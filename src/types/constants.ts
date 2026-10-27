@@ -1,5 +1,3 @@
-import theme from '../theme/tokens';
-
 export const GAME_CONSTANTS = {
   LANE_COUNT: 3,
   HERO_X_RATIO: 0.09, // hero left = 0.09 * width
@@ -17,7 +15,6 @@ export const GAME_CONSTANTS = {
   OBSTACLE_MAX_ACTIVE: 8, // design pool size
   INVULN_DURATION: 1400, // ms
   SCORE_PER_DODGE: 10,
-  TARGET_FPS: 60,
   FRAME_TIME_MS: 1000 / 60,
-  COLORS: theme.colors,
+  MAX_FRAME_DELTA_MS: 50, // clamp a background/resume gap
 };

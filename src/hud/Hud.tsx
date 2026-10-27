@@ -58,7 +58,7 @@ export const Hud = ({ who, name, lives, score, onExit, showHint = true }: HudPro
       </View>
 
       {showHint && (
-        <View style={styles.hintWrap}>
+        <View style={styles.hintWrap} pointerEvents="none">
           <View style={styles.hintPill}>
             <Text style={styles.hintText}>
               Deslize ou toque para cima/baixo para trocar de fileira

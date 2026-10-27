@@ -25,23 +25,35 @@ function Flow() {
 
 export default function App() {
   const [loadingDone, setLoadingDone] = React.useState(false);
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Fredoka_400Regular,
     Fredoka_500Medium,
     Fredoka_600SemiBold,
     Fredoka_700Bold,
   });
 
+  // A missing font must not strand the player on the loader: fall back to the
+  // system font and keep the game reachable.
+  const fontsReady = fontsLoaded || !!fontError;
+
   useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => {});
+    if (fontError) {
+      console.warn('[fonts] Fredoka failed to load; using the system font', fontError);
+    }
+  }, [fontError]);
+
+  useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch((error) => {
+      console.warn('[orientation] landscape lock failed', error);
+    });
   }, []);
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <ThemeProvider>
         <View style={styles.container}>
-          {!fontsLoaded || !loadingDone ? (
-            <LoadingScreen ready={fontsLoaded} onFinished={() => setLoadingDone(true)} />
+          {!fontsReady || !loadingDone ? (
+            <LoadingScreen ready={fontsReady} onFinished={() => setLoadingDone(true)} />
           ) : (
             <Flow />
           )}

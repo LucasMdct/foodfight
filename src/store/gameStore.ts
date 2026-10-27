@@ -36,11 +36,6 @@ export const useGameStore = create<GameStore>((set) => ({
     incrementScore: (points: number) =>
       set((s) => ({ state: { ...s.state, score: s.state.score + points } })),
 
-    gameOver: () =>
-      set((s) => ({
-        state: { ...s.state, screen: 'over', best: Math.max(s.state.best, s.state.score) },
-      })),
-
     toSelect: () => set((s) => ({ state: { ...s.state, screen: 'select' } })),
 
     updateFps: (fps: number) => set((s) => ({ state: { ...s.state, fps } })),

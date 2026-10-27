@@ -2,7 +2,7 @@
 
 The validation protocol for Food Fight v0.0.1. There is no automated test suite — validation is manual and device-based, because the question that matters most (frame rate on real hardware) cannot be answered any other way.
 
-**Status: this protocol has not yet been run against v0.0.1.** The POC passed its criteria ([results.md](./results.md)) but drew a much simpler scene, so its result is a **ceiling for v0.0.1, not a prediction**.
+**Status: this protocol has not yet been run against v0.0.1.** The POC's mechanics passed manual validation, but its frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because the POC drew a much simpler scene, treat its result as a **baseline, not a prediction**.
 
 ---
 
@@ -16,9 +16,9 @@ Frame-rate numbers are only valid under these conditions:
 - **Airplane mode** for the baseline phase, so background activity does not pollute the measurement.
 - **Battery above 30%** and not thermally throttled. Run the device cool.
 
-The FPS readout renders **only under `__DEV__`**, top-left. A release build shows nothing, so read frame rate from the profiler instead — `adb shell dumpsys gfxinfo` on Android, Metal System Trace on iOS.
+The FPS readout renders **only under `__DEV__`**, top-left. It is loop-update rate after the 16 ms throttle, not presented frame rate: on a 90 Hz panel it can read ~45 while the device is rendering 90. A release build shows nothing, so read real frame timing from the profiler instead — `adb shell dumpsys gfxinfo` on Android, Metal System Trace on iOS. Record p50/p95/p99 frame time and dropped-frame percentage, not only an average.
 
-Record the device model, OS version, build type and the `GAME_CONSTANTS` values in use. Numbers without those are not comparable to anything.
+Record the device model, OS version, build type, display refresh rate and the `GAME_CONSTANTS` values in use. Numbers without those are not comparable to anything.
 
 ---
 
@@ -166,7 +166,7 @@ Xcode → Product → Profile → **Metal System Trace**.
 
 ### Interpreting it
 
-- **GPU pegged, CPU low** → render path is the bottleneck. This is what the POC found. Reduce draw calls before anything else; see the levers in [architecture.md](./architecture.md).
+- **GPU pegged, CPU low** → render path is the bottleneck. The last recorded POC run is consistent with this, but no profiler trace was recorded; confirm it on v0.0.1. Reduce draw calls before anything else; see the levers in [architecture.md](./architecture.md).
 - **CPU pegged** → look at the worklet. It should be trivially cheap; if it is not, something React-side is running per frame.
 - **Sawtooth memory** → allocation in the loop. The pool exists to prevent this.
 
@@ -178,10 +178,11 @@ Husky runs these automatically, but run them by hand before a long QA session:
 
 ```bash
 npm run lint
-npx tsc --noEmit
+npm run typecheck
+npm test
 ```
 
-Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint.
+Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint. GitHub Actions runs typecheck, lint and tests on every PR.
 
 ---
 
@@ -196,7 +197,9 @@ Copy this into a new dated file under `docs/` and fill it in:
 **Device:** model, SoC, RAM
 **OS:** version
 **Build:** release / dev
+**Display:** __ Hz
 **Constants:** POOL=__ BASE_SPEED=__ SPAWN=__
+**Frame time:** p50=__ p95=__ p99=__ dropped=__%
 **Tester:**
 
 | Criterion | Target | Measured | Result |

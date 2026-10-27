@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import { AppState } from 'react-native';
 import {
   makeMutable,
   withTiming,
@@ -8,10 +9,11 @@ import {
 } from 'react-native-reanimated';
 import { useGameStore } from '../store/gameStore';
 import { GAME_CONSTANTS } from '../types/constants';
+import { candySpeedAt, laneTopY, rectsOverlapX, spawnIntervalAt } from '../engine/math';
 import { useSpin } from '../render/anim';
 
 const POOL_SIZE = GAME_CONSTANTS.OBSTACLE_MAX_ACTIVE;
-const LANE_COUNT = 3;
+const LANE_COUNT = GAME_CONSTANTS.LANE_COUNT;
 
 // Visual-only blink count for the invuln flicker. Not a gameplay-balance
 // constant (unlike INVULN_DURATION), so it lives here rather than in
@@ -53,7 +55,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
 
   // Top-Y of a rect of the given height, vertically centered in a lane.
   const heroTopY = useCallback(
-    (lane: number) => lane * laneHeight + (laneHeight - GAME_CONSTANTS.HERO_HEIGHT) / 2,
+    (lane: number) => laneTopY(lane, laneHeight, GAME_CONSTANTS.HERO_HEIGHT),
     [laneHeight]
   );
 
@@ -65,23 +67,17 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
   const elapsedTime = useMemo(() => makeMutable(0), []); // Monotonic time in ms that survives re-renders
   const lastUpdateTime = useMemo(() => makeMutable(0), []); // Track when the last 60fps frame update ran
   const scrollX = useMemo(() => makeMutable(0), []); // Tablecloth loop offset, 0..-88
+  // 1 while the app is not active. Assume active at mount and let the AppState
+  // listener pause on the first non-active change.
+  const appPaused = useMemo(() => makeMutable(0), []);
 
   const obstacleX = useMemo(
     () => Array.from({ length: POOL_SIZE }, () => makeMutable(-GAME_CONSTANTS.CANDY_SIZE)),
     []
   );
-  const obstacleY = useMemo(
-    () => Array.from({ length: POOL_SIZE }, () => makeMutable(0)),
-    []
-  );
-  const obstacleLane = useMemo(
-    () => Array.from({ length: POOL_SIZE }, () => makeMutable(0)),
-    []
-  );
-  const obstacleActive = useMemo(
-    () => Array.from({ length: POOL_SIZE }, () => makeMutable(0)),
-    []
-  );
+  const obstacleY = useMemo(() => Array.from({ length: POOL_SIZE }, () => makeMutable(0)), []);
+  const obstacleLane = useMemo(() => Array.from({ length: POOL_SIZE }, () => makeMutable(0)), []);
+  const obstacleActive = useMemo(() => Array.from({ length: POOL_SIZE }, () => makeMutable(0)), []);
 
   // All candies share a single spin phase (one withRepeat animation, not N).
   const candySpin = useSpin(900);
@@ -111,6 +107,17 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
   useEffect(() => {
     gameOver.value = isGameOver ? 1 : 0;
   }, [isGameOver, gameOver]);
+
+  // Freeze the loop while the app is not active. `lastUpdateTime` is reset on
+  // every transition so a long background gap cannot be integrated as one
+  // huge delta (candies teleporting off-screen and scoring for free).
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (next) => {
+      appPaused.value = next === 'active' ? 0 : 1;
+      lastUpdateTime.value = 0;
+    });
+    return () => subscription.remove();
+  }, [appPaused, lastUpdateTime]);
 
   // --- Public actions (JS thread) -------------------------------------------
   const moveLane = useCallback(
@@ -154,8 +161,21 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     heroTopY,
   ]);
 
+  // `heroY` is created once, so it keeps the laneHeight from the first render.
+  // Recompute it when the viewport changes (rotation, iPad split view,
+  // foldable) and clear the pool: active candies carry Y values from the old
+  // geometry and would sit on the wrong lanes.
+  useEffect(() => {
+    heroY.value = heroTopY(heroLane.value);
+    for (let i = 0; i < POOL_SIZE; i++) {
+      obstacleActive[i].value = 0;
+      obstacleX[i].value = -GAME_CONSTANTS.CANDY_SIZE;
+    }
+  }, [heroTopY, heroLane, heroY, obstacleActive, obstacleX]);
+
   // --- The frame loop (UI thread worklet) -----------------------------------
   // Constants captured by value so the worklet stays self-contained.
+  const MAX_FRAME_DELTA_MS = GAME_CONSTANTS.MAX_FRAME_DELTA_MS;
   const CANDY_SIZE = GAME_CONSTANTS.CANDY_SIZE;
   const CANDY_BASE_SPEED = GAME_CONSTANTS.CANDY_BASE_SPEED;
   const CANDY_SPEED_RAMP_MAX = GAME_CONSTANTS.CANDY_SPEED_RAMP_MAX;
@@ -171,6 +191,13 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     'worklet';
     const timestamp = frame.timestamp;
 
+    // Frozen while the app is in the background: don't sample, spawn, move or
+    // score. The AppState listener resets lastUpdateTime on the way back.
+    if (appPaused.value === 1) {
+      lastUpdateTime.value = timestamp;
+      return;
+    }
+
     // Initialize lastUpdateTime if it is 0 or on callback initialization
     if (frame.timeSincePreviousFrame === null || lastUpdateTime.value === 0) {
       lastUpdateTime.value = timestamp;
@@ -178,20 +205,24 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
 
     const elapsed = timestamp - lastUpdateTime.value;
 
-    // Throttle to 60 FPS (~16.0ms threshold to prevent timing jitter skips)
+    // Throttle to ~60 updates/s. Movement uses the real delta below, so this
+    // changes cadence, not gameplay speed.
     if (elapsed < 16.0 && frame.timeSincePreviousFrame !== null) {
       return;
     }
 
-    const dtMs = elapsed > 0 ? elapsed : GAME_CONSTANTS.FRAME_TIME_MS;
+    // Raw delta feeds the loop-rate sample; the simulation integrates at most
+    // MAX_FRAME_DELTA_MS so a stall or resume cannot teleport the field.
+    const rawDtMs = elapsed > 0 ? elapsed : GAME_CONSTANTS.FRAME_TIME_MS;
+    const dtMs = Math.min(rawDtMs, MAX_FRAME_DELTA_MS);
     lastUpdateTime.value = timestamp;
 
     elapsedTime.value += dtMs;
     const now = elapsedTime.value;
 
-    // --- FPS: sample once per second, then hand one value to React ----------
+    // --- Loop rate: sample once per second, then hand one value to React ----
     fpsFrames.value += 1;
-    fpsAccum.value += dtMs;
+    fpsAccum.value += rawDtMs;
     if (fpsAccum.value >= 1000) {
       const fps = Math.round((fpsFrames.value * 1000) / fpsAccum.value);
       runOnJS(applyFps)(fps);
@@ -208,8 +239,13 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     scrollX.value = -((now / 900) % 1) * 88;
 
     // --- Difficulty ramp: candies speed up and spawn faster over time -------
-    const speed = CANDY_BASE_SPEED + Math.min(CANDY_SPEED_RAMP_MAX, now * CANDY_SPEED_RAMP_RATE);
-    const interval = Math.max(SPAWN_INTERVAL_MIN, SPAWN_INTERVAL - now * SPAWN_INTERVAL_RAMP_RATE);
+    const speed = candySpeedAt(now, CANDY_BASE_SPEED, CANDY_SPEED_RAMP_MAX, CANDY_SPEED_RAMP_RATE);
+    const interval = spawnIntervalAt(
+      now,
+      SPAWN_INTERVAL,
+      SPAWN_INTERVAL_MIN,
+      SPAWN_INTERVAL_RAMP_RATE
+    );
 
     // --- Spawn: activate an idle slot on interval ---------------------------
     spawnAccum.value += dtMs;
@@ -220,7 +256,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
           const lane = Math.floor(Math.random() * LANE_COUNT);
           obstacleLane[i].value = lane;
           obstacleX[i].value = screenWidth;
-          obstacleY[i].value = lane * laneHeight + (laneHeight - CANDY_SIZE) / 2;
+          obstacleY[i].value = laneTopY(lane, laneHeight, CANDY_SIZE);
           obstacleActive[i].value = 1;
           break;
         }
@@ -244,12 +280,14 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
         continue;
       }
 
-      if (canBeHit && obstacleLane[i].value === heroLane.value) {
+      if (
+        canBeHit &&
+        obstacleLane[i].value === heroLane.value &&
         // Same lane → an X-axis overlap is a hit (Y always overlaps in-lane).
-        if (heroLeft < x + CANDY_SIZE && heroRight > x) {
-          invulnUntil.value = now + INVULN_DURATION;
-          runOnJS(applyHit)();
-        }
+        rectsOverlapX(heroLeft, heroRight, x, x + CANDY_SIZE)
+      ) {
+        invulnUntil.value = now + INVULN_DURATION;
+        runOnJS(applyHit)();
       }
     }
 

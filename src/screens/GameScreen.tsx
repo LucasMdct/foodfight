@@ -102,57 +102,60 @@ export const GameScreen = () => {
   ]);
 
   return (
-    <SwipeHandler onMoveLane={handleMoveLane}>
-      <View style={{ flex: 1 }}>
-        <Canvas style={{ flex: 1 }}>
-          <Tablecloth width={width} height={height} scrollX={engine.scrollX} />
-          <LaneDividers width={width} height={height} />
+    <View style={{ flex: 1 }}>
+      {/* Gestures cover the playfield only; HUD and modal buttons sit outside. */}
+      <SwipeHandler onMoveLane={handleMoveLane}>
+        <View style={{ flex: 1 }}>
+          <Canvas style={{ flex: 1 }}>
+            <Tablecloth width={width} height={height} scrollX={engine.scrollX} />
+            <LaneDividers width={width} height={height} />
 
-          <Group transform={villainTransform}>
-            <Foodie who="vilao" size={132} />
-          </Group>
+            <Group transform={villainTransform}>
+              <Foodie who="vilao" size={132} />
+            </Group>
 
-          {Array.from({ length: engine.poolSize }, (_, i) => (
-            <CandySlot
-              key={i}
-              x={engine.obstacleX[i]}
-              y={engine.obstacleY[i]}
-              active={engine.obstacleActive[i]}
-              spin={engine.candySpin}
-              type={CANDY_TYPES[i % 3]}
-            />
-          ))}
+            {Array.from({ length: engine.poolSize }, (_, i) => (
+              <CandySlot
+                key={i}
+                x={engine.obstacleX[i]}
+                y={engine.obstacleY[i]}
+                active={engine.obstacleActive[i]}
+                spin={engine.candySpin}
+                type={CANDY_TYPES[i % 3]}
+              />
+            ))}
 
-          <Group transform={heroTransform} opacity={engine.heroOpacity}>
-            <Oval
-              x={8}
-              y={GAME_CONSTANTS.HERO_HEIGHT - 14}
-              width={GAME_CONSTANTS.HERO_WIDTH - 16}
-              height={16}
-              color={theme.colors.heroShadow}
-            />
-            <Foodie who={who} size={96} />
-          </Group>
-        </Canvas>
+            <Group transform={heroTransform} opacity={engine.heroOpacity}>
+              <Oval
+                x={8}
+                y={GAME_CONSTANTS.HERO_HEIGHT - 14}
+                width={GAME_CONSTANTS.HERO_WIDTH - 16}
+                height={16}
+                color={theme.colors.heroShadow}
+              />
+              <Foodie who={who} size={96} />
+            </Group>
+          </Canvas>
+        </View>
+      </SwipeHandler>
 
-        <Hud
-          who={who}
-          name={HERO_NAME[who]}
-          lives={lives}
-          score={score}
-          onExit={actions.toSelect}
-          showHint={!hasMoved}
-        />
+      <Hud
+        who={who}
+        name={HERO_NAME[who]}
+        lives={lives}
+        score={score}
+        onExit={actions.toSelect}
+        showHint={!hasMoved}
+      />
 
-        {screen === 'over' && <GameOverModal />}
+      {screen === 'over' && <GameOverModal />}
 
-        {__DEV__ && (
-          <View style={{ position: 'absolute', top: 6, left: 6 }} pointerEvents="none">
-            <Text style={{ color: theme.colors.surface, fontSize: 11 }}>{fps} FPS</Text>
-          </View>
-        )}
-      </View>
-    </SwipeHandler>
+      {__DEV__ && (
+        <View style={{ position: 'absolute', top: 6, left: 6 }} pointerEvents="none">
+          <Text style={{ color: theme.colors.surface, fontSize: 11 }}>LOOP {fps}</Text>
+        </View>
+      )}
+    </View>
   );
 };
 

@@ -2,7 +2,7 @@
 
 Everything written about Food Fight, indexed. Start here.
 
-The project has two eras: the **POC** that validated React Native Skia, and the **game** (v0.0.1) that replaced it. Docs describe the game unless they say otherwise.
+The project has two eras: the **POC** that tested React Native Skia, and the **game** (v0.0.1) that replaced it. The POC's frame-rate verdict is unresolved; see [results.md](./results.md). Docs describe the game unless they say otherwise.
 
 ---
 
@@ -13,7 +13,7 @@ The project has two eras: the **POC** that validated React Native Skia, and the 
 | [architecture.md](./architecture.md) | How the game is built and why each decision was made | 20 min |
 | [testing.md](./testing.md) | The validation protocol — not yet run against v0.0.1 | 12 min |
 | [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix | reference |
-| [results.md](./results.md) | POC measurements and findings — historical baseline | 8 min |
+| [results.md](./results.md) | POC measurements and the unresolved frame-rate verdict | 8 min |
 
 Project entry point and quick start live in the [root README](../README.md). Version history is in the [changelog](../CHANGELOG.md).
 

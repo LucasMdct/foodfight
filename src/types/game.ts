@@ -1,8 +1,3 @@
-export type Lane = 'top' | 'middle' | 'bottom';
-
-// Lane index used on the UI thread (0 = top, 1 = middle, 2 = bottom).
-export const LANE_ORDER: Lane[] = ['top', 'middle', 'bottom'];
-
 export type Who = 'alface' | 'feijao' | 'arroz';
 export type Screen = 'select' | 'game' | 'over';
 
@@ -25,7 +20,6 @@ export interface GameActions {
   start: () => void;
   hitHero: () => void;
   incrementScore: (points: number) => void;
-  gameOver: () => void;
   toSelect: () => void;
   updateFps: (fps: number) => void;
   reset: () => void;

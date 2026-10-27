@@ -9,8 +9,7 @@
       "@components/*": ["src/components/*"],
       "@hooks/*": ["src/hooks/*"],
       "@store/*": ["src/store/*"],
-      "@types/*": ["src/types/*"],
-      "@utils/*": ["src/utils/*"]
+      "@types/*": ["src/types/*"]
     },
     "esModuleInterop": true,
     "skipLibCheck": true,

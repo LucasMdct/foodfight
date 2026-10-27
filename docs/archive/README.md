@@ -9,7 +9,7 @@ Kept for historical reference only: they record what was planned and believed at
 
 **They describe code that was never built.** All of them reference a `src/systems/` layer (`ObstacleSystem`, `CollisionSystem`, `AnimationSystem`, `FpsCounter`), a `useGameLoop.ts` hook, a `src/utils/` directory, and separate `HeroSprite` / `ObstacleSprite` / `LaneGrid` / `FpsOverlay` components. None of it exists. The real implementation collapsed all of that into a single UI-thread worklet in `src/hooks/useRunnerEngine.ts`.
 
-**They contradicted each other on the verdict.** `PROJECT_SUMMARY.md` declared the POC approved while `README.md` and `POC-CONCLUSION.md` described the frame rate as a failure against target. The approval turned out to be the correct call — see [results.md](../results.md) — but the documents never agreed, and a reader had no way to tell which to trust.
+**They contradicted each other on the verdict.** `PROJECT_SUMMARY.md` declared the POC approved while `README.md` and `POC-CONCLUSION.md` described the frame rate as a failure against target. The approval was never supported by a new measurement; the current [results.md](../results.md) marks the frame-rate criterion unresolved. The documents never agreed, and a reader had no way to tell which to trust.
 
 **They duplicated heavily.** The quick start appeared in four files, troubleshooting in three, the architecture overview in three, and the test protocol in four — each version drifting from the others.
 
