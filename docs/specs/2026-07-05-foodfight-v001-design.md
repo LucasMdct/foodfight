@@ -134,22 +134,22 @@ Ações: `pick(who)`, `start()`, `hit()` (-1 vida; `screen='over'` e atualiza `b
 
 Chrome de UI (cards, botões, chip, selos, modal) é **RN Views/Text** com fonte Fredoka e tokens do tema — sobrepostos ao Canvas por `zIndex`. Personagens dentro desse chrome usam mini-`Canvas` com `Foodie`.
 
-### 8.1 Seleção (`src/screens/SelectScreen.tsx`)
+### 8.1 Seleção (`src/features/select/`)
 Fundo gradiente creme + "blobs" translúcidos. Título "FOOD FIGHT" (marca, text-shadow adesivo), subtítulo em pílula. 3 cards (190px): `Foodie` + nome (cor do personagem) + tagline + 3 corações; **borda `#FFB627` 4px no selecionado**, sombra suave, hover/press. Botão **JOGAR!** verde pílula com sombra sólida deslocada (5–6px) e pulso (`ff-pulse`). Cantinho: vilão + balão "Ninguém escapa dos meus doces!".
 
-### 8.2 Gameplay (`src/screens/GameScreen` + `src/hud/Hud.tsx`)
+### 8.2 Gameplay (`src/features/game/` + `src/hud/Hud.tsx`)
 Canvas (§4–6) + HUD sobreposto:
 - **Chip do personagem** (pílula branca, borda 2px): mini-`Foodie` + nome + **corações** (cheio `#FF6B6B`, vazio `#E9DAC4`).
 - **Selo de score** laranja `#FFB627` com sombra sólida.
 - Botão **Sair** (→ `select`).
 - Dica de controle no rodapé.
 
-### 8.3 Game Over (`src/screens/GameOverModal.tsx`)
+### 8.3 Game Over (`src/features/game-over/`)
 Overlay `rgba(70,40,10,0.45)` + card `#FFFDF6` raio 30, `ff-pop`. Vilão, título "Doce demais!", subtítulo, blocos **Pontos** e **Recorde**, botões **Jogar de novo** (verde) e **Trocar herói**.
 
 ---
 
-## 9. Loading on-brand (`src/screens/LoadingScreen.tsx`)
+## 9. Loading on-brand (`src/features/loading/`)
 
 Substitui `GameLoader`. Fundo creme/gradiente, logo "FOOD FIGHT" (sombra adesivo), um `Foodie` correndo (walk cycle) e/ou vilão espiando, **barra de progresso** em pílula (trilho `#F0DFC0`, preenchimento `#7BC950`) e transição de "burst" para a seleção. Cobre o carregamento da fonte Fredoka e o lock de orientação. Reaproveita a estética (não a lógica) do `GameLoader` atual.
 
@@ -182,7 +182,7 @@ src/theme/            tokens.ts · ThemeProvider.tsx · useTheme.ts
 src/render/foodie/    Foodie.tsx · characters/{Alface,Feijao,Arroz,Vilao}.tsx · useWalkCycle.ts
 src/render/candies/   Candy.tsx (Lolli/Candy/Donut) · useSpin.ts
 src/render/scenario/  Tablecloth.tsx · LaneDividers.tsx
-src/screens/          LoadingScreen.tsx · SelectScreen.tsx · GameScreen.tsx · GameOverModal.tsx
+src/features/         loading/ · select/ · game/ · game-over/
 src/hud/              Hud.tsx
 src/hooks/            useRunnerEngine.ts (estendido)
 src/store/            gameStore.ts (screen/who/lives/score/best)

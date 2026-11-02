@@ -84,11 +84,13 @@ npm run web       # renders, but NOT valid for perf measurement
 ```
 App.tsx                       Font loading, landscape lock, screen flow
 src/
-├── screens/
-│   ├── LoadingScreen.tsx     Themed intro
-│   ├── SelectScreen.tsx      Character selection
-│   ├── GameScreen.tsx        Skia scene, HUD, gameplay
-│   └── GameOverModal.tsx     Score, best, replay / switch hero
+├── app/
+│   └── appStyles.ts          Application shell styles
+├── features/
+│   ├── loading/              Loading feature + local styles
+│   ├── select/               Character selection feature + local styles
+│   ├── game/                 Skia scene, HUD and gameplay feature
+│   └── game-over/            Score, best, replay / switch hero
 ├── render/
 │   ├── foodie/               Hero and villain characters, walk cycle, palette
 │   ├── candies/              Projectile rendering

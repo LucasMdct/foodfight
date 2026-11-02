@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Theme } from '../theme';
+import { Theme } from '../../theme';
 
 // Design source: FoodFight v0.0.1.dc.html lines 159-181 ("FIM DE JOGO" overlay).
 //

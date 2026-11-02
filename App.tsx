@@ -11,10 +11,8 @@ import {
 } from '@expo-google-fonts/fredoka';
 import { ThemeProvider } from './src/theme';
 import { useGameStore } from './src/store/gameStore';
-import { LoadingScreen } from './src/screens/LoadingScreen';
-import { SelectScreen } from './src/screens/SelectScreen';
-import { GameScreen } from './src/screens/GameScreen';
-import { styles } from './src/screens/appStyles';
+import { GameScreen, LoadingScreen, SelectScreen } from './src/features';
+import { styles } from './src/app/appStyles';
 
 function Flow() {
   const screen = useGameStore((s) => s.state.screen);

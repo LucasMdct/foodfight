@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated as RNAnimated, Pressable, Text, View } from 'react-native';
 import { Canvas } from '@shopify/react-native-skia';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme, useUiScale } from '../theme';
-import { useGameStore } from '../store/gameStore';
-import { Foodie } from '../render/foodie/Foodie';
-import { Heart } from '../hud/Heart';
+import { useTheme, useUiScale } from '../../theme';
+import { useGameStore } from '../../store/gameStore';
+import { Foodie } from '../../render/foodie/Foodie';
+import { Heart } from '../../hud/Heart';
 import { makeStyles } from './SelectScreen.styles';
-import type { Who } from '../types/game';
+import type { Who } from '../../types/game';
 
 // Character name colors are per-character identity (not UI/theme colors), same
 // rationale as `src/render/foodie/palette.ts` — kept as documented local

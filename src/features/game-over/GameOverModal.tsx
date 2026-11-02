@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated as RNAnimated, Pressable, Text, View } from 'react-native';
 import { Canvas } from '@shopify/react-native-skia';
-import { useTheme, useUiScale } from '../theme';
-import { useGameStore } from '../store/gameStore';
-import { Foodie } from '../render/foodie/Foodie';
+import { useTheme, useUiScale } from '../../theme';
+import { useGameStore } from '../../store/gameStore';
+import { Foodie } from '../../render/foodie/Foodie';
 import { makeStyles } from './GameOverModal.styles';
 
 const POP_DURATION_MS = 350;

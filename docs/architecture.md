@@ -25,9 +25,9 @@ App.tsx  ─ font loading, landscape lock, loading gate
    │
    ├─ ThemeProvider              design tokens + UI scaling
    └─ Flow
-        ├─ LoadingScreen         until fonts are ready
-        ├─ SelectScreen          screen === 'select'
-        └─ GameScreen            screen === 'game' | 'over'
+        ├─ features/loading      until fonts are ready
+        ├─ features/select       screen === 'select'
+        └─ features/game         screen === 'game' | 'over'
              │
              ├─ useRunnerEngine(width, height)   ← all gameplay lives here
              │     └─ useFrameCallback worklet (UI thread)
@@ -42,7 +42,7 @@ App.tsx  ─ font loading, landscape lock, loading gate
              ├─ SwipeHandler      Fling/tap gestures → engine.moveLane()
              ├─ Canvas            Skia scene: tablecloth, lanes, villain, candies, hero
              ├─ Hud               lives, score, hero name, exit, control hint
-             └─ GameOverModal     screen === 'over'
+             └─ features/game-over screen === 'over'
                       │
                       └─ useGameStore (Zustand)  discrete state only
 ```
@@ -177,7 +177,7 @@ Hero position, candy positions, scroll offset and flicker phase are deliberately
 
 ---
 
-## Rendering — `src/render/` and `GameScreen`
+## Rendering — `src/render/` and `src/features/game/`
 
 The Skia tree is static in shape. It mounts, back to front:
 
@@ -188,6 +188,23 @@ The Skia tree is static in shape. It mounts, back to front:
 5. Hero group — shadow oval plus `Foodie who={who}`, opacity from `heroOpacity`
 
 Skia reads shared values directly, so mutating one repaints without a React render. The node count never changes during play.
+
+### Feature module layout
+
+Each screen-level feature owns its implementation and local styles:
+
+```
+src/features/
+├── loading/       LoadingScreen.tsx + LoadingScreen.styles.ts
+├── select/        SelectScreen.tsx + SelectScreen.styles.ts
+├── game/          GameScreen.tsx
+└── game-over/     GameOverModal.tsx + GameOverModal.styles.ts
+```
+
+Each feature exposes a small `index.ts` interface, and `src/features/index.ts` is
+the composition seam consumed by `App.tsx`. Local styles and implementation
+details stay inside the feature folder. `src/app/` contains shell-only concerns
+such as `appStyles.ts`.
 
 ### Characters
 

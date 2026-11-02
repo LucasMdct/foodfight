@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated as RNAnimated, Text, View } from 'react-native';
 import { Canvas } from '@shopify/react-native-skia';
-import { useTheme } from '../theme';
-import { Foodie } from '../render/foodie/Foodie';
+import { useTheme } from '../../theme';
+import { Foodie } from '../../render/foodie/Foodie';
 import { makeStyles } from './LoadingScreen.styles';
 
 const BAR_DURATION_MS = 1200;

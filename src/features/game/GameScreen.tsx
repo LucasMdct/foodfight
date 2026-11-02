@@ -2,19 +2,19 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { Canvas, Group, Oval } from '@shopify/react-native-skia';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
-import { useGameStore } from '../store/gameStore';
-import { useRunnerEngine } from '../hooks/useRunnerEngine';
-import { SwipeHandler } from '../components/SwipeHandler';
-import { Tablecloth } from '../render/scenario/Tablecloth';
-import { LaneDividers } from '../render/scenario/LaneDividers';
-import { Foodie } from '../render/foodie/Foodie';
-import { Candy, type CandyType } from '../render/candies/Candy';
-import { useBob } from '../render/anim';
-import { Hud } from '../hud/Hud';
-import { GameOverModal } from './GameOverModal';
-import { GAME_CONSTANTS } from '../types/constants';
-import type { Who } from '../types/game';
-import theme from '../theme/tokens';
+import { useGameStore } from '../../store/gameStore';
+import { useRunnerEngine } from '../../hooks/useRunnerEngine';
+import { SwipeHandler } from '../../components/SwipeHandler';
+import { Tablecloth } from '../../render/scenario/Tablecloth';
+import { LaneDividers } from '../../render/scenario/LaneDividers';
+import { Foodie } from '../../render/foodie/Foodie';
+import { Candy, type CandyType } from '../../render/candies/Candy';
+import { useBob } from '../../render/anim';
+import { Hud } from '../../hud/Hud';
+import { GameOverModal } from '../game-over';
+import { GAME_CONSTANTS } from '../../types/constants';
+import type { Who } from '../../types/game';
+import theme from '../../theme/tokens';
 
 // Candy type is fixed per pool-slot index (not tracked by the engine): slot i
 // is always ['lolli','candy','donut'][i % 3], matching the mockup exactly and
