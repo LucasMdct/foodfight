@@ -1,56 +1,62 @@
-import React, { useState } from 'react';
-import { View, useWindowDimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { GameCanvas } from './src/components/GameCanvas';
-import { SwipeHandler } from './src/components/SwipeHandler';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import {
+  useFonts,
+  Fredoka_400Regular,
+  Fredoka_500Medium,
+  Fredoka_600SemiBold,
+  Fredoka_700Bold,
+} from '@expo-google-fonts/fredoka';
+import { ThemeProvider } from './src/theme';
 import { useGameStore } from './src/store/gameStore';
-import { useRunnerEngine } from './src/hooks/useRunnerEngine';
-import { GameLoader } from './src/components/GameLoader';
-import { OrientationScreen } from './src/components/OrientationScreen';
-import { styles } from './App.styles';
+import { GameScreen, LoadingScreen, SelectScreen } from './src/features';
+import { styles } from './src/app/appStyles';
 
-type AppState = 'loading' | 'orientation' | 'playing';
-
-function GameScreen() {
-  const { width, height } = useWindowDimensions();
-  const actions = useGameStore((s) => s.actions);
-  const engine = useRunnerEngine(width, height);
-
-  const handleReset = () => {
-    engine.reset();
-    actions.reset();
-  };
-
-  return (
-    <View style={styles.container}>
-      <SwipeHandler onMoveLane={engine.moveLane}>
-        <View style={styles.container}>
-          <GameCanvas
-            engine={engine}
-            screenWidth={width}
-            screenHeight={height}
-            onReset={handleReset}
-          />
-        </View>
-      </SwipeHandler>
-    </View>
-  );
+function Flow() {
+  const screen = useGameStore((s) => s.state.screen);
+  // 'game' and 'over' both render GameScreen (over draws its modal on top).
+  if (screen === 'select') return <SelectScreen />;
+  return <GameScreen />;
 }
 
 export default function App() {
-  const [appState, setAppState] = useState<AppState>('loading');
+  const [loadingDone, setLoadingDone] = React.useState(false);
+  const [fontsLoaded, fontError] = useFonts({
+    Fredoka_400Regular,
+    Fredoka_500Medium,
+    Fredoka_600SemiBold,
+    Fredoka_700Bold,
+  });
+
+  // A missing font must not strand the player on the loader: fall back to the
+  // system font and keep the game reachable.
+  const fontsReady = fontsLoaded || !!fontError;
+
+  useEffect(() => {
+    if (fontError) {
+      console.warn('[fonts] Fredoka failed to load; using the system font', fontError);
+    }
+  }, [fontError]);
+
+  useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch((error) => {
+      console.warn('[orientation] landscape lock failed', error);
+    });
+  }, []);
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      {appState === 'loading' && (
-        <GameLoader onFinished={() => setAppState('orientation')} />
-      )}
-      {appState === 'orientation' && (
-        <OrientationScreen onSelect={() => setAppState('playing')} />
-      )}
-      {appState === 'playing' && (
-        <GameScreen />
-      )}
+      <ThemeProvider>
+        <View style={styles.container}>
+          {!fontsReady || !loadingDone ? (
+            <LoadingScreen ready={fontsReady} onFinished={() => setLoadingDone(true)} />
+          ) : (
+            <Flow />
+          )}
+        </View>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

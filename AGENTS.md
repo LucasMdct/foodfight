@@ -8,6 +8,7 @@ All docs live in `docs/`, indexed by `docs/README.md`. Do not add markdown files
 
 - Written in English. Technical terms stay in their original form (worklet, hitbox, frame budget).
 - Specs go in `docs/specs/`, implementation plans in `docs/plans/`, both named `YYYY-MM-DD-slug.md`.
+- `docs/design/` is the design handoff bundle and the **source of truth for shapes and colours**. Character geometry in `src/render/foodie/characters/*` is ported verbatim from it. Visual changes start there and are ported into code, never the reverse.
 - `docs/archive/` is obsolete and partly inaccurate. Never cite it as a source of truth.
 - When code and docs disagree, the code is right and the doc is a bug. Fix the doc.
 

@@ -1,21 +1,21 @@
 {
   "expo": {
-    "name": "foodfight-poc",
+    "name": "FoodFight",
     "slug": "foodfight-poc",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "version": "0.0.1",
+    "orientation": "landscape",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
+      "requireFullScreen": true,
       "bundleIdentifier": "com.foodfight.poc"
     },
     "android": {
       "package": "com.foodfight.poc",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFF3E2",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
@@ -28,6 +28,7 @@
         "projectId": "07f21e8e-4cf5-4786-985d-84405fe4b26c"
       }
     },
-    "owner": "medeirosdev"
+    "owner": "medeirosdev",
+    "plugins": ["expo-font"]
   }
 }

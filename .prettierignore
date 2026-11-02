@@ -1,0 +1,10 @@
+node_modules
+android
+ios
+.expo
+dist
+build
+assets
+design-completo-foodfight-game
+.superpowers
+package-lock.json

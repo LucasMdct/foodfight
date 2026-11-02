@@ -1,10 +1,23 @@
 {
-  "name": "foodfight-poc",
-  "version": "1.0.0",
+  "name": "foodfight",
+  "version": "0.0.1",
   "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "lint": "eslint . --max-warnings=0",
+    "prepare": "husky",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
   "dependencies": {
+    "@expo-google-fonts/fredoka": "^0.4.1",
     "@shopify/react-native-skia": "2.6.2",
-    "expo": "~56.0.13",
+    "expo": "~56.0.14",
+    "expo-font": "~56.0.7",
+    "expo-linear-gradient": "~56.0.4",
     "expo-screen-orientation": "~56.0.5",
     "expo-status-bar": "~56.0.4",
     "react": "19.2.3",
@@ -18,15 +31,19 @@
     "@types/react": "~19.2.2",
     "babel-preset-expo": "~56.0.15",
     "eslint": "^9.39.4",
-    "eslint-config-expo": "^57.0.0",
-    "typescript": "~6.0.3"
+    "eslint-config-expo": "~56.0.4",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.4",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
   },
-  "scripts": {
-    "start": "expo start",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
-    "lint": "eslint ."
-  },
-  "private": true
+  "private": true,
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  }
 }

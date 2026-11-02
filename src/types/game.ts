@@ -1,7 +1,5 @@
-export type Lane = 'top' | 'middle' | 'bottom';
-
-// Lane index used on the UI thread (0 = top, 1 = middle, 2 = bottom).
-export const LANE_ORDER: Lane[] = ['top', 'middle', 'bottom'];
+export type Who = 'alface' | 'feijao' | 'arroz';
+export type Screen = 'select' | 'game' | 'over';
 
 /**
  * Discrete game state kept in React/Zustand. Per-frame values (hero position,
@@ -9,22 +7,31 @@ export const LANE_ORDER: Lane[] = ['top', 'middle', 'bottom'];
  * UI thread — see useRunnerEngine — so gameplay does NOT re-render React.
  */
 export interface GameState {
+  screen: Screen;
+  who: Who;
+  lives: number;
   score: number;
-  health: number;
-  isGameOver: boolean;
+  best: number;
   fps: number;
 }
 
 export interface GameActions {
-  updateFps: (fps: number) => void;
+  pick: (who: Who) => void;
+  start: () => void;
   hitHero: () => void;
   incrementScore: (points: number) => void;
+  toSelect: () => void;
+  updateFps: (fps: number) => void;
   reset: () => void;
 }
 
+export const START_LIVES = 3;
+
 export const INITIAL_GAME_STATE: GameState = {
+  screen: 'select',
+  who: 'alface',
+  lives: START_LIVES,
   score: 0,
-  health: 100,
-  isGameOver: false,
+  best: 0,
   fps: 60,
 };

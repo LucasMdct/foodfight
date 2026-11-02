@@ -1,6 +1,8 @@
 # Documentation
 
-Everything written about this POC, indexed. Start here.
+Everything written about Food Fight, indexed. Start here.
+
+The project has two eras: the **POC** that tested React Native Skia, and the **game** (v0.0.1) that replaced it. The POC's frame-rate verdict is unresolved; see [results.md](./results.md). Docs describe the game unless they say otherwise.
 
 ---
 
@@ -8,12 +10,20 @@ Everything written about this POC, indexed. Start here.
 
 | Document | What it covers | Read time |
 |---|---|---|
-| [architecture.md](./architecture.md) | How the engine is built and why each decision was made | 15 min |
-| [results.md](./results.md) | Device measurements, findings, and the recommendation | 8 min |
-| [testing.md](./testing.md) | The validation protocol, so results can be reproduced | 10 min |
+| [architecture.md](./architecture.md) | How the game is built and why each decision was made | 20 min |
+| [testing.md](./testing.md) | The validation protocol — not yet run against v0.0.1 | 12 min |
 | [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix | reference |
+| [results.md](./results.md) | POC measurements and the unresolved frame-rate verdict | 8 min |
 
 Project entry point and quick start live in the [root README](../README.md). Version history is in the [changelog](../CHANGELOG.md).
+
+---
+
+## Design
+
+[`design/`](./design/) holds the design handoff bundle — HTML prototypes, the style guide, and character geometry.
+
+**It is the source of truth for shapes and colours**, not the code. `src/render/foodie/characters/*` port coordinates verbatim from `design/project/Foodie.dc.html`; visual changes start there and are ported, never the other way round.
 
 ---
 
@@ -23,10 +33,11 @@ Written before implementation, one per feature.
 
 | Spec | Subject |
 |---|---|
+| [2026-07-05-foodfight-v001-design.md](./specs/2026-07-05-foodfight-v001-design.md) | **v0.0.1 game design** — heroes, villain, screens, theme |
 | [poc-runner-skia.md](./specs/poc-runner-skia.md) | The original POC specification and acceptance criteria |
-| [2026-07-04-orientation.md](./specs/2026-07-04-orientation.md) | Portrait/landscape selection screen |
-| [2026-07-04-dopamine-loader.md](./specs/2026-07-04-dopamine-loader.md) | Animated loading screen |
 | [2026-07-04-play-again-button.md](./specs/2026-07-04-play-again-button.md) | Game Over modal and replay flow |
+| [2026-07-04-orientation.md](./specs/2026-07-04-orientation.md) | Orientation selection *(superseded — v0.0.1 locks landscape)* |
+| [2026-07-04-dopamine-loader.md](./specs/2026-07-04-dopamine-loader.md) | POC loading screen *(superseded by the themed loader)* |
 
 ## Plans
 
@@ -34,8 +45,9 @@ Step-by-step implementation plans derived from the specs above.
 
 | Plan | Subject |
 |---|---|
-| [2026-07-04-dopamine-loader.md](./plans/2026-07-04-dopamine-loader.md) | Loading screen |
-| [2026-07-04-play-again-button.md](./plans/2026-07-04-play-again-button.md) | Game Over modal |
+| [2026-07-05-foodfight-v001.md](./plans/2026-07-05-foodfight-v001.md) | **v0.0.1 game implementation** |
+| [2026-07-04-play-again-button.md](./plans/2026-07-04-play-again-button.md) | Game Over modal (POC) |
+| [2026-07-04-dopamine-loader.md](./plans/2026-07-04-dopamine-loader.md) | Loading screen (POC) |
 
 ---
 
@@ -43,13 +55,15 @@ Step-by-step implementation plans derived from the specs above.
 
 **Running it for the first time** → [root README → Quick start](../README.md#quick-start)
 
-**Deciding whether this stack is viable** → [results.md](./results.md)
+**Changing gameplay code** → [architecture.md](./architecture.md) first. The frame loop has two invariants that are easy to break silently: no per-frame React state, and no allocation inside the worklet.
 
-**Changing gameplay code** → [architecture.md](./architecture.md) first; the loop has invariants that are easy to break silently (frame budget, no per-frame React renders).
+**Changing how something looks** → [`design/`](./design/) first, then port.
 
-**Reproducing the measurements** → [testing.md](./testing.md)
+**Testing on a device** → [testing.md](./testing.md). v0.0.1 has never been measured on hardware; that is the largest open item on the project.
 
 **Something is broken** → [troubleshooting.md](./troubleshooting.md)
+
+**Wondering why the stack is what it is** → [results.md](./results.md)
 
 ---
 

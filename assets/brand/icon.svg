@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- FoodFight app icon: cream on-brand background + Alface (lettuce hero) centered in safe zone -->
+  <rect x="0" y="0" width="1024" height="1024" rx="180" ry="180" fill="#FFF3E2"></rect>
+
+  <!-- Alface hero, reused from design-completo-foodfight-game/project/Foodie.dc.html (lines 21-53).
+       Original art occupies a 120x150 box; scaled ~4.13x and centered so the motif
+       stays within the ~66% central safe zone for adaptive-icon masking. -->
+  <g transform="translate(264,202) scale(4.1333)">
+    <!-- legs -->
+    <g>
+      <rect x="42" y="108" width="12" height="26" rx="6" fill="#4E9A3C"></rect>
+      <ellipse cx="48" cy="136" rx="11" ry="6.5" fill="#2F6B24"></ellipse>
+    </g>
+    <g>
+      <rect x="66" y="108" width="12" height="26" rx="6" fill="#4E9A3C"></rect>
+      <ellipse cx="72" cy="136" rx="11" ry="6.5" fill="#2F6B24"></ellipse>
+    </g>
+
+    <!-- body + head -->
+    <g>
+      <ellipse cx="19" cy="88" rx="8" ry="14" fill="#4E9A3C" transform="rotate(18 19 88)"></ellipse>
+      <ellipse cx="101" cy="88" rx="8" ry="14" fill="#4E9A3C" transform="rotate(-18 101 88)"></ellipse>
+      <circle cx="60" cy="52" r="30" fill="#66B84E"></circle>
+      <circle cx="32" cy="66" r="22" fill="#66B84E"></circle>
+      <circle cx="88" cy="66" r="22" fill="#66B84E"></circle>
+      <circle cx="38" cy="90" r="20" fill="#5CAB45"></circle>
+      <circle cx="82" cy="90" r="20" fill="#5CAB45"></circle>
+      <circle cx="60" cy="98" r="24" fill="#5CAB45"></circle>
+      <circle cx="60" cy="74" r="31" fill="#A9DD7E"></circle>
+      <circle cx="60" cy="76" r="25" fill="#C9EF9F"></circle>
+      <circle cx="50" cy="72" r="5" fill="#3B2B20"></circle>
+      <circle cx="70" cy="72" r="5" fill="#3B2B20"></circle>
+      <circle cx="51.7" cy="70.2" r="1.8" fill="#FFFFFF"></circle>
+      <circle cx="71.7" cy="70.2" r="1.8" fill="#FFFFFF"></circle>
+      <ellipse cx="41" cy="82" rx="5.5" ry="3.2" fill="#FF9DB0" opacity="0.75"></ellipse>
+      <ellipse cx="79" cy="82" rx="5.5" ry="3.2" fill="#FF9DB0" opacity="0.75"></ellipse>
+      <path d="M53 84 Q60 91 67 84" stroke="#3B2B20" stroke-width="2.6" fill="none" stroke-linecap="round"></path>
+    </g>
+  </g>
+</svg>

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { GameState, GameActions, INITIAL_GAME_STATE } from '../types/game';
-import { GAME_CONSTANTS } from '../types/constants';
+import { GameState, GameActions, INITIAL_GAME_STATE, START_LIVES, Who } from '../types/game';
 
 interface GameStore {
   state: GameState;
@@ -11,24 +10,37 @@ export const useGameStore = create<GameStore>((set) => ({
   state: INITIAL_GAME_STATE,
 
   actions: {
-    updateFps: (fps: number) =>
-      set((store) => ({ state: { ...store.state, fps } })),
+    pick: (who: Who) => set((s) => ({ state: { ...s.state, who } })),
+
+    start: () =>
+      set((s) => ({
+        state: { ...s.state, screen: 'game', lives: START_LIVES, score: 0 },
+      })),
 
     hitHero: () =>
-      set((store) => {
-        const health = Math.max(0, store.state.health - GAME_CONSTANTS.COLLISION_DAMAGE);
-        return {
-          state: {
-            ...store.state,
-            health,
-            isGameOver: health <= 0,
-          },
-        };
+      set((s) => {
+        const lives = Math.max(0, s.state.lives - 1);
+        if (lives === 0) {
+          return {
+            state: {
+              ...s.state,
+              lives,
+              screen: 'over',
+              best: Math.max(s.state.best, s.state.score),
+            },
+          };
+        }
+        return { state: { ...s.state, lives } };
       }),
 
     incrementScore: (points: number) =>
-      set((store) => ({ state: { ...store.state, score: store.state.score + points } })),
+      set((s) => ({ state: { ...s.state, score: s.state.score + points } })),
 
-    reset: () => set({ state: INITIAL_GAME_STATE }),
+    toSelect: () => set((s) => ({ state: { ...s.state, screen: 'select' } })),
+
+    updateFps: (fps: number) => set((s) => ({ state: { ...s.state, fps } })),
+
+    reset: () =>
+      set((s) => ({ state: { ...INITIAL_GAME_STATE, who: s.state.who, best: s.state.best } })),
   },
 }));
