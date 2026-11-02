@@ -11,7 +11,7 @@ The project has two eras: the **POC** that tested React Native Skia, and the **g
 | Document | What it covers | Read time |
 |---|---|---|
 | [architecture.md](./architecture.md) | How the game is built and why each decision was made | 20 min |
-| [testing.md](./testing.md) | The validation protocol — not yet run against v0.0.1 | 12 min |
+| [testing.md](./testing.md) | The v0.0.2 validation protocol — automated checks pass; device QA pending | 12 min |
 | [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix | reference |
 | [results.md](./results.md) | POC measurements and the unresolved frame-rate verdict | 8 min |
 
@@ -61,7 +61,7 @@ Step-by-step implementation plans derived from the specs above.
 
 **Changing how something looks** → [`design/`](./design/) first, then port.
 
-**Testing on a device** → [testing.md](./testing.md). v0.0.1 has never been measured on hardware; that is the largest open item on the project.
+**Testing on a device** → [testing.md](./testing.md). The released v0.0.1 baseline and v0.0.2 combat scene still need physical-device measurement; that is the largest open item on the project.
 
 **Something is broken** → [troubleshooting.md](./troubleshooting.md)
 
