@@ -15,6 +15,14 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ## [Unreleased]
 
+No changes after `v0.0.2` yet.
+
+---
+
+## [0.0.2] — 2026-11-02 — _release candidate_
+
+This release packages the v0.0.2 combat loop for device validation. Physical-device performance and manual gameplay QA remain explicitly pending.
+
 ### Added
 
 - Added the v0.0.2 combat design handoff and implementation spec, covering the moving Barão Brigadeiro, five attack phases, food bubbles, hero powers, fixed pools, victory/defeat flow and deterministic harness scenarios.
