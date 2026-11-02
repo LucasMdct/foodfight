@@ -47,6 +47,15 @@ export const makeStyles = (theme: Theme) =>
       alignItems: 'flex-end',
       gap: theme.space.sm,
     },
+    villainHp: {
+      fontFamily: theme.font.bold,
+      fontSize: 13,
+      color: theme.colors.villain,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radii.pill,
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+    },
     scoreSeal: {
       backgroundColor: theme.colors.score,
       borderRadius: theme.radii.pill,
@@ -76,6 +85,24 @@ export const makeStyles = (theme: Theme) =>
       fontSize: 14,
       color: theme.colors.textBody,
     },
+    powerBtn: {
+      minHeight: 40,
+      justifyContent: 'center',
+      backgroundColor: theme.colors.brand,
+      borderRadius: theme.radii.pill,
+      paddingVertical: 7,
+      paddingHorizontal: 14,
+      shadowColor: theme.colors.brandShadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 1,
+      shadowRadius: 0,
+      elevation: 4,
+    },
+    powerText: {
+      fontFamily: theme.font.bold,
+      fontSize: 14,
+      color: theme.colors.surface,
+    },
     hintWrap: {
       alignItems: 'center',
     },
@@ -91,5 +118,22 @@ export const makeStyles = (theme: Theme) =>
       fontFamily: theme.font.medium,
       fontSize: 13,
       color: theme.colors.textMuted,
+    },
+    toastWrap: {
+      alignItems: 'center',
+      marginBottom: theme.space.xl,
+    },
+    toastPill: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 2,
+      borderColor: theme.colors.score,
+      borderRadius: theme.radii.pill,
+      paddingVertical: 7,
+      paddingHorizontal: 16,
+    },
+    toastText: {
+      fontFamily: theme.font.bold,
+      fontSize: 15,
+      color: theme.colors.textStrong,
     },
   });

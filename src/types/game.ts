@@ -1,5 +1,7 @@
 export type Who = 'alface' | 'feijao' | 'arroz';
-export type Screen = 'select' | 'game' | 'over';
+export type Screen = 'select' | 'game' | 'over' | 'win';
+export type GameToast = 'power-charged' | 'power-full' | null;
+export type VillainMood = 'feliz' | 'bravo';
 
 /**
  * Discrete game state kept in React/Zustand. Per-frame values (hero position,
@@ -13,6 +15,12 @@ export interface GameState {
   score: number;
   best: number;
   fps: number;
+  villainHp: number;
+  charges: number;
+  powerIndex: number;
+  toast: GameToast;
+  toastId: number;
+  villainMood: VillainMood;
 }
 
 export interface GameActions {
@@ -20,6 +28,11 @@ export interface GameActions {
   start: () => void;
   hitHero: () => void;
   incrementScore: (points: number) => void;
+  applyVillainHit: () => void;
+  applyPowerFired: (powerIndex: number) => void;
+  collectFood: () => void;
+  clearToast: (toastId: number) => void;
+  clearVillainMood: () => void;
   toSelect: () => void;
   updateFps: (fps: number) => void;
   reset: () => void;
@@ -34,4 +47,10 @@ export const INITIAL_GAME_STATE: GameState = {
   score: 0,
   best: 0,
   fps: 60,
+  villainHp: 5,
+  charges: 0,
+  powerIndex: 0,
+  toast: null,
+  toastId: 0,
+  villainMood: 'feliz',
 };

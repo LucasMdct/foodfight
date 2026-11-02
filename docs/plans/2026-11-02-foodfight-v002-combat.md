@@ -1,5 +1,7 @@
 # Food Fight v0.0.2 Combat Loop Implementation Plan
 
+**Status:** Implemented on `feature/v002`; physical-device performance validation remains outstanding.
+
 > **For agentic workers:** Implement this plan task-by-task with a fresh verification checkpoint after every task. Do not begin a task until its predecessor's tests and typecheck are green.
 
 **Goal:** Add the v0.0.2 combat loop to the existing Food Fight runner: moving Barão, typed attack phases, food bubbles, hero powers, victory/defeat, deterministic harness coverage and device performance gates.
@@ -27,16 +29,16 @@
 
 ## File map
 
-| Area | Files | Responsibility |
-|---|---|---|
-| Constants/types | `src/types/constants.ts`, `src/types/game.ts` | Combat constants, screen/mood/kind unions, discrete state/actions |
-| Pure engine | `src/engine/combatMath.ts`, `src/engine/combatMath.test.ts` | Attack phases, type distribution, speed, thresholds, hitboxes, seeded RNG |
-| Harness | `src/engine/combatSimulation.ts`, `src/engine/combatSimulation.test.ts` | Deterministic event/snapshot runner composed from pure formulas |
-| Store | `src/store/gameStore.ts`, `src/store/gameStore.test.ts` | Guarded discrete transitions and result state |
-| UI-thread engine | `src/hooks/useRunnerEngine.ts` | Fixed pools, shared mirrors, local freeze, bridges |
-| Render | `src/render/candies/Candy.tsx`, `src/render/combat/*`, `src/render/foodie/characters/Vilao.tsx` | Static Skia tree, zombie, bubble, power shot, mood |
-| UI | `src/hud/Hud.tsx`, `src/features/game/GameScreen.tsx`, `src/features/game-over/GameOverModal.tsx` | Leaf subscriptions, combat controls, victory/defeat states |
-| Docs | `docs/architecture.md`, `docs/testing.md`, `docs/results.md`, `CHANGELOG.md` | Current architecture, QA protocol, baseline result and release notes |
+| Area             | Files                                                                                             | Responsibility                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Constants/types  | `src/types/constants.ts`, `src/types/game.ts`                                                     | Combat constants, screen/mood/kind unions, discrete state/actions         |
+| Pure engine      | `src/engine/combatMath.ts`, `src/engine/combatMath.test.ts`                                       | Attack phases, type distribution, speed, thresholds, hitboxes, seeded RNG |
+| Harness          | `src/engine/combatSimulation.ts`, `src/engine/combatSimulation.test.ts`                           | Deterministic event/snapshot runner composed from pure formulas           |
+| Store            | `src/store/gameStore.ts`, `src/store/gameStore.test.ts`                                           | Guarded discrete transitions and result state                             |
+| UI-thread engine | `src/hooks/useRunnerEngine.ts`                                                                    | Fixed pools, shared mirrors, local freeze, bridges                        |
+| Render           | `src/render/candies/Candy.tsx`, `src/render/combat/*`, `src/render/foodie/characters/Vilao.tsx`   | Static Skia tree, zombie, bubble, power shot, mood                        |
+| UI               | `src/hud/Hud.tsx`, `src/features/game/GameScreen.tsx`, `src/features/game-over/GameOverModal.tsx` | Leaf subscriptions, combat controls, victory/defeat states                |
+| Docs             | `docs/architecture.md`, `docs/testing.md`, `docs/results.md`, `CHANGELOG.md`                      | Current architecture, QA protocol, baseline result and release notes      |
 
 ## Task 0: Establish baseline and resolve the design-source gate
 
@@ -168,7 +170,15 @@ export interface CombatScenario {
 }
 
 export interface CombatEvent {
-  type: 'score' | 'heroHit' | 'foodCollected' | 'powerFired' | 'villainHit' | 'win' | 'over' | 'spawnSkipped';
+  type:
+    | 'score'
+    | 'heroHit'
+    | 'foodCollected'
+    | 'powerFired'
+    | 'villainHit'
+    | 'win'
+    | 'over'
+    | 'spawnSkipped';
   value?: number;
 }
 
@@ -513,4 +523,3 @@ Run `git diff HEAD~1`, check that no per-frame value entered Zustand, confirm `.
 git add docs/results.md
 git commit -m "test: verify v0.0.2 combat on device"
 ```
-

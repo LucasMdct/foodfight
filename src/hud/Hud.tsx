@@ -5,13 +5,18 @@ import { useTheme } from '../theme';
 import { Foodie } from '../render/foodie/Foodie';
 import { Heart } from './Heart';
 import { makeStyles } from './Hud.styles';
-import { START_LIVES, type Who } from '../types/game';
+import { START_LIVES, type GameToast, type Who } from '../types/game';
+import { GAME_CONSTANTS } from '../types/constants';
 
 interface HudProps {
   who: Who;
   name: string;
   lives: number;
   score: number;
+  charges: number;
+  villainHp: number;
+  toast: GameToast;
+  onFire: () => void;
   onExit: () => void;
   // Control hint stays up until the player's first move, then hides.
   showHint?: boolean;
@@ -23,7 +28,18 @@ interface HudProps {
  * regular, low-frequency subscription) — nothing here touches per-frame
  * shared values, so it re-renders only on hit/score/exit, never per frame.
  */
-export const Hud = ({ who, name, lives, score, onExit, showHint = true }: HudProps) => {
+export const Hud = ({
+  who,
+  name,
+  lives,
+  score,
+  charges,
+  villainHp,
+  toast,
+  onFire,
+  onExit,
+  showHint = true,
+}: HudProps) => {
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
 
@@ -43,9 +59,20 @@ export const Hud = ({ who, name, lives, score, onExit, showHint = true }: HudPro
         </View>
 
         <View style={styles.rightCluster}>
+          <Text style={styles.villainHp}>
+            Barão {villainHp}/{GAME_CONSTANTS.VILLAIN_HP}
+          </Text>
           <View style={styles.scoreSeal}>
             <Text style={styles.scoreText}>{score}</Text>
           </View>
+          <Pressable
+            onPressIn={onFire}
+            style={styles.powerBtn}
+            accessibilityRole="button"
+            accessibilityLabel={`Usar poder, ${charges} cargas`}
+          >
+            <Text style={styles.powerText}>PODER · {charges}</Text>
+          </Pressable>
           <Pressable
             onPress={onExit}
             style={styles.exitBtn}
@@ -62,6 +89,16 @@ export const Hud = ({ who, name, lives, score, onExit, showHint = true }: HudPro
           <View style={styles.hintPill}>
             <Text style={styles.hintText}>
               Deslize ou toque para cima/baixo para trocar de fileira
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {toast && (
+        <View style={styles.toastWrap} pointerEvents="none">
+          <View style={styles.toastPill}>
+            <Text style={styles.toastText}>
+              {toast === 'power-full' ? 'Poder cheio!' : '+1 poder'}
             </Text>
           </View>
         </View>

@@ -1,8 +1,8 @@
 # Testing Guide
 
-The validation protocol for Food Fight v0.0.1. There is no automated test suite — validation is manual and device-based, because the question that matters most (frame rate on real hardware) cannot be answered any other way.
+The validation protocol for Food Fight v0.0.2. Pure combat rules and race conditions are covered by automated Vitest tests; frame timing and visual fidelity still require a physical device because the question that matters most (render performance on real hardware) cannot be answered any other way.
 
-**Status: this protocol has not yet been run against v0.0.1.** The POC's mechanics passed manual validation, but its frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because the POC drew a much simpler scene, treat its result as a **baseline, not a prediction**.
+**Status: automated v0.0.2 checks pass; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.2 draws a larger typed pool, treat that result as a **baseline, not a prediction**.
 
 ---
 
@@ -32,13 +32,13 @@ Record the device model, OS version, build type, display refresh rate and the `G
 4. Pick each hero in turn; the correct character appears in-game.
 5. From Game Over, use both exits: **play again** and **switch hero**.
 
-| Check | Expected |
-|---|---|
-| Fonts | No fallback-font flash before the loader clears |
-| Orientation | Landscape, locked, no rotation possible |
-| Hero identity | HUD name and on-canvas character match the pick |
-| Play again | Restarts at 3 lives, score 0, starting difficulty |
-| Switch hero | Returns to select; `best` survives |
+| Check         | Expected                                          |
+| ------------- | ------------------------------------------------- |
+| Fonts         | No fallback-font flash before the loader clears   |
+| Orientation   | Landscape, locked, no rotation possible           |
+| Hero identity | HUD name and on-canvas character match the pick   |
+| Play again    | Restarts at 3 lives, score 0, starting difficulty |
+| Switch hero   | Returns to select; `best` survives                |
 
 `GameScreen` stays mounted across `'game'` and `'over'`, so **replay is the interesting path** — it exercises `engine.reset()` without a remount. Candy left on screen or difficulty that stays ramped means the reset was incomplete.
 
@@ -52,16 +52,16 @@ Record the device model, OS version, build type, display refresh rate and the `G
 2. Let the hero take all three hits and reach Game Over.
 3. Restart and repeat, letting it run 5 minutes total.
 
-| Record | Target |
-|---|---|
-| Average FPS | ≥ 55 |
-| Minimum FPS | ≥ 50 |
+| Record                | Target        |
+| --------------------- | ------------- |
+| Average FPS           | ≥ 55          |
+| Minimum FPS           | ≥ 50          |
 | Memory at start / end | growth < 5 MB |
-| Crashes | 0 |
+| Crashes               | 0             |
 
 Watch the **tablecloth scroll** specifically: it repaints the full screen every frame and is the largest single draw. Stutter that tracks the scroll loop points there.
 
-A frame rate that *degrades* over time points at a leak — check the pool is recycling.
+A frame rate that _degrades_ over time points at a leak — check the pool is recycling.
 
 ---
 
@@ -97,7 +97,7 @@ Remember the 100 ms debounce in `SwipeHandler`: two flicks inside that window co
 
 The ramp is the newest mechanic and the least exercised. Play a single match past two minutes and confirm speed approaches its 600 px/s ceiling and the interval approaches its 420 ms floor without the pool starving.
 
-Watch for a spawn *gap* — if all 8 pool slots are busy, that tick is silently skipped. The tightening interval narrows that margin as a match progresses.
+Watch for a spawn _gap_ — if all 10 enemy slots are busy, that tick is skipped without allocating a new object. The tightening interval narrows that margin as a match progresses. Confirm lollipop, candy, donut and zumbi all appear as the score crosses the phase thresholds.
 
 ### 3.4 Collisions and lives
 
@@ -108,9 +108,18 @@ Watch for a spawn *gap* — if all 8 pool slots are busy, that tick is silently 
 - Dodging a candy adds 10 to the score
 - Best score updates only when the run beats it
 
-Test edge cases specifically: clip the leading and trailing edge of a candy. The 18 px hitbox inset means grazes should *not* count.
+### 3.5 Powers, bubbles and terminal results
 
-### 3.5 Game Over
+- The HUD power button fires on press-in, not on release, and a double tap with one charge creates only one shot
+- A shot moves right, reaches the Barão and removes one HP; five accepted hits show the win result
+- A shot never spends a charge when all three shot slots are occupied
+- Food bubbles appear one at a time after each 300-point threshold; collecting one adds a charge but never exceeds three
+- A full-charge pickup still shows feedback and does not increase the charge count
+- A late enemy hit cannot replace a frozen win with Game Over
+
+Test edge cases specifically: clip the leading and trailing edge of a candy. The 18 px hitbox inset means grazes should _not_ count.
+
+### 3.6 Game Over
 
 - Modal shows final score and best
 - The scene behind it is **frozen** — no scroll, no candy movement
@@ -125,14 +134,14 @@ Test edge cases specifically: clip the leading and trailing edge of a candy. The
 1. Play continuously through at least three full matches.
 2. Include at least one match run past two minutes so the ramp reaches its limits.
 
-| Record | Target |
-|---|---|
-| Match duration | ≥ 2 min for at least one run |
-| Average FPS during play | ≥ 55 |
-| Minimum FPS | ≥ 50 |
-| Memory growth | < 50 MB |
-| Crashes | 0 |
-| Jank / stutter | none sustained |
+| Record                  | Target                       |
+| ----------------------- | ---------------------------- |
+| Match duration          | ≥ 2 min for at least one run |
+| Average FPS during play | ≥ 55                         |
+| Minimum FPS             | ≥ 50                         |
+| Memory growth           | < 50 MB                      |
+| Crashes                 | 0                            |
+| Jank / stutter          | none sustained               |
 
 ---
 
@@ -147,22 +156,22 @@ adb shell dumpsys gfxinfo <package>          # frame timing histogram
 
 Android Studio → Profiler for CPU/GPU/memory over time.
 
-| Metric | Target |
-|---|---|
-| CPU average | < 80% |
-| GPU average | < 85% |
-| Dropped frames | 0 |
-| GC pauses | minimal |
+| Metric         | Target  |
+| -------------- | ------- |
+| CPU average    | < 80%   |
+| GPU average    | < 85%   |
+| Dropped frames | 0       |
+| GC pauses      | minimal |
 
 ### iOS
 
 Xcode → Product → Profile → **Metal System Trace**.
 
-| Metric | Target |
-|---|---|
-| GPU average | < 85% |
-| Frame time | ~16.67 ms |
-| Missed frames | 0 |
+| Metric        | Target    |
+| ------------- | --------- |
+| GPU average   | < 85%     |
+| Frame time    | ~16.67 ms |
+| Missed frames | 0         |
 
 ### Interpreting it
 
@@ -182,6 +191,11 @@ npm run typecheck
 npm test
 ```
 
+The automated suite includes `src/engine/combatMath.test.ts`,
+`src/engine/combatSimulation.test.ts` and `src/store/gameStore.test.ts`. These
+cover phase boundaries, seeded distribution, clamped villain motion, charge
+authorization, food pickup caps and terminal result races.
+
 Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint. GitHub Actions runs typecheck, lint and tests on every PR.
 
 ---
@@ -193,24 +207,27 @@ Copy this into a new dated file under `docs/` and fill it in:
 ```markdown
 # Test Run — YYYY-MM-DD
 
-**Version:** v0.0.1
+**Version:** v0.0.2
 **Device:** model, SoC, RAM
 **OS:** version
 **Build:** release / dev
 **Display:** __ Hz
-**Constants:** POOL=__ BASE_SPEED=__ SPAWN=__
+**Constants:** ENEMY_POOL=__ SHOT_POOL=__ BASE_SPEED=__ SPAWN=__
 **Frame time:** p50=__ p95=__ p99=__ dropped=__%
 **Tester:**
 
-| Criterion | Target | Measured | Result |
-|---|---|---|---|
-| Frame rate | ≥55 fps | | |
-| Swipe latency | <100 ms | | |
-| Collision accuracy | no false +/- | | |
-| Lives | 1 per hit, 3 ends run | | |
-| Difficulty ramp | speeds up, no pool starvation | | |
-| Memory | <50 MB / 2 min | | |
-| Stability | 0 crashes | | |
+| Criterion          | Target                                        | Measured | Result |
+| ------------------ | --------------------------------------------- | -------- | ------ |
+| Frame rate         | ≥55 fps                                       |          |        |
+| Swipe latency      | <100 ms                                       |          |        |
+| Collision accuracy | no false +/-                                  |          |        |
+| Lives              | 1 per hit, 3 ends run                         |          |        |
+| Difficulty ramp    | speeds up, no pool starvation                 |          |        |
+| Powers             | one charge per accepted shot, five hits win   |          |        |
+| Food bubbles       | one pending bubble at a time, cap three       |          |        |
+| Terminal freeze    | win/over cannot be overwritten by late events |          |        |
+| Memory             | <50 MB / 2 min                                |          |        |
+| Stability          | 0 crashes                                     |          |        |
 
 **Verdict:** approved / rejected / conditional
 **Notes:**
@@ -220,7 +237,7 @@ Then add a `CHANGELOG.md` entry if the run changes the project's conclusions.
 
 ---
 
-## Outstanding for v0.0.1
+## Outstanding for v0.0.2
 
 Carried from the branch's known debts — none of these have been verified on hardware:
 
@@ -228,4 +245,6 @@ Carried from the branch's known debts — none of these have been verified on ha
 - 1.4 s invulnerability flicker timing
 - 130 ms lane-change swipe
 - Background scroll confined to the game screen
-- Frame rate under the full v0.0.1 scene
+- Final Barão `bravo` geometry from the design handoff
+- Frame rate under the full v0.0.2 scene, including the four-variant enemy pool
+- p95 comparison against the v0.0.1 baseline using the platform profiler

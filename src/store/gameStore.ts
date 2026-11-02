@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { GameState, GameActions, INITIAL_GAME_STATE, START_LIVES, Who } from '../types/game';
+import { GAME_CONSTANTS } from '../types/constants';
 
 interface GameStore {
   state: GameState;
@@ -14,11 +15,22 @@ export const useGameStore = create<GameStore>((set) => ({
 
     start: () =>
       set((s) => ({
-        state: { ...s.state, screen: 'game', lives: START_LIVES, score: 0 },
+        state: {
+          ...s.state,
+          screen: 'game',
+          lives: START_LIVES,
+          score: 0,
+          villainHp: GAME_CONSTANTS.VILLAIN_HP,
+          charges: GAME_CONSTANTS.POWER_MAX_CHARGES,
+          powerIndex: 0,
+          toast: null,
+          villainMood: 'feliz',
+        },
       })),
 
     hitHero: () =>
       set((s) => {
+        if (s.state.screen !== 'game') return s;
         const lives = Math.max(0, s.state.lives - 1);
         if (lives === 0) {
           return {
@@ -34,13 +46,71 @@ export const useGameStore = create<GameStore>((set) => ({
       }),
 
     incrementScore: (points: number) =>
-      set((s) => ({ state: { ...s.state, score: s.state.score + points } })),
+      set((s) =>
+        s.state.screen === 'game' ? { state: { ...s.state, score: s.state.score + points } } : s
+      ),
+
+    applyVillainHit: () =>
+      set((s) => {
+        if (s.state.screen !== 'game') return s;
+        const villainHp = Math.max(0, s.state.villainHp - 1);
+        if (villainHp === 0) {
+          return {
+            state: {
+              ...s.state,
+              villainHp,
+              villainMood: 'bravo',
+              screen: 'win',
+              best: Math.max(s.state.best, s.state.score),
+            },
+          };
+        }
+        return { state: { ...s.state, villainHp, villainMood: 'bravo' } };
+      }),
+
+    applyPowerFired: (powerIndex: number) =>
+      set((s) => {
+        if (s.state.screen !== 'game' || s.state.charges <= 0) return s;
+        return {
+          state: {
+            ...s.state,
+            charges: s.state.charges - 1,
+            powerIndex: (powerIndex + 1) % 3,
+          },
+        };
+      }),
+
+    collectFood: () =>
+      set((s) => {
+        if (s.state.screen !== 'game') return s;
+        const charges = Math.min(GAME_CONSTANTS.POWER_MAX_CHARGES, s.state.charges + 1);
+        return {
+          state: {
+            ...s.state,
+            charges,
+            toast: charges === GAME_CONSTANTS.POWER_MAX_CHARGES ? 'power-full' : 'power-charged',
+            toastId: s.state.toastId + 1,
+          },
+        };
+      }),
+
+    clearToast: (toastId: number) =>
+      set((s) => (s.state.toastId === toastId ? { state: { ...s.state, toast: null } } : s)),
+
+    clearVillainMood: () =>
+      set((s) =>
+        s.state.screen === 'game' && s.state.villainMood === 'bravo'
+          ? { state: { ...s.state, villainMood: 'feliz' } }
+          : s
+      ),
 
     toSelect: () => set((s) => ({ state: { ...s.state, screen: 'select' } })),
 
     updateFps: (fps: number) => set((s) => ({ state: { ...s.state, fps } })),
 
     reset: () =>
-      set((s) => ({ state: { ...INITIAL_GAME_STATE, who: s.state.who, best: s.state.best } })),
+      set((s) => ({
+        state: { ...INITIAL_GAME_STATE, who: s.state.who, best: s.state.best },
+      })),
   },
 }));

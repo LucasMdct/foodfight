@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { GestureDetector, Gesture, Directions } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 interface SwipeHandlerProps {
   children: React.ReactNode;
@@ -41,7 +41,7 @@ export const SwipeHandler = ({ children, onMoveLane }: SwipeHandlerProps) => {
         .direction(Directions.UP)
         .onEnd(() => {
           'worklet';
-          runOnJS(handleInput)(-1); // up = toward the top lane
+          scheduleOnRN(handleInput, -1); // up = toward the top lane
         }),
     [handleInput]
   );
@@ -52,7 +52,7 @@ export const SwipeHandler = ({ children, onMoveLane }: SwipeHandlerProps) => {
         .direction(Directions.DOWN)
         .onEnd(() => {
           'worklet';
-          runOnJS(handleInput)(1); // down = toward the bottom lane
+          scheduleOnRN(handleInput, 1); // down = toward the bottom lane
         }),
     [handleInput]
   );
@@ -61,7 +61,7 @@ export const SwipeHandler = ({ children, onMoveLane }: SwipeHandlerProps) => {
     () =>
       Gesture.Tap().onEnd((event) => {
         'worklet';
-        runOnJS(handleTap)(event.y);
+        scheduleOnRN(handleTap, event.y);
       }),
     [handleTap]
   );

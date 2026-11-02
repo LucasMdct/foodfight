@@ -3,6 +3,7 @@ import { Group, Circle, Oval, RoundedRect, Path, Skia, vec } from '@shopify/reac
 import { useDerivedValue } from 'react-native-reanimated';
 import { useBob, useSwing } from '../../anim';
 import { foodiePalette } from '../palette';
+import type { VillainMood } from '../../../types/game';
 
 // Ported verbatim from Foodie.dc.html lines 121-156 (viewBox 0 0 150 160).
 // No walk cycle: body bobs, wand swings, left arm is static.
@@ -27,10 +28,20 @@ const monocleChain = Skia.Path.MakeFromSVGString('M92 82.5 Q96 96 104 100')!;
 const smile = Skia.Path.MakeFromSVGString('M56 90 Q75 104 94 88')!;
 const tooth = Skia.Path.MakeFromSVGString('M84 92 L88 98 L91 90 Z')!;
 
-export const Vilao = () => {
+export const Vilao = ({
+  animated = true,
+  mood = 'feliz',
+}: {
+  animated?: boolean;
+  mood?: VillainMood;
+}) => {
+  // The final bravo face is intentionally blocked until design source geometry arrives.
+  // Keeping the prop and state plumbing here lets the combat transition be validated
+  // while the renderer safely falls back to the approved feliz geometry.
+  void mood;
   const bobY = useBob(3, 450);
   const wandSwing = useSwing(13, 350);
-  const bob = useDerivedValue(() => [{ translateY: bobY.value }]);
+  const bob = useDerivedValue(() => [{ translateY: animated ? bobY.value : 0 }]);
   const wand = useDerivedValue(() => [{ rotate: wandSwing.value }]);
 
   return (
