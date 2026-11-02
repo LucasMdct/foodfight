@@ -5,7 +5,7 @@ import { useBob, useSwing } from '../../anim';
 import { foodiePalette } from '../palette';
 import type { VillainMood } from '../../../types/game';
 
-// Ported verbatim from Foodie.dc.html lines 121-156 (viewBox 0 0 150 160).
+// Ported from docs/design/project/Foodie.dc.html (viewBox 0 0 150 160).
 // No walk cycle: body bobs, wand swings, left arm is static.
 // Painted back-to-front in the exact order of the source SVG.
 const c = foodiePalette.vilao;
@@ -24,9 +24,13 @@ const swirl = Skia.Path.MakeFromSVGString(
 const highlight = Skia.Path.MakeFromSVGString('M42 58 Q52 38 75 34 Q56 44 48 62 Z')!;
 const browL = Skia.Path.MakeFromSVGString('M48 62 L67 68')!;
 const browR = Skia.Path.MakeFromSVGString('M102 62 L83 68')!;
+const bravoBrowL = Skia.Path.MakeFromSVGString('M45 55 L69 71')!;
+const bravoBrowR = Skia.Path.MakeFromSVGString('M105 55 L81 71')!;
 const monocleChain = Skia.Path.MakeFromSVGString('M92 82.5 Q96 96 104 100')!;
 const smile = Skia.Path.MakeFromSVGString('M56 90 Q75 104 94 88')!;
 const tooth = Skia.Path.MakeFromSVGString('M84 92 L88 98 L91 90 Z')!;
+const bravoMouth = Skia.Path.MakeFromSVGString('M57 98 Q75 86 93 98')!;
+const bravoMouthLines = Skia.Path.MakeFromSVGString('M64 92 L64 97 M75 90 L75 96 M86 92 L86 97')!;
 
 export const Vilao = ({
   animated = true,
@@ -35,10 +39,6 @@ export const Vilao = ({
   animated?: boolean;
   mood?: VillainMood;
 }) => {
-  // The final bravo face is intentionally blocked until design source geometry arrives.
-  // Keeping the prop and state plumbing here lets the combat transition be validated
-  // while the renderer safely falls back to the approved feliz geometry.
-  void mood;
   const bobY = useBob(3, 450);
   const wandSwing = useSwing(13, 350);
   const bob = useDerivedValue(() => [{ translateY: animated ? bobY.value : 0 }]);
@@ -100,16 +100,52 @@ export const Vilao = ({
       <Circle cx={92} cy={70} r={9} color={c.eyeWhite} />
       <Circle cx={60} cy={72} r={4.5} color={c.eye} />
       <Circle cx={90} cy={72} r={4.5} color={c.eye} />
-      <Path path={browL} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
-      <Path path={browR} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
+      {mood === 'bravo' ? (
+        <>
+          <Path
+            path={bravoBrowL}
+            color={c.eye}
+            style="stroke"
+            strokeWidth={5.5}
+            strokeCap="round"
+          />
+          <Path
+            path={bravoBrowR}
+            color={c.eye}
+            style="stroke"
+            strokeWidth={5.5}
+            strokeCap="round"
+          />
+        </>
+      ) : (
+        <>
+          <Path path={browL} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
+          <Path path={browR} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
+        </>
+      )}
 
       {/* monocle */}
       <Circle cx={92} cy={70} r={12.5} color={c.monocle} style="stroke" strokeWidth={2.5} />
       <Path path={monocleChain} color={c.monocle} style="stroke" strokeWidth={2} />
 
-      {/* smile */}
-      <Path path={smile} color={c.eye} style="stroke" strokeWidth={3.5} strokeCap="round" />
-      <Path path={tooth} color={c.eyeWhite} />
+      {/* expression */}
+      {mood === 'bravo' ? (
+        <>
+          <Path path={bravoMouth} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
+          <Path
+            path={bravoMouthLines}
+            color={c.eye}
+            style="stroke"
+            strokeWidth={2.5}
+            strokeCap="round"
+          />
+        </>
+      ) : (
+        <>
+          <Path path={smile} color={c.eye} style="stroke" strokeWidth={3.5} strokeCap="round" />
+          <Path path={tooth} color={c.eyeWhite} />
+        </>
+      )}
 
       {/* hat */}
       <RoundedRect x={57} y={2} width={36} height={24} r={3} color={c.hat} />

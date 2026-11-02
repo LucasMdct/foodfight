@@ -13,6 +13,7 @@
 @keyframes ff-arm{from{transform:rotate(14deg)}to{transform:rotate(-14deg)}}
 @keyframes ff-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes ff-wave{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(18deg)}}
+@keyframes ff-mouth{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}
 body{margin:0}
 </style>
 </helmet>
@@ -120,18 +121,18 @@ body{margin:0}
 <sc-if value="{{ isVilao }}" hint-placeholder-val="{{ false }}">
 <svg viewBox="0 0 150 160" width="100%" height="100%" style="display:block;overflow:visible">
   <g style="transform-origin:75px 80px;animation:ff-bob 0.9s ease-in-out infinite">
-    <path d="M38 106 L112 106 L103 142 L47 142 Z" fill="#D94F4F"></path>
-    <path d="M38 106 L46 100 L54 106 L62 100 L70 106 L78 100 L86 106 L94 100 L102 106 L112 106 L38 106 Z" fill="#B93E3E"></path>
-    <path d="M52 108 L54 140 M75 108 L75 141 M98 108 L96 140" stroke="#B93E3E" stroke-width="3" fill="none"></path>
+    <path d="M38 106 L112 106 L103 142 L47 142 Z" fill="{{ vilCup }}"></path>
+    <path d="M38 106 L46 100 L54 106 L62 100 L70 106 L78 100 L86 106 L94 100 L102 106 L112 106 L38 106 Z" fill="{{ vilCupD }}"></path>
+    <path d="M52 108 L54 140 M75 108 L75 141 M98 108 L96 140" stroke="{{ vilCupD }}" stroke-width="3" fill="none"></path>
     <g style="transform-origin:120px 86px;animation:ff-wave 0.7s ease-in-out infinite">
       <rect x="124" y="38" width="5" height="52" rx="2.5" fill="#E8D9C0" transform="rotate(14 126 64)"></rect>
       <circle cx="133" cy="34" r="15" fill="#FF7BAC"></circle>
       <path d="M133 34 m-9 0 a9 9 0 0 1 18 0 a6.5 6.5 0 0 1 -13 0 a4 4 0 0 1 8 0" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"></path>
-      <ellipse cx="118" cy="88" rx="9" ry="14" fill="#4A2C17" transform="rotate(-30 118 88)"></ellipse>
+      <ellipse cx="118" cy="88" rx="9" ry="14" fill="{{ vilBody }}" transform="rotate(-30 118 88)"></ellipse>
     </g>
-    <ellipse cx="30" cy="92" rx="9" ry="14" fill="#4A2C17" transform="rotate(24 30 92)"></ellipse>
-    <circle cx="75" cy="76" r="44" fill="#4A2C17"></circle>
-    <path d="M42 58 Q52 38 75 34 Q56 44 48 62 Z" fill="#6B4226" opacity="0.7"></path>
+    <ellipse cx="30" cy="92" rx="9" ry="14" fill="{{ vilBody }}" transform="rotate(24 30 92)"></ellipse>
+    <circle cx="75" cy="76" r="44" fill="{{ vilBody }}"></circle>
+    <path d="M42 58 Q52 38 75 34 Q56 44 48 62 Z" fill="{{ vilBody2 }}" opacity="0.7"></path>
     <rect x="52" y="46" width="9" height="3.5" rx="1.75" fill="#FF7BAC" transform="rotate(24 56 47)"></rect>
     <rect x="88" y="44" width="9" height="3.5" rx="1.75" fill="#FFD23F" transform="rotate(-18 92 45)"></rect>
     <rect x="42" y="88" width="9" height="3.5" rx="1.75" fill="#4ECDC4" transform="rotate(-30 46 89)"></rect>
@@ -143,29 +144,111 @@ body{margin:0}
     <circle cx="92" cy="70" r="9" fill="#FFFFFF"></circle>
     <circle cx="60" cy="72" r="4.5" fill="#241206"></circle>
     <circle cx="90" cy="72" r="4.5" fill="#241206"></circle>
-    <path d="M48 62 L67 68" stroke="#241206" stroke-width="4" stroke-linecap="round"></path>
-    <path d="M102 62 L83 68" stroke="#241206" stroke-width="4" stroke-linecap="round"></path>
+    <sc-if value="{{ vilFeliz }}" hint-placeholder-val="{{ true }}">
+      <path d="M48 62 L67 68" stroke="#241206" stroke-width="4" stroke-linecap="round"></path>
+      <path d="M102 62 L83 68" stroke="#241206" stroke-width="4" stroke-linecap="round"></path>
+    </sc-if>
+    <sc-if value="{{ vilBravo }}" hint-placeholder-val="{{ false }}">
+      <path d="M45 55 L69 71" stroke="#241206" stroke-width="5.5" stroke-linecap="round"></path>
+      <path d="M105 55 L81 71" stroke="#241206" stroke-width="5.5" stroke-linecap="round"></path>
+    </sc-if>
     <circle cx="92" cy="70" r="12.5" fill="none" stroke="#FFD23F" stroke-width="2.5"></circle>
     <path d="M92 82.5 Q96 96 104 100" stroke="#FFD23F" stroke-width="2" fill="none"></path>
-    <path d="M56 90 Q75 104 94 88" stroke="#241206" stroke-width="3.5" fill="none" stroke-linecap="round"></path>
-    <path d="M84 92 L88 98 L91 90 Z" fill="#FFFFFF"></path>
-    <rect x="57" y="2" width="36" height="24" rx="3" fill="#232323"></rect>
-    <rect x="49" y="24" width="52" height="7" rx="3.5" fill="#232323"></rect>
-    <rect x="57" y="17" width="36" height="7" fill="#9B5DE5"></rect>
+    <sc-if value="{{ mouthFeliz }}" hint-placeholder-val="{{ true }}">
+      <path d="M56 90 Q75 104 94 88" stroke="#241206" stroke-width="3.5" fill="none" stroke-linecap="round"></path>
+      <path d="M84 92 L88 98 L91 90 Z" fill="#FFFFFF"></path>
+    </sc-if>
+    <sc-if value="{{ mouthBravo }}" hint-placeholder-val="{{ false }}">
+      <path d="M57 98 Q75 86 93 98" stroke="#241206" stroke-width="4" fill="none" stroke-linecap="round"></path>
+      <path d="M64 92 L64 97 M75 90 L75 96 M86 92 L86 97" stroke="#241206" stroke-width="2.5" stroke-linecap="round"></path>
+    </sc-if>
+    <sc-if value="{{ vilTalking }}" hint-placeholder-val="{{ false }}">
+      <g style="transform-origin:75px 95px;animation:ff-mouth 0.26s ease-in-out infinite">
+        <ellipse cx="75" cy="95" rx="14" ry="11" fill="#241206"></ellipse>
+        <ellipse cx="75" cy="99" rx="8" ry="5" fill="#FF6B6B"></ellipse>
+        <path d="M65 88 L85 88" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"></path>
+      </g>
+    </sc-if>
+    <sc-if value="{{ hatCartola }}" hint-placeholder-val="{{ true }}">
+      <rect x="57" y="2" width="36" height="24" rx="3" fill="#232323"></rect>
+      <rect x="49" y="24" width="52" height="7" rx="3.5" fill="#232323"></rect>
+      <rect x="57" y="17" width="36" height="7" fill="#9B5DE5"></rect>
+    </sc-if>
+    <sc-if value="{{ hatCoroa }}" hint-placeholder-val="{{ false }}">
+      <path d="M52 30 L52 8 L63 19 L75 3 L87 19 L98 8 L98 30 Z" fill="#FFD23F" stroke="#E09A10" stroke-width="2"></path>
+      <circle cx="63" cy="24" r="3" fill="#FF6B6B"></circle>
+      <circle cx="75" cy="22" r="3.5" fill="#4ECDC4"></circle>
+      <circle cx="87" cy="24" r="3" fill="#9B5DE5"></circle>
+    </sc-if>
+    <sc-if value="{{ hatCone }}" hint-placeholder-val="{{ false }}">
+      <path d="M54 32 L75 -12 L96 32 Z" fill="#E8A85C" stroke="#C9853B" stroke-width="2"></path>
+      <path d="M62 15 L82 25 M68 3 L90 14 M58 26 L88 8" stroke="#C9853B" stroke-width="2"></path>
+      <circle cx="75" cy="-14" r="7" fill="#FF6B6B"></circle>
+    </sc-if>
   </g>
 </svg>
 </sc-if>
 
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:180,&quot;height&quot;:220},&quot;who&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;alface&quot;,&quot;feijao&quot;,&quot;arroz&quot;,&quot;vilao&quot;],&quot;default&quot;:&quot;alface&quot;,&quot;tsType&quot;:&quot;'alface'|'feijao'|'arroz'|'vilao'&quot;,&quot;section&quot;:&quot;Personagem&quot;}}">
+
+
+<sc-if value="{{ skinCartola }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 120 150" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none">
+  <g transform="translate(60 30) rotate(-9)">
+    <rect x="-17" y="-26" width="34" height="22" rx="3" fill="#232323"></rect>
+    <rect x="-24" y="-6" width="48" height="6.5" rx="3.2" fill="#232323"></rect>
+    <rect x="-17" y="-12" width="34" height="6.5" fill="#9B5DE5"></rect>
+  </g>
+</svg>
+</sc-if>
+<sc-if value="{{ skinCoroa }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 120 150" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none">
+  <g transform="translate(60 34) rotate(-7)">
+    <path d="M-20 0 L-20 -18 L-10 -9 L0 -22 L10 -9 L20 -18 L20 0 Z" fill="#FFD23F" stroke="#E09A10" stroke-width="2"></path>
+    <circle cx="-10" cy="-5" r="2.6" fill="#FF6B6B"></circle>
+    <circle cx="0" cy="-7" r="3" fill="#4ECDC4"></circle>
+    <circle cx="10" cy="-5" r="2.6" fill="#9B5DE5"></circle>
+  </g>
+</svg>
+</sc-if>
+<sc-if value="{{ skinOculos }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 120 150" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none">
+  <g transform="translate(60 72)">
+    <rect x="-24" y="-7" width="20" height="15" rx="6" fill="#232323"></rect>
+    <rect x="4" y="-7" width="20" height="15" rx="6" fill="#232323"></rect>
+    <path d="M-4 -2 L4 -2 M-24 -3 L-30 -7 M24 -3 L30 -7" stroke="#232323" stroke-width="3.5" stroke-linecap="round"></path>
+    <path d="M-19 -3 L-9 -3" stroke="#6FB9E8" stroke-width="2.5" stroke-linecap="round" opacity="0.9"></path>
+    <path d="M9 -3 L19 -3" stroke="#6FB9E8" stroke-width="2.5" stroke-linecap="round" opacity="0.9"></path>
+  </g>
+</svg>
+</sc-if></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:180,&quot;height&quot;:220},&quot;who&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;alface&quot;,&quot;feijao&quot;,&quot;arroz&quot;,&quot;vilao&quot;,&quot;vilao2&quot;,&quot;vilao3&quot;],&quot;default&quot;:&quot;alface&quot;,&quot;tsType&quot;:&quot;'alface'|'feijao'|'arroz'|'vilao'|'vilao2'|'vilao3'&quot;,&quot;section&quot;:&quot;Personagem&quot;},&quot;mood&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;feliz&quot;,&quot;bravo&quot;],&quot;default&quot;:&quot;feliz&quot;,&quot;tsType&quot;:&quot;'feliz'|'bravo'&quot;,&quot;section&quot;:&quot;Personagem&quot;},&quot;talking&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Personagem&quot;},&quot;skin&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;cartola&quot;,&quot;coroa&quot;,&quot;oculos&quot;],&quot;default&quot;:&quot;none&quot;,&quot;tsType&quot;:&quot;'none'|'cartola'|'coroa'|'oculos'&quot;,&quot;section&quot;:&quot;Personagem&quot;}}">
 class Component extends DCLogic {
   renderVals() {
     const who = this.props.who ?? 'alface';
+    const mood = this.props.mood ?? 'feliz';
+    const VIL = {
+      vilao:  { body: '#4A2C17', body2: '#6B4226', cup: '#D94F4F', cupD: '#B93E3E', hat: 'cartola' },
+      vilao2: { body: '#F06BAF', body2: '#F78CC3', cup: '#9B5DE5', cupD: '#7E44C4', hat: 'coroa' },
+      vilao3: { body: '#6FB9E8', body2: '#93CDF2', cup: '#C89A6B', cupD: '#A9723F', hat: 'cone' },
+    };
+    const isVil = !!VIL[who];
+    const v = VIL[who] || VIL.vilao;
+    const skin = this.props.skin ?? 'none';
     return {
+      vilBody: v.body, vilBody2: v.body2, vilCup: v.cup, vilCupD: v.cupD,
+      hatCartola: v.hat === 'cartola', hatCoroa: v.hat === 'coroa', hatCone: v.hat === 'cone',
+      skinCartola: !isVil && skin === 'cartola',
+      skinCoroa: !isVil && skin === 'coroa',
+      skinOculos: !isVil && skin === 'oculos',
+      vilFeliz: isVil && mood !== 'bravo',
+      vilBravo: isVil && mood === 'bravo',
+      mouthFeliz: isVil && mood !== 'bravo' && !this.props.talking,
+      mouthBravo: isVil && mood === 'bravo' && !this.props.talking,
+      vilTalking: isVil && !!this.props.talking,
       isAlface: who === 'alface',
       isFeijao: who === 'feijao',
       isArroz: who === 'arroz',
-      isVilao: who === 'vilao',
+      isVilao: isVil,
     };
   }
 }

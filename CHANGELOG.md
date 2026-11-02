@@ -19,6 +19,7 @@ Entries are ordered newest first regardless of track, and each is labelled. Entr
 
 - Added the v0.0.2 combat design handoff and implementation spec, covering the moving Barão Brigadeiro, five attack phases, food bubbles, hero powers, fixed pools, victory/defeat flow and deterministic harness scenarios.
 - Added the v0.0.2 combat loop with typed enemy spawns, UI-thread-authorized power shots, capped food bubbles, villain HP, win/over result flow and a headless combat harness.
+- Added the complete Barão `bravo` expression from the supplied `Foodie.dc.html` design source.
 
 ### Changed
 

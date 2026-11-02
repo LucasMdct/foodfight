@@ -245,6 +245,6 @@ Carried from the branch's known debts — none of these have been verified on ha
 - 1.4 s invulnerability flicker timing
 - 130 ms lane-change swipe
 - Background scroll confined to the game screen
-- Final Barão `bravo` geometry from the design handoff
 - Frame rate under the full v0.0.2 scene, including the four-variant enemy pool
+- Barão `bravo` expression timing and visual fidelity on a physical device
 - p95 comparison against the v0.0.1 baseline using the platform profiler

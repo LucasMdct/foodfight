@@ -32,7 +32,7 @@ The following decisions are closed for implementation:
 - The adapter layer uses existing Vitest store tests plus a manual development checklist. Adding `jest-expo`, React Native Testing Library or Reanimated mocks is out of scope unless separately approved.
 - The zombie laugh is rendered inside Skia with `useFont` and the existing Fredoka TTF package, so it respects canvas layer order without adding ten animated React Native text overlays.
 
-One visual dependency remains blocked: the design bundle has rules for the Barão `bravo` face but no source geometry. The mood must be added to the design source before the renderer is ported; production code must not invent a reverse-engineered face without that handoff update.
+The visual dependency for the Barão `bravo` face is resolved. The complete geometry was found in the supplied design bundle's `Foodie.dc.html`, imported into `docs/design/project/Foodie.dc.html`, and ported literally to `Vilao.tsx` for the crossed brows, inverted mouth and clenched teeth.
 
 ## Objective
 
@@ -265,7 +265,7 @@ The zombie SVG geometry remains literal at 80×74, but its container is centered
 
 | Asset | Source/format | Implementation action |
 |---|---|---|
-| Barão feliz/bravo | Feliz geometry exists; bravo geometry is missing from the design bundle | Add the bravo face to the design source first, then extend `Vilao.tsx` with a mood prop |
+| Barão feliz/bravo | `Foodie.dc.html` in the supplied design bundle | Port the source's `feliz` and `bravo` brow/mouth paths to `Vilao.tsx` and select them through `VillainMood` |
 | Brigadeiro Zumbi | Inline SVG in v0.0.2 handoff | Port to a fixed Skia renderer |
 | Food bubble | Inline SVG in v0.0.2 handoff | Port rice/beans bubble to Skia |
 | Three hero power visuals | Inline SVG in v0.0.2 handoff | Port one fixed renderer per hero; the three names rotate without mechanical differences in v0.0.2 |
@@ -314,7 +314,7 @@ The performance gate is measurable: when the v0.0.1 baseline meets the existing 
 ## Boundaries
 
 - **Always:** read `docs/architecture.md` before loop changes; follow the imported v0.0.2 handoff for visuals; keep per-frame values out of React; keep pools fixed; use named constants; share pure formulas between production and harness; run typecheck, lint and tests; update the changelog for user-visible behavior.
-- **Ask first:** adding runtime or test dependencies; adding audio; changing the game orientation; changing the v0.0.1 scoring/lives model; changing the fixed-pool strategy; changing the existing character geometry; approving an invented `bravo` face without a design-source update.
+- **Ask first:** adding runtime or test dependencies; adding audio; changing the game orientation; changing the v0.0.1 scoring/lives model; changing the fixed-pool strategy; changing the existing character geometry beyond the imported source.
 - **Never:** copy the browser prototype's `requestAnimationFrame` state model into React Native; allocate objects/arrays in the frame worklet; move positions into Zustand; delete or weaken existing tests; use the archived docs as source of truth.
 
 ## Success criteria
@@ -334,6 +334,6 @@ The performance gate is measurable: when the v0.0.1 baseline meets the existing 
 - [ ] `docs/testing.md` contains the v0.0.2 combat protocol, performance gate, dev-only QA shortcut and multitouch/device checks.
 - [ ] `CHANGELOG.md` records the user-visible v0.0.2 combat feature under `[Unreleased]`.
 
-## Blocking design dependency
+## Design dependency resolution
 
-The only unresolved input to the final visual implementation is the source geometry for the Barão `bravo` expression. Add a design-source amendment under `docs/design/project/` before porting the final `Vilao.tsx` face. The `mood` prop, timers, state transitions and a temporary `feliz` fallback may be implemented earlier, but the final `bravo` geometry must come from the design source under `AGENTS.md`.
+Resolved during implementation: the supplied folder contained the missing `bravo` geometry in `Foodie.dc.html`. The file is now the project design source under `docs/design/project/`, and `Vilao.tsx` uses the exact source paths for the `bravo` expression. No invented face geometry remains.

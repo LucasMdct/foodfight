@@ -231,7 +231,7 @@ such as `appStyles.ts`.
 
 ### Characters
 
-`Foodie` dispatches on `who` to `Alface`, `Feijao`, `Arroz` or `Vilao`, and uniformly scales each to the requested pixel size from its design viewBox (heroes 120×150, villain 150×160). The game passes `animated={false}` to the villain because its 1.7 s combat motion is driven by `villainY`; selection and result screens keep the decorative bob. `VillainMood` and the 1.2 s `bravo` timer are wired through the store, but the renderer deliberately falls back to the existing `feliz` geometry until the missing bravo source geometry is added to `docs/design/project/`. Geometry is ported from the design bundle — that bundle is the source of truth, not the code.
+`Foodie` dispatches on `who` to `Alface`, `Feijao`, `Arroz` or `Vilao`, and uniformly scales each to the requested pixel size from its design viewBox (heroes 120×150, villain 150×160). The game passes `animated={false}` to the villain because its 1.7 s combat motion is driven by `villainY`; selection and result screens keep the decorative bob. `VillainMood` and the 1.2 s `bravo` timer are wired through the store, and `Vilao.tsx` now uses the exact `bravo` brow and mouth paths from the imported `Foodie.dc.html` source. Geometry is ported from the design bundle — that bundle is the source of truth, not the code.
 
 `useWalkCycle` mirrors the design's CSS keyframes: legs swing ±16°, arms ±14° counter-phase, body bobs 3 px, all on a 320 ms half-cycle.
 
