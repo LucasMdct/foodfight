@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F6EFE3;font-family:'Fredoka',system-ui,sans-serif;color:#3E2F1C}
+a{color:#7BC950}a:hover{color:#59A335}
+@keyframes ff-spin{to{transform:rotate(360deg)}}
+@keyframes ff-zwobble{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+</style>
+</helmet>
+
+<div style="max-width:880px;margin:0 auto;padding:56px 32px 80px;display:flex;flex-direction:column;gap:40px">
+
+  <header style="display:flex;flex-direction:column;gap:10px;border-bottom:3px solid #E7D8BD;padding-bottom:28px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:13px;font-weight:700;letter-spacing:2px;color:#FFFFFF;background:#FF6B6B;border-radius:999px;padding:5px 14px">GUIA DE ESTILO</span>
+      <span style="font-size:13px;font-weight:700;letter-spacing:1px;color:#9B5DE5;background:#F1E7FB;border-radius:999px;padding:5px 14px">v0.0.2</span>
+    </div>
+    <h1 style="margin:0;font-size:52px;font-weight:700;line-height:1;color:#FF6B6B;text-shadow:0 3px 0 #E04F4F">FOOD FIGHT — Combate!</h1>
+    <p style="margin:0;font-size:16px;font-weight:500;color:#8A6A45;max-width:640px">Adendo à v0.0.1 (paleta, tipografia, personagens e mapa continuam valendo). A v0.0.2 introduz o <strong style="color:#5A4327">loop de combate</strong>: o vilão se movimenta, ataca em 5 estilos, e o herói revida com poderes especiais para derrotá-lo.</p>
+    <p style="margin:0;font-size:13px;color:#B08F63">Julho 2026 · base: <a href="Guia de Estilo v0.0.1.dc.html">Guia v0.0.1</a> · jogo: FoodFight v0.0.2</p>
+  </header>
+
+  <!-- LOOP -->
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2 style="margin:0;font-size:26px;font-weight:700;color:#5A4327">1 · Loop de combate</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0"><div style="font-weight:700;color:#9B5DE5;font-size:16px">Vilão em movimento</div><div style="font-size:14px;color:#8A6A45;margin-top:4px">O Barão flutua verticalmente pelo mapa em onda senoidal (~1.7s por ciclo), varrendo as 3 trilhas enquanto ataca. Sorri enquanto ataca; faz cara brava por 1.2s quando é atingido.</div></div>
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0"><div style="font-weight:700;color:#7BC950;font-size:16px">Bolha de comida</div><div style="font-size:14px;color:#8A6A45;margin-top:4px">A cada <strong>300 pts</strong>, um prato de arroz &amp; feijão flutua numa bolha de sabão. Pegou = <strong>+1 carga de PODER</strong> (máx. 3, mostradas como bolinhas douradas).</div></div>
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0"><div style="font-weight:700;color:#FF6B6B;font-size:16px">Contra-ataque</div><div style="font-size:14px;color:#8A6A45;margin-top:4px">ESPAÇO ou botão <strong>PODER!</strong> dispara o especial do herói, que persegue o vilão e tira <strong>1 vida</strong> dele. Nome do poder aparece em toast dourado (dopamina!).</div></div>
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0"><div style="font-weight:700;color:#FFB627;font-size:16px">Vitória</div><div style="font-size:14px;color:#8A6A45;margin-top:4px">O Barão tem <strong>5 vidas</strong> (docinhos roxos no HUD central). Zerou = tela verde "VOCÊ VENCEU!" com o herói pulando. Perdeu as 3 vidas = tela "Doce demais!".</div></div>
+    </div>
+  </section>
+
+  <!-- ATAQUES DO VILÃO -->
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2 style="margin:0;font-size:26px;font-weight:700;color:#5A4327">2 · Os 5 ataques do Barão</h2>
+    <p style="margin:0;font-size:14px;color:#8A6A45">O ataque evolui a cada <strong style="color:#5A4327">100 pontos</strong> — o nome do ataque atual aparece no HUD sob a vida do vilão.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:#8A6A45">
+      <div style="background:#FFFFFF;border-radius:14px;padding:12px 18px;border:2px solid #F0DFC0;display:flex;align-items:center;gap:14px">
+        <span style="font-weight:700;color:#B08F63;min-width:70px">0–99</span>
+        <svg viewBox="0 0 52 52" width="38" height="38" style="animation:ff-spin 1.4s linear infinite;flex-shrink:0"><rect x="24" y="26" width="4" height="24" rx="2" fill="#E8D9C0"></rect><circle cx="26" cy="19" r="14" fill="#FF7BAC"></circle><path d="M26 19 m-9 0 a9 9 0 0 1 18 0 a6.5 6.5 0 0 1 -13 0 a4 4 0 0 1 8 0" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"></path></svg>
+        <span><strong style="color:#5A4327">Pirulito Espiral</strong> — velocidade padrão, gira em voo. Ataque de "boas-vindas".</span>
+      </div>
+      <div style="background:#FFFFFF;border-radius:14px;padding:12px 18px;border:2px solid #F0DFC0;display:flex;align-items:center;gap:14px">
+        <span style="font-weight:700;color:#B08F63;min-width:70px">100–199</span>
+        <svg viewBox="0 0 52 52" width="38" height="38" style="animation:ff-spin 1.2s linear infinite reverse;flex-shrink:0"><path d="M12 26 L3 17 L6 26 L3 35 Z" fill="#3BB8B0"></path><path d="M40 26 L49 17 L46 26 L49 35 Z" fill="#3BB8B0"></path><ellipse cx="26" cy="26" rx="14" ry="11" fill="#4ECDC4"></ellipse><path d="M20 16 Q18 26 20 36 M26 15 Q24 26 26 37 M32 16 Q30 26 32 36" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.8"></path></svg>
+        <span><strong style="color:#5A4327">Bala Veloz</strong> — 30% mais rápida que os demais projéteis. Testa reflexo.</span>
+      </div>
+      <div style="background:#FFFFFF;border-radius:14px;padding:12px 18px;border:2px solid #F0DFC0;display:flex;align-items:center;gap:14px">
+        <span style="font-weight:700;color:#B08F63;min-width:70px">200–299</span>
+        <svg viewBox="0 0 52 52" width="38" height="38" style="animation:ff-spin 1.6s linear infinite;flex-shrink:0"><circle cx="26" cy="26" r="10" fill="none" stroke="#F4A259" stroke-width="10"></circle><circle cx="26" cy="26" r="10" fill="none" stroke="#FF7BAC" stroke-width="9" stroke-dasharray="34 63" stroke-linecap="round"></circle><rect x="20" y="14" width="5" height="2.4" rx="1.2" fill="#FFD23F" transform="rotate(20 22 15)"></rect></svg>
+        <span><strong style="color:#5A4327">Rosquinha Voadora</strong> — velocidade padrão, rotação lenta e hipnótica.</span>
+      </div>
+      <div style="background:#F7F1FB;border-radius:14px;padding:12px 18px;border:2px solid #E5D4F7;display:flex;align-items:center;gap:14px">
+        <span style="font-weight:700;color:#9B5DE5;min-width:70px">300–399</span>
+        <svg viewBox="0 0 80 74" width="46" height="42" style="animation:ff-zwobble 0.5s ease-in-out infinite;flex-shrink:0"><path d="M14 52 L66 52 L60 72 L20 72 Z" fill="#D94F4F"></path><circle cx="40" cy="36" r="28" fill="#4A2C17"></circle><path d="M22 22 Q34 12 50 16 Q36 18 28 28 Z" fill="#7FB069" opacity="0.85"></path><path d="M52 14 L56 22 M56 14 L52 22" stroke="#241206" stroke-width="3" stroke-linecap="round"></path><circle cx="28" cy="32" r="7" fill="#FFFFFF"></circle><circle cx="29" cy="35" r="3.5" fill="#241206"></circle><circle cx="52" cy="34" r="5" fill="#FFFFFF"></circle><circle cx="52" cy="36" r="2.5" fill="#241206"></circle><path d="M26 48 Q40 60 56 46" stroke="#241206" stroke-width="3.5" fill="none" stroke-linecap="round"></path></svg>
+        <span><strong style="color:#9B5DE5">Brigadeiro Zumbi</strong> — mini-clone gigante (76px) do Barão, verde-mofado, olho de X, gargalhando "HA HA!". Mais lento, porém enorme: ocupa quase a trilha inteira. Balança em vez de girar.</span>
+      </div>
+      <div style="background:#FFFFFF;border-radius:14px;padding:12px 18px;border:2px solid #F0DFC0;display:flex;align-items:center;gap:14px">
+        <span style="font-weight:700;color:#B08F63;min-width:70px">400+</span>
+        <span style="font-size:22px;flex-shrink:0">🍬🍭🍩</span>
+        <span><strong style="color:#5A4327">Chuva de Açúcar</strong> — mistura todos os tipos (incl. zumbis) com 50% de chance de rajada dupla em duas trilhas ao mesmo tempo. Fase final.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PODERES -->
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2 style="margin:0;font-size:26px;font-weight:700;color:#5A4327">3 · Poderes especiais dos heróis</h2>
+    <p style="margin:0;font-size:14px;color:#8A6A45">Cada herói tem 3 poderes que se alternam em rodízio a cada disparo. Todos tiram 1 vida do Barão; a diferença é narrativa/visual (a diferenciação mecânica vem na v0.0.3).</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0">
+        <div style="font-weight:700;color:#3E7D2E;font-size:17px;margin-bottom:8px">🥬 Alface</div>
+        <div style="font-size:13.5px;color:#8A6A45;display:flex;flex-direction:column;gap:6px">
+          <div><strong style="color:#5A4327">Folha Bumerangue</strong> — folha giratória que corta o ar.</div>
+          <div><strong style="color:#5A4327">Furacão Verde</strong> — redemoinho de folhas frescas.</div>
+          <div><strong style="color:#5A4327">Muralha de Salada</strong> — parede crocante de vitaminas.</div>
+        </div>
+      </div>
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0">
+        <div style="font-weight:700;color:#8A5A34;font-size:17px;margin-bottom:8px">🫘 Feijão</div>
+        <div style="font-size:13.5px;color:#8A6A45;display:flex;flex-direction:column;gap:6px">
+          <div><strong style="color:#5A4327">Meteoro Carioca</strong> — grão em chamas douradas de ferro e proteína.</div>
+          <div><strong style="color:#5A4327">Rajada de Feijão</strong> — metralhadora de grãozinhos.</div>
+          <div><strong style="color:#5A4327">Escudo de Caldo</strong> — caldo quentinho que protege e empurra.</div>
+        </div>
+      </div>
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0">
+        <div style="font-weight:700;color:#B39B62;font-size:17px;margin-bottom:8px">🍚 Arroz</div>
+        <div style="font-size:13.5px;color:#8A6A45;display:flex;flex-direction:column;gap:6px">
+          <div><strong style="color:#5A4327">Grão Turbo</strong> — grão-foguete de energia rápida.</div>
+          <div><strong style="color:#5A4327">Chuva de Arroz</strong> — granizo branco nutritivo.</div>
+          <div><strong style="color:#5A4327">Broto Explosivo</strong> — brotinho verde que estoura em vitalidade.</div>
+        </div>
+      </div>
+    </div>
+    <div style="background:#FFF9EE;border-radius:16px;padding:16px 20px;border:2px dashed #E7D8BD;font-size:14px;color:#8A6A45">
+      <strong style="color:#5A4327">Regra visual dos poderes:</strong> projétil de 56px com brilho dourado pulsante (aura de "coisa boa"), voa para a direita a 620px/s com leve perseguição vertical ao vilão. O toast dourado com o nome do poder é obrigatório — é o momento de recompensa.
+    </div>
+  </section>
+
+  <!-- ESTADOS DO VILÃO -->
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2 style="margin:0;font-size:26px;font-weight:700;color:#5A4327">4 · Expressões do Barão</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0;display:flex;align-items:center;gap:16px">
+        <dc-import name="Foodie" who="vilao" mood="feliz" hint-size="110px,118px" style="width:110px;height:118px;flex-shrink:0"></dc-import>
+        <div style="font-size:14px;color:#8A6A45"><strong style="color:#5A4327;font-size:16px">Feliz (atacando)</strong><br>Sorriso largo com dentinho, sobrancelhas maliciosas. Estado padrão enquanto arremessa doces.</div>
+      </div>
+      <div style="background:#FFFFFF;border-radius:20px;padding:18px;border:2px solid #F0DFC0;display:flex;align-items:center;gap:16px">
+        <dc-import name="Foodie" who="vilao" mood="bravo" hint-size="110px,118px" style="width:110px;height:118px;flex-shrink:0"></dc-import>
+        <div style="font-size:14px;color:#8A6A45"><strong style="color:#5A4327;font-size:16px">Bravo (atingido)</strong><br>Sobrancelhas em V fechado, boca invertida com dentes cerrados. Dura 1.2s após cada golpe recebido.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2 style="margin:0;font-size:26px;font-weight:700;color:#5A4327">5 · Roadmap atualizado</h2>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:#8A6A45">
+      <div style="background:#FFFFFF;border-radius:14px;padding:12px 18px;border:2px solid #F0DFC0;opacity:0.7"><strong style="color:#5A4327">v0.0.1</strong> — estilo base, 3 heróis, mapa, seleção, 3 vidas, HUD.</div>
+      <div style="background:#EAF6E1;border-radius:14px;padding:12px 18px;border:2px solid #C9E7B4"><strong style="color:#3E7D2E">v0.0.2 (atual)</strong> — vilão móvel com 5 vidas e 5 ataques (incl. Brigadeiro Zumbi), bolha de comida a cada 300 pts, poderes especiais (3 por herói), expressões feliz/bravo, telas de vitória e derrota.</div>
+      <div style="background:#FFFFFF;border-radius:14px;padding:12px 18px;border:2px solid #F0DFC0"><strong style="color:#5A4327">v0.0.3</strong> — mecânica única por poder (bumerangue volta, rajada tripla, escudo), sons e música, animação de arremesso do Barão, contagem 3-2-1, medalhas.</div>
+    </div>
+  </section>
+</div>
+
+</x-dc>
+</body>
+</html>

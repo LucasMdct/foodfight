@@ -15,6 +15,9 @@ Entries are ordered newest first regardless of track, and each is labelled. Entr
 
 ## [Unreleased]
 
+### Added
+- Added the v0.0.2 combat design handoff and draft implementation spec, covering the moving Barão Brigadeiro, five attack phases, food bubbles, hero powers, fixed pools, victory/defeat flow and deterministic harness scenarios.
+
 ### Changed
 - Rewrote `docs/architecture.md`, `docs/testing.md` and `docs/troubleshooting.md` for v0.0.1. They previously described the POC: the wrong pool size, no difficulty ramp, a health bar instead of three lives, and components that no longer exist.
 - Moved the design handoff bundle from `design-completo-foodfight-game/` at the repo root to `docs/design/`, updating references in `eslint.config.js`, `src/render/foodie/palette.ts`, and the v0.0.1 spec and plan.

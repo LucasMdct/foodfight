@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;overflow:hidden;font-family:'Fredoka',system-ui,sans-serif;-webkit-user-select:none;user-select:none}
+a{color:#7BC950}a:hover{color:#59A335}
+@keyframes ff-scroll{from{background-position:0 0,0 0}to{background-position:-88px 0,-88px 0}}
+@keyframes ff-spin{to{transform:rotate(360deg)}}
+@keyframes ff-flicker{50%{opacity:0.25}}
+@keyframes ff-pop{0%{transform:scale(0.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+@keyframes ff-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes ff-zwobble{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+@keyframes ff-toast{0%{transform:translate(-50%,14px);opacity:0}15%{transform:translate(-50%,0);opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes ff-bubble{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes ff-glow{0%,100%{filter:drop-shadow(0 0 4px rgba(255,210,63,0.9))}50%{filter:drop-shadow(0 0 14px rgba(255,210,63,1))}}
+</style>
+</helmet>
+
+<div ref="{{ rootRef }}" style="width:100vw;height:100vh;position:relative;overflow:hidden;background:linear-gradient(180deg,#FFE9C9 0%,#FFF4E0 55%,#FFEFD6 100%)">
+
+  <!-- ===================== TELA DE SELEÇÃO ===================== -->
+  <sc-if value="{{ isSelect }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="Seleção de personagem" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;animation:ff-pop 0.4s ease-out both">
+    <div style="position:absolute;top:-40px;left:-60px;width:280px;height:280px;border-radius:50%;background:rgba(255,210,63,0.25)"></div>
+    <div style="position:absolute;bottom:-70px;right:-50px;width:320px;height:320px;border-radius:50%;background:rgba(123,201,80,0.18)"></div>
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;position:relative">
+      <div style="font-size:clamp(44px,7vw,72px);font-weight:700;line-height:1;letter-spacing:2px;color:#FF6B6B;text-shadow:0 4px 0 #E04F4F, 0 8px 18px rgba(224,79,79,0.3)">FOOD FIGHT</div>
+      <div style="font-size:clamp(14px,2vw,18px);font-weight:500;color:#8A6A45;background:#FFFDF6;border:2px solid #F0DFC0;border-radius:999px;padding:6px 18px">Desvie dos doces, pegue a bolha de comida e derrote o <strong style="color:#9B5DE5">Barão Brigadeiro</strong>!</div>
+    </div>
+
+    <div style="font-size:clamp(17px,2.2vw,24px);font-weight:600;color:#5A4327">Escolha seu heroizinho</div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;position:relative">
+      <div onClick="{{ pickAlface }}" style="cursor:pointer;width:200px;display:flex;flex-direction:column;align-items:center;gap:7px;background:#FFFFFF;border-radius:26px;padding:18px 14px 14px;border:{{ borderAlface }};box-shadow:0 10px 24px rgba(90,60,20,0.12);transition:transform 0.15s" style-hover="transform:translateY(-6px)">
+        <dc-import name="Foodie" who="alface" hint-size="108px,134px" style="width:108px;height:134px"></dc-import>
+        <div style="font-size:23px;font-weight:700;color:#3E7D2E">Alface</div>
+        <div style="display:flex;gap:4px">
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+        </div>
+        <div style="font-size:11.5px;font-weight:600;color:#7BC950;background:#EAF6E1;border-radius:10px;padding:5px 10px;text-align:center;line-height:1.5">Folha Bumerangue<br>Furacão Verde<br>Muralha de Salada</div>
+      </div>
+      <div onClick="{{ pickFeijao }}" style="cursor:pointer;width:200px;display:flex;flex-direction:column;align-items:center;gap:7px;background:#FFFFFF;border-radius:26px;padding:18px 14px 14px;border:{{ borderFeijao }};box-shadow:0 10px 24px rgba(90,60,20,0.12);transition:transform 0.15s" style-hover="transform:translateY(-6px)">
+        <dc-import name="Foodie" who="feijao" hint-size="108px,134px" style="width:108px;height:134px"></dc-import>
+        <div style="font-size:23px;font-weight:700;color:#8A5A34">Feijão</div>
+        <div style="display:flex;gap:4px">
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+        </div>
+        <div style="font-size:11.5px;font-weight:600;color:#8A5A34;background:#F7EDDE;border-radius:10px;padding:5px 10px;text-align:center;line-height:1.5">Meteoro Carioca<br>Rajada de Feijão<br>Escudo de Caldo</div>
+      </div>
+      <div onClick="{{ pickArroz }}" style="cursor:pointer;width:200px;display:flex;flex-direction:column;align-items:center;gap:7px;background:#FFFFFF;border-radius:26px;padding:18px 14px 14px;border:{{ borderArroz }};box-shadow:0 10px 24px rgba(90,60,20,0.12);transition:transform 0.15s" style-hover="transform:translateY(-6px)">
+        <dc-import name="Foodie" who="arroz" hint-size="108px,134px" style="width:108px;height:134px"></dc-import>
+        <div style="font-size:23px;font-weight:700;color:#B39B62">Arroz</div>
+        <div style="display:flex;gap:4px">
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+          <svg width="19" height="17" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="#FF6B6B"></path></svg>
+        </div>
+        <div style="font-size:11.5px;font-weight:600;color:#B39B62;background:#FBF6E9;border-radius:10px;padding:5px 10px;text-align:center;line-height:1.5">Grão Turbo<br>Chuva de Arroz<br>Broto Explosivo</div>
+      </div>
+    </div>
+
+    <button onClick="{{ start }}" style="cursor:pointer;border:none;font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;letter-spacing:1px;color:#FFFFFF;background:#7BC950;padding:15px 56px;border-radius:999px;box-shadow:0 6px 0 #59A335, 0 14px 26px rgba(89,163,53,0.35);animation:ff-pulse 1.6s ease-in-out infinite;transition:transform 0.1s" style-hover="transform:translateY(-2px)" style-active="transform:translateY(3px)">JOGAR!</button>
+
+    <div style="position:absolute;bottom:18px;right:22px;display:flex;align-items:center;gap:10px;opacity:0.95">
+      <div style="width:86px;height:96px"><dc-import name="Foodie" who="vilao" hint-size="86px,96px" style="width:86px;height:96px"></dc-import></div>
+      <div style="font-size:13px;font-weight:600;color:#9B5DE5;background:#FFFFFF;border:2px solid #E5D4F7;border-radius:14px;padding:8px 12px;max-width:160px">"Meus brigadeiros zumbis vão te pegar! Hahaha!"</div>
+    </div>
+    <div style="position:absolute;bottom:16px;left:22px;font-size:12px;font-weight:500;color:#C4A87E">FOOD FIGHT · estilo v0.0.2</div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== JOGO ===================== -->
+  <sc-if value="{{ isGame }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Gameplay" style="position:absolute;inset:0">
+
+    <div ref="{{ fieldRef }}" style="position:absolute;inset:0;background-color:#FFF3E2;background-image:repeating-linear-gradient(90deg,rgba(255,107,107,0.13) 0 44px,transparent 44px 88px),repeating-linear-gradient(0deg,rgba(255,107,107,0.13) 0 44px,transparent 44px 88px);animation:ff-scroll 0.9s linear infinite;animation-play-state:{{ bgPlay }}">
+
+      <div style="position:absolute;left:0;right:0;top:33.33%;border-top:3px dashed rgba(138,90,52,0.28)"></div>
+      <div style="position:absolute;left:0;right:0;top:66.66%;border-top:3px dashed rgba(138,90,52,0.28)"></div>
+
+      <!-- vilão: agora se movimenta pelo mapa (JS) -->
+      <div ref="{{ vilRef }}" style="position:absolute;right:1.5%;top:0;width:132px;height:142px;will-change:transform;z-index:5;filter:drop-shadow(0 14px 10px rgba(90,50,10,0.25))">
+        <dc-import name="Foodie" who="vilao" mood="{{ vilMood }}" hint-size="132px,142px" style="width:132px;height:142px"></dc-import>
+      </div>
+
+      <!-- pool de projéteis do vilão -->
+      <sc-for list="{{ candySlots }}" as="slot" hint-placeholder-count="0">
+        <div ref="{{ slot.ref }}" style="position:absolute;left:0;top:0;width:52px;height:52px;visibility:hidden;will-change:transform;z-index:4;overflow:visible">
+          <sc-if value="{{ slot.isLolli }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 52 52" width="52" height="52" style="animation:ff-spin 0.9s linear infinite">
+              <rect x="24" y="26" width="4" height="24" rx="2" fill="#E8D9C0"></rect>
+              <circle cx="26" cy="19" r="14" fill="#FF7BAC"></circle>
+              <path d="M26 19 m-9 0 a9 9 0 0 1 18 0 a6.5 6.5 0 0 1 -13 0 a4 4 0 0 1 8 0" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"></path>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ slot.isCandy }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 52 52" width="52" height="52" style="animation:ff-spin 1.1s linear infinite reverse">
+              <path d="M12 26 L3 17 L6 26 L3 35 Z" fill="#3BB8B0"></path>
+              <path d="M40 26 L49 17 L46 26 L49 35 Z" fill="#3BB8B0"></path>
+              <ellipse cx="26" cy="26" rx="14" ry="11" fill="#4ECDC4"></ellipse>
+              <path d="M20 16 Q18 26 20 36 M26 15 Q24 26 26 37 M32 16 Q30 26 32 36" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.8"></path>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ slot.isDonut }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 52 52" width="52" height="52" style="animation:ff-spin 1.3s linear infinite">
+              <circle cx="26" cy="26" r="10" fill="none" stroke="#F4A259" stroke-width="10"></circle>
+              <circle cx="26" cy="26" r="10" fill="none" stroke="#FF7BAC" stroke-width="9" stroke-dasharray="34 63" stroke-linecap="round"></circle>
+              <rect x="20" y="14" width="5" height="2.4" rx="1.2" fill="#FFD23F" transform="rotate(20 22 15)"></rect>
+              <rect x="32" y="20" width="5" height="2.4" rx="1.2" fill="#FFFFFF" transform="rotate(-30 34 21)"></rect>
+              <rect x="14" y="24" width="5" height="2.4" rx="1.2" fill="#9B5DE5" transform="rotate(60 16 25)"></rect>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ slot.isZumbi }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:-14px;top:-30px;width:80px;height:84px">
+              <div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;color:#9B5DE5;background:#FFFFFF;border-radius:999px;padding:1px 8px;white-space:nowrap;box-shadow:0 2px 6px rgba(90,50,10,0.2)">HA HA!</div>
+              <svg viewBox="0 0 80 74" width="80" height="74" style="animation:ff-zwobble 0.5s ease-in-out infinite;transform-origin:50% 60%">
+                <path d="M14 52 L66 52 L60 72 L20 72 Z" fill="#D94F4F"></path>
+                <circle cx="40" cy="36" r="28" fill="#4A2C17"></circle>
+                <path d="M22 22 Q34 12 50 16 Q36 18 28 28 Z" fill="#7FB069" opacity="0.85"></path>
+                <ellipse cx="58" cy="46" rx="9" ry="7" fill="#7FB069" opacity="0.8"></ellipse>
+                <path d="M52 14 L56 22 M56 14 L52 22" stroke="#241206" stroke-width="3" stroke-linecap="round"></path>
+                <circle cx="28" cy="32" r="7" fill="#FFFFFF"></circle>
+                <circle cx="29" cy="35" r="3.5" fill="#241206"></circle>
+                <circle cx="52" cy="34" r="5" fill="#FFFFFF"></circle>
+                <circle cx="52" cy="36" r="2.5" fill="#241206"></circle>
+                <path d="M26 48 Q40 60 56 46" stroke="#241206" stroke-width="3.5" fill="none" stroke-linecap="round"></path>
+                <path d="M32 50 L34 56 L38 50 Z M44 51 L46 57 L50 49 Z" fill="#FFFFFF"></path>
+                <rect x="20" y="40" width="8" height="3" rx="1.5" fill="#FFD23F" transform="rotate(30 24 41)"></rect>
+                <rect x="44" y="24" width="8" height="3" rx="1.5" fill="#FF7BAC" transform="rotate(-20 48 25)"></rect>
+              </svg>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <!-- bolha de comida natural -->
+      <div ref="{{ bubbleRef }}" style="position:absolute;left:0;top:0;width:72px;height:72px;visibility:hidden;will-change:transform;z-index:4">
+        <svg viewBox="0 0 72 72" width="72" height="72" style="animation:ff-bubble 1.2s ease-in-out infinite">
+          <ellipse cx="36" cy="44" rx="22" ry="7" fill="#FFFFFF"></ellipse>
+          <ellipse cx="36" cy="41" rx="22" ry="7" fill="#F4F7FA" stroke="#D8E0E8" stroke-width="1.5"></ellipse>
+          <path d="M18 41 A18 8 0 0 1 36 34 A18 8 0 0 1 43 41 Z" fill="#FFFDF6"></path>
+          <circle cx="27" cy="36" r="2.5" fill="#FFFDF6"></circle><circle cx="32" cy="34" r="3" fill="#FFFDF6"></circle><circle cx="37" cy="36" r="2.5" fill="#FFFDF6"></circle>
+          <path d="M40 36 A14 6 0 0 1 54 41 L40 41 Z" fill="#8A5A34"></path>
+          <ellipse cx="47" cy="37.5" rx="3" ry="2" fill="#C89A6B"></ellipse><ellipse cx="42" cy="39" rx="3" ry="2" fill="#C89A6B"></ellipse>
+          <path d="M30 30 Q33 24 30 20" stroke="#7BC950" stroke-width="2.5" fill="none" stroke-linecap="round"></path>
+          <circle cx="36" cy="36" r="33" fill="rgba(180,220,255,0.18)" stroke="rgba(150,200,255,0.75)" stroke-width="2"></circle>
+          <path d="M16 22 A26 26 0 0 1 30 8" stroke="rgba(255,255,255,0.95)" stroke-width="3.5" fill="none" stroke-linecap="round"></path>
+        </svg>
+      </div>
+
+      <!-- pool de poderes especiais -->
+      <sc-for list="{{ shotSlots }}" as="shot" hint-placeholder-count="0">
+        <div ref="{{ shot.ref }}" style="position:absolute;left:0;top:0;width:56px;height:56px;visibility:hidden;will-change:transform;z-index:6;animation:ff-glow 0.4s ease-in-out infinite">
+          <sc-if value="{{ isAlface }}" hint-placeholder-val="{{ true }}">
+            <svg viewBox="0 0 56 56" width="56" height="56" style="animation:ff-spin 0.5s linear infinite">
+              <path d="M28 6 Q44 16 46 30 Q40 48 28 50 Q14 44 10 28 Q14 12 28 6 Z" fill="#7BC950"></path>
+              <path d="M28 10 Q28 28 28 46 M16 22 Q28 28 40 20 M15 34 Q28 32 41 36" stroke="#C9EF9F" stroke-width="2.5" fill="none"></path>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ isFeijao }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 56 56" width="56" height="56">
+              <path d="M8 34 Q2 28 8 24 L18 28 Z" fill="#FFD23F" opacity="0.9"></path>
+              <ellipse cx="32" cy="28" rx="18" ry="14" fill="#C89A6B" transform="rotate(-14 32 28)"></ellipse>
+              <path d="M20 22 Q16 28 20 36 Q14 28 18 22 Z" fill="#8A5A34"></path>
+              <circle cx="38" cy="24" r="3" fill="#EBCB9E"></circle>
+            </svg>
+          </sc-if>
+          <sc-if value="{{ isArroz }}" hint-placeholder-val="{{ false }}">
+            <svg viewBox="0 0 56 56" width="56" height="56">
+              <path d="M6 32 L16 28 L6 24 Z" fill="#FFD23F" opacity="0.9"></path>
+              <ellipse cx="32" cy="28" rx="16" ry="11" fill="#FFFDF6" stroke="#EADFC8" stroke-width="2" transform="rotate(-12 32 28)"></ellipse>
+              <path d="M40 18 Q44 12 42 6 Q46 12 44 18 Z" fill="#7BC950"></path>
+            </svg>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <!-- herói -->
+      <div style="position:absolute;left:9%;top:{{ heroTop }};width:96px;height:120px;transform:translateY(-58%);transition:top 0.13s ease-out;z-index:6;animation:{{ heroAnim }}">
+        <div style="position:absolute;left:14px;right:14px;bottom:-8px;height:14px;border-radius:50%;background:rgba(90,50,10,0.18)"></div>
+        <dc-import name="Foodie" who="{{ who }}" hint-size="96px,120px" style="width:96px;height:120px"></dc-import>
+      </div>
+
+      <!-- toast do poder -->
+      <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:50%;top:20%;transform:translateX(-50%);z-index:12;font-size:24px;font-weight:700;color:#FFFFFF;background:#FFB627;border-radius:999px;padding:10px 28px;box-shadow:0 5px 0 #E09A10, 0 12px 24px rgba(224,154,16,0.35);animation:ff-toast 1.4s ease-out both;pointer-events:none;white-space:nowrap">{{ toast }}</div>
+      </sc-if>
+    </div>
+
+    <!-- HUD -->
+    <div style="position:absolute;top:16px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:flex-start;z-index:10;pointer-events:none">
+      <div style="display:flex;align-items:center;gap:10px;background:#FFFFFF;border:2px solid #F0DFC0;border-radius:999px;padding:8px 16px 8px 10px;box-shadow:0 6px 16px rgba(90,60,20,0.14)">
+        <div style="width:40px;height:48px"><dc-import name="Foodie" who="{{ who }}" hint-size="40px,48px" style="width:40px;height:48px"></dc-import></div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:15px;font-weight:700;color:#5A4327;line-height:1">{{ whoName }}</div>
+          <div style="display:flex;gap:3px">
+            <sc-for list="{{ hearts }}" as="h" hint-placeholder-count="3">
+              <svg width="18" height="16" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="{{ h.color }}"></path></svg>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- vida do vilão + ataque atual -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;background:#FFFFFF;border:2px solid #E5D4F7;border-radius:18px;padding:8px 18px;box-shadow:0 6px 16px rgba(90,60,20,0.14)">
+        <div style="font-size:13px;font-weight:700;color:#9B5DE5;line-height:1">Barão Brigadeiro</div>
+        <div style="display:flex;gap:3px">
+          <sc-for list="{{ vilHearts }}" as="v" hint-placeholder-count="5">
+            <svg width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="{{ v.color }}"></circle><rect x="6" y="4" width="5" height="2" rx="1" fill="#FFFFFF" transform="rotate(24 8 5)" opacity="0.8"></rect></svg>
+          </sc-for>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#B08F63;line-height:1">{{ attackName }}</div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="font-size:22px;font-weight:700;color:#FFFFFF;background:#FFB627;border-radius:999px;padding:8px 22px;box-shadow:0 4px 0 #E09A10, 0 8px 18px rgba(224,154,16,0.3)">{{ score }}</div>
+        <button data-ff-btn="1" onClick="{{ toSelect }}" style="pointer-events:auto;cursor:pointer;border:2px solid #F0DFC0;background:#FFFFFF;color:#9B8464;font-family:'Fredoka',sans-serif;font-size:14px;font-weight:600;border-radius:999px;padding:9px 16px">Sair</button>
+      </div>
+    </div>
+
+    <!-- botão de poder -->
+    <div style="position:absolute;bottom:20px;right:22px;z-index:10;display:flex;flex-direction:column;align-items:center;gap:6px">
+      <button data-ff-btn="1" onClick="{{ fire }}" style="cursor:pointer;border:none;width:88px;height:88px;border-radius:50%;font-family:'Fredoka',sans-serif;font-size:15px;font-weight:700;color:#FFFFFF;background:{{ fireBg }};box-shadow:0 6px 0 {{ fireShadow }}, 0 12px 24px rgba(90,60,20,0.25);animation:{{ fireAnim }};transition:transform 0.1s" style-active="transform:translateY(4px)">PODER!</button>
+      <div style="display:flex;gap:5px">
+        <sc-for list="{{ chargeDots }}" as="c" hint-placeholder-count="3">
+          <div style="width:14px;height:14px;border-radius:50%;background:{{ c.color }};border:2px solid #FFFFFF;box-shadow:0 2px 5px rgba(90,60,20,0.25)"></div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:10;font-size:13px;font-weight:500;color:#B08F63;background:rgba(255,255,255,0.85);border-radius:999px;padding:6px 16px;pointer-events:none">↑↓ trocar trilha · ESPAÇO ou PODER! para atacar · pegue a bolha 🫧</div>
+
+    <!-- ===================== DERROTA ===================== -->
+    <sc-if value="{{ isOver }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Fim de jogo" style="position:absolute;inset:0;z-index:20;background:rgba(70,40,10,0.45);display:flex;align-items:center;justify-content:center">
+      <div style="background:#FFFDF6;border-radius:30px;padding:34px 44px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 24px 60px rgba(50,25,0,0.35);animation:ff-pop 0.35s ease-out both;max-width:86vw">
+        <div style="width:110px;height:120px"><dc-import name="Foodie" who="vilao" hint-size="110px,120px" style="width:110px;height:120px"></dc-import></div>
+        <div style="font-size:36px;font-weight:700;color:#FF6B6B;line-height:1">Doce demais!</div>
+        <div style="font-size:16px;font-weight:500;color:#8A6A45;text-align:center">O Barão Brigadeiro venceu dessa vez…<br>mas comida de verdade nunca desiste!</div>
+        <div style="display:flex;gap:20px;margin-top:4px">
+          <div style="display:flex;flex-direction:column;align-items:center;background:#FFF3E2;border-radius:16px;padding:10px 22px">
+            <div style="font-size:12px;font-weight:600;color:#B08F63;text-transform:uppercase;letter-spacing:1px">Pontos</div>
+            <div style="font-size:28px;font-weight:700;color:#5A4327">{{ score }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;background:#FFF3E2;border-radius:16px;padding:10px 22px">
+            <div style="font-size:12px;font-weight:600;color:#B08F63;text-transform:uppercase;letter-spacing:1px">Recorde</div>
+            <div style="font-size:28px;font-weight:700;color:#5A4327">{{ best }}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:6px">
+          <button data-ff-btn="1" onClick="{{ again }}" style="cursor:pointer;border:none;font-family:'Fredoka',sans-serif;font-size:19px;font-weight:700;color:#FFFFFF;background:#7BC950;padding:13px 30px;border-radius:999px;box-shadow:0 5px 0 #59A335" style-active="transform:translateY(3px)">Jogar de novo</button>
+          <button data-ff-btn="1" onClick="{{ toSelect }}" style="cursor:pointer;font-family:'Fredoka',sans-serif;font-size:19px;font-weight:600;color:#8A6A45;background:#FFFFFF;border:2px solid #F0DFC0;padding:13px 26px;border-radius:999px" style-active="transform:translateY(3px)">Trocar herói</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== VITÓRIA ===================== -->
+    <sc-if value="{{ isWin }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Vitória" style="position:absolute;inset:0;z-index:20;background:rgba(123,201,80,0.4);display:flex;align-items:center;justify-content:center">
+      <div style="background:#FFFDF6;border-radius:30px;padding:34px 44px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 24px 60px rgba(50,80,10,0.35);animation:ff-pop 0.35s ease-out both;max-width:86vw">
+        <div style="width:110px;height:136px;animation:ff-pulse 0.8s ease-in-out infinite"><dc-import name="Foodie" who="{{ who }}" hint-size="110px,136px" style="width:110px;height:136px"></dc-import></div>
+        <div style="font-size:38px;font-weight:700;color:#7BC950;line-height:1;text-shadow:0 3px 0 #59A335">VOCÊ VENCEU!</div>
+        <div style="font-size:16px;font-weight:500;color:#8A6A45;text-align:center">{{ whoName }} derrotou o Barão Brigadeiro!<br>Comida de verdade no prato, doce só de vez em quando. 🏆</div>
+        <div style="display:flex;gap:20px;margin-top:4px">
+          <div style="display:flex;flex-direction:column;align-items:center;background:#EAF6E1;border-radius:16px;padding:10px 22px">
+            <div style="font-size:12px;font-weight:600;color:#59A335;text-transform:uppercase;letter-spacing:1px">Pontos</div>
+            <div style="font-size:28px;font-weight:700;color:#3E7D2E">{{ score }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;background:#EAF6E1;border-radius:16px;padding:10px 22px">
+            <div style="font-size:12px;font-weight:600;color:#59A335;text-transform:uppercase;letter-spacing:1px">Recorde</div>
+            <div style="font-size:28px;font-weight:700;color:#3E7D2E">{{ best }}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:6px">
+          <button data-ff-btn="1" onClick="{{ again }}" style="cursor:pointer;border:none;font-family:'Fredoka',sans-serif;font-size:19px;font-weight:700;color:#FFFFFF;background:#7BC950;padding:13px 30px;border-radius:999px;box-shadow:0 5px 0 #59A335" style-active="transform:translateY(3px)">Jogar de novo</button>
+          <button data-ff-btn="1" onClick="{{ toSelect }}" style="cursor:pointer;font-family:'Fredoka',sans-serif;font-size:19px;font-weight:600;color:#8A6A45;background:#FFFFFF;border:2px solid #F0DFC0;padding:13px 26px;border-radius:999px" style-active="transform:translateY(3px)">Trocar herói</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;candySpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:340,&quot;min&quot;:180,&quot;max&quot;:700,&quot;step&quot;:20,&quot;unit&quot;:&quot;px/s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Dificuldade&quot;},&quot;spawnInterval&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:900,&quot;min&quot;:450,&quot;max&quot;:1600,&quot;step&quot;:50,&quot;unit&quot;:&quot;ms&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Dificuldade&quot;},&quot;startLives&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;min&quot;:1,&quot;max&quot;:5,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Dificuldade&quot;},&quot;vilHP&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5,&quot;min&quot;:1,&quot;max&quot;:9,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Vilão&quot;},&quot;bubbleEvery&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:300,&quot;min&quot;:100,&quot;max&quot;:600,&quot;step&quot;:50,&quot;unit&quot;:&quot;pts&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Vilão&quot;}}">
+class Component extends DCLogic {
+  state = { screen: 'select', who: 'alface', lives: 3, score: 0, heroLane: 1, invuln: false, best: 0,
+            vilHP: 5, charges: 0, vilMood: 'feliz', toast: '', toastN: 0 };
+
+  POWERS = {
+    alface: ['Folha Bumerangue', 'Furacão Verde', 'Muralha de Salada'],
+    feijao: ['Meteoro Carioca', 'Rajada de Feijão', 'Escudo de Caldo'],
+    arroz:  ['Grão Turbo', 'Chuva de Arroz', 'Broto Explosivo'],
+  };
+  ATTACKS = ['Pirulito Espiral', 'Bala Veloz', 'Rosquinha Voadora', 'Brigadeiro Zumbi', 'Chuva de Açúcar'];
+
+  slots = Array.from({ length: 10 }, (_, i) => {
+    const s = { el: null, active: false, x: 0, lane: 0, counted: false, type: 'lolli', i };
+    s.ref = (el) => { s.el = el; };
+    return s;
+  });
+  shots = Array.from({ length: 3 }, (_, i) => {
+    const s = { el: null, active: false, x: 0, y: 0, i };
+    s.ref = (el) => { s.el = el; };
+    return s;
+  });
+  bubble = { el: null, active: false, x: 0, lane: 1 };
+
+  componentDidMount() {
+    this.onKey = (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { this.moveLane(-1); e.preventDefault(); }
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { this.moveLane(1); e.preventDefault(); }
+      if (e.key === ' ' || e.code === 'Space') { this.fireSpecial(); e.preventDefault(); }
+    };
+    window.addEventListener('keydown', this.onKey);
+    this.onDown = (e) => { this.pDown = { y: e.clientY, t: Date.now() }; };
+    this.onUp = (e) => {
+      if (e.target && e.target.closest && e.target.closest('[data-ff-btn]')) { this.pDown = null; return; }
+      if (!this.pDown || this.state.screen !== 'game') return;
+      const dy = e.clientY - this.pDown.y;
+      if (dy < -28) this.moveLane(-1);
+      else if (dy > 28) this.moveLane(1);
+      else {
+        const h = this.root ? this.root.clientHeight : window.innerHeight;
+        this.moveLane(e.clientY < h / 2 ? -1 : 1);
+      }
+      this.pDown = null;
+    };
+    window.addEventListener('pointerdown', this.onDown);
+    window.addEventListener('pointerup', this.onUp);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.onKey);
+    window.removeEventListener('pointerdown', this.onDown);
+    window.removeEventListener('pointerup', this.onUp);
+    cancelAnimationFrame(this.raf);
+  }
+
+  moveLane(d) {
+    if (this.state.screen !== 'game') return;
+    const l = Math.max(0, Math.min(2, this.state.heroLane + d));
+    if (l !== this.state.heroLane) this.setState({ heroLane: l });
+  }
+
+  phase() { return Math.min(4, Math.floor(this.state.score / 100)); }
+
+  startGame() {
+    cancelAnimationFrame(this.raf);
+    this.slots.forEach((s) => { s.active = false; s.counted = false; if (s.el) s.el.style.visibility = 'hidden'; });
+    this.shots.forEach((s) => { s.active = false; if (s.el) s.el.style.visibility = 'hidden'; });
+    this.bubble.active = false;
+    if (this.bubble.el) this.bubble.el.style.visibility = 'hidden';
+    const lives = Math.max(1, this.props.startLives ?? 3);
+    this.setState({ screen: 'game', lives, score: 0, heroLane: 1, invuln: false,
+                    vilHP: Math.max(1, this.props.vilHP ?? 5), charges: 0, vilMood: 'feliz', toast: '' });
+    this.elapsed = 0; this.spawnT = 600; this.invulnUntil = 0;
+    this.nextBubbleAt = this.props.bubbleEvery ?? 300;
+    this.specialIdx = 0;
+    this.last = performance.now();
+    const tick = (t) => { this.step(t); const sc = this.state.screen; if (sc === 'game') this.raf = requestAnimationFrame(tick); };
+    this.raf = requestAnimationFrame(tick);
+  }
+
+  spawnCandy(W, laneForce) {
+    const s = this.slots.find((s) => !s.active);
+    if (!s) return;
+    const p = this.phase();
+    let type;
+    if (p === 4) { const r = Math.random(); type = r < 0.3 ? 'zumbi' : r < 0.55 ? 'candy' : r < 0.8 ? 'lolli' : 'donut'; }
+    else type = ['lolli', 'candy', 'donut', 'zumbi'][p];
+    s.active = true; s.counted = false; s.type = type;
+    s.lane = laneForce != null ? laneForce : Math.floor(Math.random() * 3);
+    s.x = W + 90;
+    this.forceUpdate();
+  }
+
+  fireSpecial() {
+    if (this.state.screen !== 'game' || this.state.charges <= 0) return;
+    const shot = this.shots.find((s) => !s.active);
+    if (!shot) return;
+    const field = this.field;
+    const H = field ? field.clientHeight : 520;
+    shot.active = true;
+    shot.x = (field ? field.clientWidth : 900) * 0.09 + 70;
+    shot.y = (this.state.heroLane + 0.5) * (H / 3) - 28;
+    const name = this.POWERS[this.state.who][this.specialIdx % 3];
+    this.specialIdx++;
+    this.setState((st) => ({ charges: st.charges - 1, toast: name + '!', toastN: st.toastN + 1 }));
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => this.setState({ toast: '' }), 1400);
+  }
+
+  hitVillain() {
+    this.setState((st) => {
+      const hp = st.vilHP - 1;
+      if (hp <= 0) return { vilHP: 0, screen: 'win', vilMood: 'bravo', best: Math.max(st.best, st.score) };
+      return { vilHP: hp, vilMood: 'bravo' };
+    });
+    clearTimeout(this.moodTimer);
+    this.moodTimer = setTimeout(() => { if (this.state.screen === 'game') this.setState({ vilMood: 'feliz' }); }, 1200);
+  }
+
+  step(t) {
+    const dt = Math.min(50, t - this.last);
+    this.last = t;
+    this.elapsed += dt;
+    const field = this.field;
+    const W = field ? field.clientWidth : 900;
+    const H = field ? field.clientHeight : 520;
+    const laneH = H / 3;
+    const baseSpeed = this.props.candySpeed ?? 340;
+    const speed = baseSpeed + Math.min(260, this.elapsed * 0.006);
+    const p = this.phase();
+    const interval = Math.max(420, (this.props.spawnInterval ?? 900) - this.elapsed * 0.004);
+
+    // vilão se movimenta pelo mapa (vertical, senoide)
+    this.vilY = H / 2 + Math.sin(this.elapsed / 850) * H * 0.31;
+    if (this.vil) this.vil.style.transform = 'translateY(' + (this.vilY - 71) + 'px)';
+
+    // spawn de doces (fase 4 = chuva: rajada dupla)
+    this.spawnT += dt;
+    if (this.spawnT >= interval) {
+      this.spawnT = 0;
+      const lane = Math.floor(Math.random() * 3);
+      this.spawnCandy(W, lane);
+      if (p === 4 && Math.random() < 0.5) this.spawnCandy(W, (lane + 1 + Math.floor(Math.random() * 2)) % 3);
+    }
+
+    // bolha de comida natural
+    if (!this.bubble.active && this.state.score >= this.nextBubbleAt) {
+      this.nextBubbleAt += this.props.bubbleEvery ?? 300;
+      this.bubble.active = true;
+      this.bubble.lane = Math.floor(Math.random() * 3);
+      this.bubble.x = W + 80;
+    }
+
+    const heroX = W * 0.09, heroW = 96;
+    const heroLaneNow = this.state.heroLane;
+    const now = this.elapsed;
+
+    if (this.bubble.active && this.bubble.el) {
+      this.bubble.x -= (speed * 0.55 * dt) / 1000;
+      const by = this.bubble.lane * laneH + laneH / 2 - 36;
+      this.bubble.el.style.visibility = 'visible';
+      this.bubble.el.style.transform = 'translate(' + this.bubble.x + 'px,' + by + 'px)';
+      if (this.bubble.x < -80) { this.bubble.active = false; this.bubble.el.style.visibility = 'hidden'; }
+      else if (this.bubble.lane === heroLaneNow && this.bubble.x < heroX + heroW - 14 && this.bubble.x + 72 > heroX + 14) {
+        this.bubble.active = false; this.bubble.el.style.visibility = 'hidden';
+        this.setState((st) => ({ charges: Math.min(3, st.charges + 1), toast: 'Comida de verdade! +1 PODER', toastN: st.toastN + 1 }));
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => this.setState({ toast: '' }), 1400);
+      }
+    }
+
+    // projéteis do vilão
+    for (const s of this.slots) {
+      if (!s.active || !s.el) continue;
+      const isZ = s.type === 'zumbi';
+      const mySpeed = s.type === 'candy' ? speed * 1.3 : isZ ? speed * 0.8 : speed;
+      s.x -= (mySpeed * dt) / 1000;
+      const size = isZ ? 76 : 52;
+      const y = s.lane * laneH + laneH / 2 - size / 2;
+      s.el.style.visibility = 'visible';
+      s.el.style.transform = 'translate(' + s.x + 'px,' + y + 'px)';
+      if (s.x < -100) {
+        s.active = false;
+        s.el.style.visibility = 'hidden';
+        if (!s.counted) { s.counted = true; this.setState((st) => ({ score: st.score + 10 })); }
+        continue;
+      }
+      if (now >= this.invulnUntil && s.lane === heroLaneNow && s.x < heroX + heroW - 18 && s.x + size > heroX + 18) {
+        this.invulnUntil = now + 1400;
+        s.active = false;
+        s.el.style.visibility = 'hidden';
+        this.setState((st) => {
+          const lives = st.lives - 1;
+          if (lives <= 0) return { lives: 0, screen: 'over', invuln: false, best: Math.max(st.best, st.score) };
+          return { lives, invuln: true };
+        });
+        setTimeout(() => { if (this.state.invuln) this.setState({ invuln: false }); }, 1450);
+      }
+    }
+
+    // poderes do herói -> vilão
+    for (const sh of this.shots) {
+      if (!sh.active || !sh.el) continue;
+      sh.x += (620 * dt) / 1000;
+      const vilTargetY = this.vilY - 28;
+      sh.y += (vilTargetY - sh.y) * Math.min(1, dt / 220);
+      sh.el.style.visibility = 'visible';
+      sh.el.style.transform = 'translate(' + sh.x + 'px,' + sh.y + 'px)';
+      if (sh.x > W - W * 0.015 - 110) {
+        sh.active = false;
+        sh.el.style.visibility = 'hidden';
+        this.hitVillain();
+      }
+    }
+  }
+
+  renderVals() {
+    const s = this.state;
+    const names = { alface: 'Alface', feijao: 'Feijão', arroz: 'Arroz' };
+    const sel = '4px solid #FFB627';
+    const idle = '4px solid transparent';
+    const maxLives = Math.max(1, this.props.startLives ?? 3);
+    const maxVil = Math.max(1, this.props.vilHP ?? 5);
+    const hasCharge = s.charges > 0;
+    return {
+      isSelect: s.screen === 'select',
+      isGame: s.screen === 'game' || s.screen === 'over' || s.screen === 'win',
+      isOver: s.screen === 'over',
+      isWin: s.screen === 'win',
+      who: s.who,
+      whoName: names[s.who],
+      isAlface: s.who === 'alface',
+      isFeijao: s.who === 'feijao',
+      isArroz: s.who === 'arroz',
+      score: s.score,
+      best: s.best,
+      vilMood: s.vilMood,
+      attackName: 'Ataque: ' + this.ATTACKS[Math.min(4, Math.floor(s.score / 100))],
+      borderAlface: s.who === 'alface' ? sel : idle,
+      borderFeijao: s.who === 'feijao' ? sel : idle,
+      borderArroz: s.who === 'arroz' ? sel : idle,
+      hearts: Array.from({ length: maxLives }, (_, i) => ({ color: i < s.lives ? '#FF6B6B' : '#E9DAC4' })),
+      vilHearts: Array.from({ length: maxVil }, (_, i) => ({ color: i < s.vilHP ? '#9B5DE5' : '#E9DAC4' })),
+      chargeDots: Array.from({ length: 3 }, (_, i) => ({ color: i < s.charges ? '#FFD23F' : '#E9DAC4' })),
+      heroTop: ((s.heroLane + 0.5) * 33.333) + '%',
+      heroAnim: s.invuln ? 'ff-flicker 0.2s steps(2) infinite' : 'none',
+      bgPlay: s.screen === 'game' ? 'running' : 'paused',
+      fireBg: hasCharge ? '#FF6B6B' : '#D8CBB4',
+      fireShadow: hasCharge ? '#E04F4F' : '#BEB09A',
+      fireAnim: hasCharge ? 'ff-pulse 0.9s ease-in-out infinite' : 'none',
+      toast: s.toast,
+      hasToast: !!s.toast,
+      candySlots: this.slots.map((sl) => ({
+        ref: sl.ref,
+        isLolli: sl.active && sl.type === 'lolli',
+        isCandy: sl.active && sl.type === 'candy',
+        isDonut: sl.active && sl.type === 'donut',
+        isZumbi: sl.active && sl.type === 'zumbi',
+      })),
+      shotSlots: this.shots.map((sh) => ({ ref: sh.ref })),
+      bubbleRef: (el) => { this.bubble.el = el; },
+      pickAlface: () => this.setState({ who: 'alface' }),
+      pickFeijao: () => this.setState({ who: 'feijao' }),
+      pickArroz: () => this.setState({ who: 'arroz' }),
+      start: () => this.startGame(),
+      again: () => this.startGame(),
+      fire: () => this.fireSpecial(),
+      toSelect: () => { cancelAnimationFrame(this.raf); this.setState({ screen: 'select' }); },
+      rootRef: (el) => { this.root = el; },
+      fieldRef: (el) => { this.field = el; },
+      vilRef: (el) => { this.vil = el; },
+    };
+  }
+}
+</script>
+</body>
+</html>
