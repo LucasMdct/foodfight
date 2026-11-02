@@ -8,7 +8,7 @@ const heartPath = Skia.Path.MakeFromSVGString(
 )!;
 
 /**
- * Shared heart icon used by SelectScreen cards and the in-game HUD (Task 9).
+ * Shared heart icon used by SelectScreen cards and the in-game HUD.
  * `size` scales uniformly from the 20x18 design viewBox.
  */
 export const Heart = ({ filled, size = 18 }: { filled: boolean; size?: number }) => (

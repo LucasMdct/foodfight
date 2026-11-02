@@ -11,9 +11,9 @@ import {
 } from '@expo-google-fonts/fredoka';
 import { ThemeProvider } from './src/theme';
 import { useGameStore } from './src/store/gameStore';
-import { LoadingScreen } from './src/screens/LoadingScreen'; // Task 7
-import { SelectScreen } from './src/screens/SelectScreen'; // Task 8
-import { GameScreen } from './src/screens/GameScreen'; // Task 9
+import { LoadingScreen } from './src/screens/LoadingScreen';
+import { SelectScreen } from './src/screens/SelectScreen';
+import { GameScreen } from './src/screens/GameScreen';
 import { styles } from './src/screens/appStyles';
 
 function Flow() {
