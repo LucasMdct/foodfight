@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { GameState, GameActions, INITIAL_GAME_STATE, START_LIVES, Who } from '../types/game';
+import {
+  GameState,
+  GameActions,
+  INITIAL_GAME_STATE,
+  START_LIVES,
+  Who,
+  Difficulty,
+} from '../types/game';
 import { GAME_CONSTANTS } from '../types/constants';
 
 interface GameStore {
@@ -19,11 +26,14 @@ export const useGameStore = create<GameStore>((set) => ({
   actions: {
     pick: (who: Who) => set((s) => ({ state: { ...s.state, who } })),
 
-    start: () =>
+    toDifficulty: () => set((s) => ({ state: { ...s.state, screen: 'difficulty' } })),
+
+    start: (difficulty?: Difficulty) =>
       set((s) => ({
         state: {
           ...s.state,
           screen: 'game',
+          difficulty: difficulty ?? s.state.difficulty,
           lives: START_LIVES,
           score: 0,
           villainHp: GAME_CONSTANTS.VILLAIN_HP,
@@ -118,7 +128,12 @@ export const useGameStore = create<GameStore>((set) => ({
 
     reset: () =>
       set((s) => ({
-        state: { ...INITIAL_GAME_STATE, who: s.state.who, best: s.state.best },
+        state: {
+          ...INITIAL_GAME_STATE,
+          who: s.state.who,
+          difficulty: s.state.difficulty,
+          best: s.state.best,
+        },
       })),
   },
 }));

@@ -17,6 +17,29 @@ describe('combat game store guards', () => {
     expect(useGameStore.getState().state.charges).toBe(0);
   });
 
+  it('stores the selected difficulty before starting a match', () => {
+    const { toDifficulty, start } = useGameStore.getState().actions;
+
+    toDifficulty();
+    expect(useGameStore.getState().state.screen).toBe('difficulty');
+
+    start('dificil');
+
+    expect(useGameStore.getState().state).toMatchObject({
+      screen: 'game',
+      difficulty: 'dificil',
+    });
+  });
+
+  it('preserves the selected difficulty when replaying', () => {
+    const { start, reset } = useGameStore.getState().actions;
+
+    start('impossivel');
+    reset();
+
+    expect(useGameStore.getState().state.difficulty).toBe('impossivel');
+  });
+
   it('does not spend more than one charge when the accepted fire callback races', () => {
     const { applyPowerFired } = useGameStore.getState().actions;
 

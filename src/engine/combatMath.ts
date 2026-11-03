@@ -1,4 +1,54 @@
 import { GAME_CONSTANTS } from '../types/constants';
+import type { Difficulty } from '../types/game';
+
+export interface DifficultyConfig {
+  readonly label: string;
+  readonly speed: number;
+  readonly interval: number;
+  readonly doubleSpawnChance: number;
+  readonly acceleration: number;
+}
+
+export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
+  mfacil: {
+    label: 'Muito Fácil',
+    speed: 215,
+    interval: 1450,
+    doubleSpawnChance: 0,
+    acceleration: 0.002,
+  },
+  facil: {
+    label: 'Fácil',
+    speed: 300,
+    interval: 1050,
+    doubleSpawnChance: 0.1,
+    acceleration: 0.004,
+  },
+  dificil: {
+    label: 'Difícil',
+    speed: 430,
+    interval: 760,
+    doubleSpawnChance: 0.3,
+    acceleration: 0.006,
+  },
+  impossivel: {
+    label: 'Impossível',
+    speed: 560,
+    interval: 540,
+    doubleSpawnChance: 0.55,
+    acceleration: 0.009,
+  },
+};
+
+export const difficultyConfigAt = (difficulty: Difficulty): DifficultyConfig => {
+  'worklet';
+  return DIFFICULTY_CONFIG[difficulty] ?? DIFFICULTY_CONFIG.facil;
+};
+
+export const milestoneCountAt = (score: number): number => {
+  'worklet';
+  return Math.floor(score / GAME_CONSTANTS.MILESTONE_SCORE_STEP);
+};
 
 export const PROJECTILE_KIND = {
   lolli: 0,

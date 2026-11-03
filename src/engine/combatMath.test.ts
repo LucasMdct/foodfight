@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   PROJECTILE_KIND,
   attackPhaseAt,
+  difficultyConfigAt,
+  milestoneCountAt,
   nextRngState,
   powerChargeAfterPickup,
   projectileKindAt,
@@ -11,6 +13,38 @@ import {
   trackShotY,
   villainYAt,
 } from './combatMath';
+
+describe('v0.0.3 difficulty presets', () => {
+  it('exposes the four handoff presets', () => {
+    expect(difficultyConfigAt('mfacil')).toMatchObject({
+      label: 'Muito Fácil',
+      speed: 215,
+      interval: 1450,
+      doubleSpawnChance: 0,
+      acceleration: 0.002,
+    });
+    expect(difficultyConfigAt('facil').label).toBe('Fácil');
+    expect(difficultyConfigAt('dificil').label).toBe('Difícil');
+    expect(difficultyConfigAt('impossivel')).toMatchObject({
+      label: 'Impossível',
+      speed: 560,
+      interval: 540,
+      doubleSpawnChance: 0.55,
+      acceleration: 0.009,
+    });
+  });
+
+  it('falls back to the regular preset for an invalid runtime key', () => {
+    expect(difficultyConfigAt('invalid' as never)).toEqual(difficultyConfigAt('facil'));
+  });
+
+  it('counts score milestones at each 100-point boundary', () => {
+    expect(milestoneCountAt(99)).toBe(0);
+    expect(milestoneCountAt(100)).toBe(1);
+    expect(milestoneCountAt(199)).toBe(1);
+    expect(milestoneCountAt(200)).toBe(2);
+  });
+});
 
 describe('attack phases', () => {
   it.each([

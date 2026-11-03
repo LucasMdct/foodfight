@@ -1,5 +1,6 @@
 export type Who = 'alface' | 'feijao' | 'arroz';
-export type Screen = 'select' | 'game' | 'over' | 'win';
+export type Difficulty = 'mfacil' | 'facil' | 'dificil' | 'impossivel';
+export type Screen = 'select' | 'difficulty' | 'game' | 'over' | 'win';
 export type GameToast =
   'food-collected' | { readonly type: 'power-fired'; readonly name: string } | null;
 export type VillainMood = 'feliz' | 'bravo';
@@ -12,6 +13,7 @@ export type VillainMood = 'feliz' | 'bravo';
 export interface GameState {
   screen: Screen;
   who: Who;
+  difficulty: Difficulty;
   lives: number;
   score: number;
   best: number;
@@ -26,7 +28,8 @@ export interface GameState {
 
 export interface GameActions {
   pick: (who: Who) => void;
-  start: () => void;
+  toDifficulty: () => void;
+  start: (difficulty?: Difficulty) => void;
   hitHero: () => void;
   incrementScore: (points: number) => void;
   applyVillainHit: () => void;
@@ -44,6 +47,7 @@ export const START_LIVES = 3;
 export const INITIAL_GAME_STATE: GameState = {
   screen: 'select',
   who: 'alface',
+  difficulty: 'facil',
   lives: START_LIVES,
   score: 0,
   best: 0,
