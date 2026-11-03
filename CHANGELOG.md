@@ -19,6 +19,8 @@ This project has **two version tracks**, because it changed identity partway thr
 
 - Fixed the select-screen footer to read the current app version from `app.json` instead of displaying the stale `v0.0.1` label.
 - Fixed the white flash between the loading burst and the select screen by keeping the themed app surface visible during the transition.
+- Fixed the native Expo splash to use the FoodFight asset and cream background instead of the default centered symbol.
+- Fixed the loading burst clipping the logo by limiting its scale to a subtle 1.08x transition.
 
 ---
 
