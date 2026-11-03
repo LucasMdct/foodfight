@@ -62,7 +62,7 @@ export interface RunnerEngine {
   reset: () => void;
 }
 
-/** v0.0.2 combat loop: positions and authorization stay on the UI thread. */
+/** v0.0.4 combat loop: positions and authorization stay on the UI thread. */
 export const useRunnerEngine = (
   screenWidth: number,
   screenHeight: number,
@@ -117,7 +117,7 @@ export const useRunnerEngine = (
     () => Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () => makeMutable(0)),
     []
   );
-  const obstacleResistant = useMemo(
+  const obstacleScored = useMemo(
     () => Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () => makeMutable(0)),
     []
   );
@@ -133,7 +133,7 @@ export const useRunnerEngine = (
     () => Array.from({ length: GAME_CONSTANTS.POWER_SHOT_POOL_SIZE }, () => makeMutable(0)),
     []
   );
-  const bubbleX = useMemo(() => makeMutable(-GAME_CONSTANTS.BUBBLE_SIZE), []);
+  const bubbleX = useMemo(() => makeMutable(-GAME_CONSTANTS.BUBBLE_RENDER_SIZE), []);
   const bubbleY = useMemo(() => makeMutable(0), []);
   const bubbleLane = useMemo(() => makeMutable(0), []);
   const bubbleActive = useMemo(() => makeMutable(0), []);
@@ -163,7 +163,6 @@ export const useRunnerEngine = (
   const bubblePending = useMemo(() => makeMutable(0), []);
   const bubbleThreshold = useMemo(() => makeMutable(GAME_CONSTANTS.BUBBLE_EVERY), []);
   const nextMilestone = useMemo(() => makeMutable(GAME_CONSTANTS.MILESTONE_SCORE_STEP), []);
-  const powerUntilScore = useMemo(() => makeMutable(-1), []);
   const burstPending = useMemo(() => makeMutable(0), []);
   const burstLane = useMemo(() => makeMutable(1), []);
   const burstNextAt = useMemo(() => makeMutable(0), []);
@@ -188,10 +187,6 @@ export const useRunnerEngine = (
   const applyFoodCollected = useCallback((generation: number) => {
     if (generation !== activeMatchGeneration.current) return;
     useGameStore.getState().actions.collectFood();
-  }, []);
-  const applyPowerCharge = useCallback((generation: number) => {
-    if (generation !== activeMatchGeneration.current) return;
-    useGameStore.getState().actions.grantPowerCharge();
   }, []);
   const applyVillainBurst = useCallback((generation: number) => {
     if (generation !== activeMatchGeneration.current) return;
@@ -252,24 +247,70 @@ export const useRunnerEngine = (
       const acceptedPowerIndex = powerIndex.value;
       charges.value -= 1;
       powerIndex.value = (powerIndex.value + 1) % 3;
-      powerUntilScore.value = scoreMirror.value + GAME_CONSTANTS.POWER_MODE_SCORE_DURATION;
       shotX[slot].value = heroX + GAME_CONSTANTS.HERO_WIDTH;
       shotY[slot].value =
         heroLane.value * laneHeight + (laneHeight - GAME_CONSTANTS.HERO_HEIGHT) / 2;
       shotActive[slot].value = 1;
       scheduleOnRN(applyPowerFired, acceptedPowerIndex, matchGeneration.value);
+      const now = elapsedTime.value;
+      for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
+        if (obstacleActive[index].value === 0) continue;
+        const size =
+          obstacleKind[index].value === PROJECTILE_KIND.zumbi
+            ? GAME_CONSTANTS.ZOMBIE_RENDER_SIZE
+            : GAME_CONSTANTS.CANDY_SIZE * GAME_CONSTANTS.PROJECTILE_SIZE_MULTIPLIER;
+        const x = obstacleX[index].value;
+        if (x > screenWidth + 10 || x + size <= 0) continue;
+        // Mark score ownership before releasing the slot or bridging to React.
+        if (obstacleScored[index].value === 0) {
+          obstacleScored[index].value = 1;
+          scoreMirror.value += GAME_CONSTANTS.SCORE_PER_DODGE;
+          scheduleOnRN(applyScore, GAME_CONSTANTS.SCORE_PER_DODGE, matchGeneration.value);
+        }
+        obstacleActive[index].value = 0;
+        let effectSlot = -1;
+        for (
+          let effectIndex = 0;
+          effectIndex < GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE;
+          effectIndex += 1
+        ) {
+          if (burstFxActive[effectIndex].value === 0 || now >= burstFxUntil[effectIndex].value) {
+            effectSlot = effectIndex;
+            break;
+          }
+        }
+        if (effectSlot >= 0) {
+          burstFxX[effectSlot].value = x + size / 2;
+          burstFxY[effectSlot].value = obstacleY[index].value + size / 2;
+          burstFxRotation[effectSlot].value = index * 0.8 + now * 0.001;
+          burstFxUntil[effectSlot].value = now + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+          burstFxActive[effectSlot].value = 1;
+        }
+      }
     });
   }, [
     applyPowerFired,
+    applyScore,
+    burstFxActive,
+    burstFxRotation,
+    burstFxUntil,
+    burstFxX,
+    burstFxY,
     charges,
+    elapsedTime,
     frozen,
     heroLane,
     heroX,
     laneHeight,
     matchGeneration,
     powerIndex,
-    powerUntilScore,
+    obstacleActive,
+    obstacleKind,
+    obstacleScored,
+    obstacleX,
+    obstacleY,
     scoreMirror,
+    screenWidth,
     shotActive,
     shotX,
     shotY,
@@ -297,7 +338,6 @@ export const useRunnerEngine = (
     powerIndex.value = 0;
     difficultyIndex.value = difficultyIndexAt(difficulty);
     nextMilestone.value = GAME_CONSTANTS.MILESTONE_SCORE_STEP;
-    powerUntilScore.value = -1;
     burstPending.value = 0;
     burstLane.value = 1;
     burstNextAt.value = 0;
@@ -307,7 +347,7 @@ export const useRunnerEngine = (
     villainY.value = villainYAt(0, screenHeight, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT);
     for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
       obstacleActive[index].value = 0;
-      obstacleResistant[index].value = 0;
+      obstacleScored[index].value = 0;
       obstacleX[index].value = GAME_CONSTANTS.ENEMY_DESPAWN_X;
     }
     for (let index = 0; index < GAME_CONSTANTS.POWER_SHOT_POOL_SIZE; index += 1) {
@@ -336,10 +376,9 @@ export const useRunnerEngine = (
     matchGeneration,
     livesMirror,
     obstacleActive,
-    obstacleResistant,
+    obstacleScored,
     obstacleX,
     powerIndex,
-    powerUntilScore,
     nextMilestone,
     scoreMirror,
     screenHeight,
@@ -361,9 +400,9 @@ export const useRunnerEngine = (
     villainY.value = villainYAt(0, screenHeight, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT);
     for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
       obstacleActive[index].value = 0;
-      obstacleResistant[index].value = 0;
+      obstacleScored[index].value = 0;
     }
-  }, [heroLane, heroTopY, heroY, obstacleActive, obstacleResistant, screenHeight, villainY]);
+  }, [heroLane, heroTopY, heroY, obstacleActive, obstacleScored, screenHeight, villainY]);
 
   useFrameCallback((frame) => {
     'worklet';
@@ -447,7 +486,7 @@ export const useRunnerEngine = (
         if (spawnIndex === 0) primaryLane = lane;
         obstacleKind[slot].value = kind;
         obstacleLane[slot].value = lane;
-        obstacleResistant[slot].value = 0;
+        obstacleScored[slot].value = 0;
         obstacleX[slot].value = screenWidth - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
         obstacleY[slot].value = laneTopY(
           lane,
@@ -482,7 +521,7 @@ export const useRunnerEngine = (
       if (slot >= 0) {
         obstacleKind[slot].value = PROJECTILE_KIND.zumbi;
         obstacleLane[slot].value = burstLane.value;
-        obstacleResistant[slot].value = 1;
+        obstacleScored[slot].value = 0;
         obstacleX[slot].value = screenWidth - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
         obstacleY[slot].value = laneTopY(
           burstLane.value,
@@ -527,46 +566,12 @@ export const useRunnerEngine = (
       obstacleX[index].value -= speed * projectileSpeedMultiplier(kind as ProjectileKind) * dt;
       const x = obstacleX[index].value;
       if (x + size < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
-        obstacleActive[index].value = 0;
-        scoreMirror.value += GAME_CONSTANTS.SCORE_PER_DODGE;
-        scheduleOnRN(applyScore, GAME_CONSTANTS.SCORE_PER_DODGE, matchGeneration.value);
-        while (scoreMirror.value >= bubbleThreshold.value) {
-          bubblePending.value += 1;
-          bubbleThreshold.value += GAME_CONSTANTS.BUBBLE_EVERY;
-        }
-        continue;
-      }
-      if (
-        scoreMirror.value < powerUntilScore.value &&
-        obstacleResistant[index].value === 0 &&
-        x > heroRight &&
-        x < screenWidth * 0.62
-      ) {
-        let effectSlot = -1;
-        for (
-          let effectIndex = 0;
-          effectIndex < GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE;
-          effectIndex += 1
-        ) {
-          if (burstFxActive[effectIndex].value === 0 || now >= burstFxUntil[effectIndex].value) {
-            effectSlot = effectIndex;
-            break;
-          }
-        }
-        if (effectSlot >= 0) {
-          burstFxX[effectSlot].value = x + size / 2;
-          burstFxY[effectSlot].value = obstacleY[index].value + size / 2;
-          burstFxRotation[effectSlot].value = index * 0.8 + now * 0.001;
-          burstFxUntil[effectSlot].value = now + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
-          burstFxActive[effectSlot].value = 1;
+        if (obstacleScored[index].value === 0) {
+          obstacleScored[index].value = 1;
+          scoreMirror.value += GAME_CONSTANTS.SCORE_PER_DODGE;
+          scheduleOnRN(applyScore, GAME_CONSTANTS.SCORE_PER_DODGE, matchGeneration.value);
         }
         obstacleActive[index].value = 0;
-        scoreMirror.value += GAME_CONSTANTS.SCORE_PER_DODGE;
-        scheduleOnRN(applyScore, GAME_CONSTANTS.SCORE_PER_DODGE, matchGeneration.value);
-        while (scoreMirror.value >= bubbleThreshold.value) {
-          bubblePending.value += 1;
-          bubbleThreshold.value += GAME_CONSTANTS.BUBBLE_EVERY;
-        }
         continue;
       }
       if (
@@ -588,24 +593,26 @@ export const useRunnerEngine = (
 
     while (scoreMirror.value >= nextMilestone.value) {
       nextMilestone.value += GAME_CONSTANTS.MILESTONE_SCORE_STEP;
-      charges.value = powerChargeAfterPickup(charges.value);
       burstPending.value += GAME_CONSTANTS.VILLAIN_BURST_COUNT;
       burstLane.value = villainLane;
       if (burstPending.value === GAME_CONSTANTS.VILLAIN_BURST_COUNT) {
         burstDelayIndex.value = 0;
         burstNextAt.value = now + GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[0];
       }
-      scheduleOnRN(applyPowerCharge, matchGeneration.value);
       scheduleOnRN(applyVillainBurst, matchGeneration.value);
     }
 
+    while (scoreMirror.value >= bubbleThreshold.value) {
+      bubblePending.value += 1;
+      bubbleThreshold.value += GAME_CONSTANTS.BUBBLE_EVERY;
+    }
     if (bubbleActive.value === 0 && bubblePending.value > 0) {
       bubblePending.value -= 1;
       bubbleActive.value = 1;
       rngState.value = nextRngState(rngState.value);
       bubbleLane.value = Math.floor(rngUnit(rngState.value) * LANE_COUNT);
       bubbleX.value = screenWidth + GAME_CONSTANTS.ENEMY_SPAWN_X_OFFSET;
-      bubbleY.value = laneTopY(bubbleLane.value, laneHeight, GAME_CONSTANTS.BUBBLE_SIZE);
+      bubbleY.value = laneTopY(bubbleLane.value, laneHeight, GAME_CONSTANTS.BUBBLE_RENDER_SIZE);
     }
     if (bubbleActive.value === 1) {
       bubbleX.value -= speed * 0.55 * dt;
@@ -615,13 +622,13 @@ export const useRunnerEngine = (
           heroLeft,
           heroRight,
           bubbleX.value - GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
-          bubbleX.value + GAME_CONSTANTS.BUBBLE_SIZE + GAME_CONSTANTS.BUBBLE_HITBOX_PADDING
+          bubbleX.value + GAME_CONSTANTS.BUBBLE_RENDER_SIZE + GAME_CONSTANTS.BUBBLE_HITBOX_PADDING
         )
       ) {
         bubbleActive.value = 0;
         charges.value = powerChargeAfterPickup(charges.value);
         scheduleOnRN(applyFoodCollected, matchGeneration.value);
-      } else if (bubbleX.value + GAME_CONSTANTS.BUBBLE_SIZE < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
+      } else if (bubbleX.value < GAME_CONSTANTS.BUBBLE_DESPAWN_X) {
         bubbleActive.value = 0;
       }
     }

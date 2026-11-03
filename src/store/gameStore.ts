@@ -134,19 +134,6 @@ export const useGameStore = create<GameStore>((set) => ({
         };
       }),
 
-    grantPowerCharge: () =>
-      set((s) => {
-        if (s.state.screen !== 'game') return s;
-        return {
-          state: {
-            ...s.state,
-            charges: Math.min(GAME_CONSTANTS.POWER_MAX_CHARGES, s.state.charges + 1),
-            toast: 'milestone-power',
-            toastId: s.state.toastId + 1,
-          },
-        };
-      }),
-
     collectFood: () =>
       set((s) => {
         if (s.state.screen !== 'game') return s;

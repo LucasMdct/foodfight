@@ -10,8 +10,8 @@ The project has two eras: the **POC** that tested React Native Skia, and the **g
 
 | Document                                   | What it covers                                                            | Read time |
 | ------------------------------------------ | ------------------------------------------------------------------------- | --------- |
-| [architecture.md](./architecture.md)       | How the current game is built, including v0.0.4 Task 2 constants         | 20 min    |
-| [testing.md](./testing.md)                 | The v0.0.3 validation protocol — automated checks pass; device QA pending | 12 min    |
+| [architecture.md](./architecture.md)       | How the current game is built, including v0.0.4 Task 3 power semantics   | 20 min    |
+| [testing.md](./testing.md)                 | Validation through v0.0.4 Task 3 — device QA pending                         | 12 min    |
 | [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix                                                     | reference |
 | [results.md](./results.md)                 | POC measurements and the unresolved frame-rate verdict                    | 8 min     |
 

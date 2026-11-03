@@ -24,6 +24,8 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ### Changed
 
+- Grant v0.0.4 power charges only from collected food bubbles, queued at every 100 points and served one at a time with 84 px bounds and a −90 px despawn boundary.
+- Clear every visible sweet and zombie immediately on accepted power fire, award 10 points once per enemy, and request centered confetti while the shot continues toward the Barão.
 - Change the screen flow to Loading → Select hero → Choose difficulty → Game → Result.
 - Preserve the selected difficulty when replaying a match.
 - Lock difficulty speed, spawn interval, and double-spawn chance to each preset for v0.0.4; remove the elapsed-time ramp.

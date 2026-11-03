@@ -2,7 +2,7 @@
 
 The validation protocol for Food Fight v0.0.3. Pure combat rules and race conditions are covered by automated Vitest tests; frame timing and visual fidelity still require a physical device because the question that matters most (render performance on real hardware) cannot be answered any other way.
 
-**Status: automated v0.0.3 checks pass; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.3 draws enlarged projectiles, a larger Barão, and milestone bursts, treat that result as a **baseline, not a prediction**.
+**Status: automated checks cover v0.0.4 through Task 3; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.3 draws enlarged projectiles, a larger Barão, and milestone bursts, treat that result as a **baseline, not a prediction**.
 
 ---
 
@@ -121,10 +121,10 @@ Watch for a spawn _gap_ — if all 10 enemy slots are busy, that tick is skipped
 - The HUD power button fires on press-in, not on release, and a double tap with one charge creates only one shot
 - A shot moves right, reaches the Barão and removes one HP; five accepted hits show the win result
 - A shot never spends a charge when all three shot slots are occupied
-- Every 100 points grants one power charge, capped at three, and triggers one Barão burst.
-- A power shot clears normal projectiles in front of the hero for the next 40 score points.
-- Zombie projectiles launched by the Barão's milestone burst resist power clear mode.
-- Food bubbles appear one at a time after each 300-point threshold; collecting one adds a charge but never exceeds three
+- Every 100 points queues one food bubble and triggers one Barão burst; score alone grants no charge.
+- An accepted power immediately clears every visible sweet and zombie, including enemies behind the hero, awards ten points once per enemy, and requests centered confetti.
+- Later spawns survive until another accepted fire. A saturated confetti pool drops effects without dropping clears or score.
+- Food bubbles appear one at a time after each 100-point threshold; collecting one adds a charge but never exceeds three. Check the 84 px bounds and −90 px left-edge despawn boundary.
 - A full-charge pickup still shows feedback and does not increase the charge count
 - A late enemy hit cannot replace a frozen win with Game Over
 
@@ -216,7 +216,7 @@ The automated suite includes `src/engine/combatMath.test.ts`,
 cover difficulty presets, score milestones, seeded distribution, clamped villain
 motion, soft shot tracking, UI-thread charge authorization, zero-charge starts,
 food pickup caps and padding, automatic bubble thresholds, invulnerability,
-zombie hitboxes, resistant bursts, power clearing, phase-four sugar rain, pool
+zombie hitboxes, milestone bursts, full-screen power clearing, centered confetti, phase-four sugar rain, pool
 saturation, power rotation, reset/replay and terminal result races.
 
 Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint. GitHub Actions runs typecheck, lint and tests on every PR.
@@ -271,6 +271,6 @@ Carried from the branch's known debts — none of these have been verified on ha
 - Frame rate under the full v0.0.3 scene, including the four-variant enemy pool, enlarged Barão, and milestone bursts
 - Barão `bravo` expression timing and visual fidelity on a physical device
 - Difficulty card layout and all four difficulty presets on a short landscape device
-- Barão lane-origin normal attacks and staggered resistant zombie bursts
-- 40-point power clear mode versus resistant burst projectiles
+- Barão lane-origin normal attacks and staggered zombie bursts
+- Bubble-only charging, full-screen power clears including zombies, and centered confetti
 - p95 comparison against the v0.0.1 baseline using the platform profiler

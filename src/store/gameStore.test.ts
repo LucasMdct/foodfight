@@ -62,12 +62,20 @@ describe('combat game store guards', () => {
     expect(VILLAIN_OUCHES).toContain(useGameStore.getState().state.villainTaunt);
   });
 
-  it('grants milestone power without using the food pickup toast', () => {
-    useGameStore.getState().actions.grantPowerCharge();
+  it('exposes no automatic milestone charge action', () => {
+    expect(useGameStore.getState().actions).not.toHaveProperty('grantPowerCharge');
+  });
+
+  it('keeps charges and pickup feedback unchanged when score crosses 100', () => {
+    const { start, incrementScore } = useGameStore.getState().actions;
+    start();
+    incrementScore(90);
+    incrementScore(10);
 
     expect(useGameStore.getState().state).toMatchObject({
-      charges: 2,
-      toast: 'milestone-power',
+      score: 100,
+      charges: 0,
+      toast: null,
     });
   });
 

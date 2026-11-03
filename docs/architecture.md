@@ -2,7 +2,7 @@
 
 How Food Fight is built, and why it is built this way.
 
-**Scope:** this describes the current game, including the v0.0.4 Task 2 constants and fixed difficulty presets. Other v0.0.4 gameplay changes remain in the [v0.0.4 plan](./plans/2026-11-03-foodfight-v004.md). The POC that preceded the game is documented in [results.md](./results.md).
+**Scope:** this describes the current game through v0.0.4 Task 3: fixed difficulty presets, bubble-only charges, and full-screen power clears. Other v0.0.4 gameplay changes remain in the [v0.0.4 plan](./plans/2026-11-03-foodfight-v004.md). The POC that preceded the game is documented in [results.md](./results.md).
 
 ---
 
@@ -97,8 +97,8 @@ Created once with `makeMutable` and memoised so they survive re-renders:
 | `bubbleX`, `bubbleY`, `bubbleActive`                                                 | One visible food bubble at a time                 |
 | `villainY`, `villainHpMirror`, `charges`, `powerIndex`, `difficultyIndex`            | UI-thread villain, fire, and difficulty mirrors   |
 | `livesMirror`, `scoreMirror`, `rngState`                                             | Local collision/result state and seeded PRNG      |
-| `spawnAccum`, `bubblePending`, `bubbleThreshold`, `nextMilestone`, `powerUntilScore` | Score and spawn accumulators                      |
-| `obstacleResistant[]`, `burstPending`, `burstLane`, `burstNextAt`                    | Resistant Barão burst metadata                    |
+| `spawnAccum`, `bubblePending`, `bubbleThreshold`, `nextMilestone` | Score and spawn accumulators                      |
+| `obstacleScored[]`, `burstPending`, `burstLane`, `burstNextAt`                    | Score ownership and Barão burst metadata                    |
 | `burstFxX[]`, `burstFxY[]`, `burstFxActive[]`, `burstFxRotation[]`                   | Eight-slot power-clear confetti effect pool       |
 | `frozen`                                                                             | 1 freezes the simulation before a terminal bridge |
 
@@ -114,7 +114,7 @@ Created once with `makeMutable` and memoised so they survive re-renders:
 
 **Consequence:** zero allocation per frame, and therefore no GC pressure from the loop. This is what kept memory flat through the POC's stress testing.
 
-**Trade-off:** if all 12 enemy slots or all 3 shot slots are busy, that spawn/fire request is skipped. The v0.0.2 performance gate permits the approved typed sub-pool fallback if the four-variant opacity tree exceeds the p95 budget. v0.0.3 adds only preallocated resistant flags and burst counters; it does not add a dynamic projectile collection.
+**Trade-off:** if all 12 enemy slots or all 3 shot slots are busy, that spawn/fire request is skipped. A saturated eight-slot confetti pool skips only the effect; the clear and score still apply. The deterministic harness emits `spawnSkipped` for rejected requests. The v0.0.2 performance gate permits the approved typed sub-pool fallback if the four-variant opacity tree exceeds the p95 budget. Score flags and burst counters are preallocated; there is no dynamic projectile collection.
 
 ### The frame loop
 
@@ -129,14 +129,13 @@ useFrameCallback(frame):
   7. tablecloth scroll: 88px loop every 900ms
   8. selected difficulty: read fixed speed, interval, and double-spawn chance from the preset
   9. spawn: use the current Barão lane for the primary projectile, use the approved adjacent-lane formula for an optional secondary, advance the seeded PRNG, and activate typed slots
- 10. milestone: every 100 score points queue one charge and three resistant zombies
+ 10. serve scheduled zombie bursts from the fixed pool
  11. move active power shots with soft villain-Y tracking and resolve villain hits first
  12. for each active enemy:
        move left by speed * dt
-       if power mode and non-resistant? deactivate and +10 score
-       off-screen? → deactivate, +10 score
+       off-screen? → mark scored, +10 once, deactivate
        same lane as hero and not invulnerable? → AABB test on X
- 13. serve pending bubble thresholds one at a time
+ 13. queue three zombies and one bubble per crossed 100-point threshold; serve bubbles one at a time
  14. flicker: derive heroOpacity from time remaining on invulnUntil
 ```
 
@@ -152,7 +151,9 @@ Details worth knowing before touching this:
 
 The first spawn starts after the handoff warmup accumulator (`INITIAL_SPAWN_ACCUMULATOR_MS`, 400 ms), not after a full preset interval. This keeps the opening readable while preserving the selected cadence afterward.
 
-**Milestones and power mode.** When the UI-thread score mirror crosses 100 points, the loop increments the capped charge mirror, schedules one discrete charge bridge and queues three resistant zombies. The burst lane is captured from the current Barão lane and slots are activated at the handoff timestamps 160, 460, and 760 ms. An accepted power shot sets `powerUntilScore` to `score + 40`; normal enemies ahead of the hero are cleared for score and claim a slot in the eight-entry confetti effect pool, while resistant burst enemies continue.
+**Milestones, bubbles, and power.** Each crossed 100-point threshold queues one bubble and three zombies; it grants no charge. The burst lane is captured from the current Barão lane and slots are activated at the handoff timestamps 160, 460, and 760 ms. Bubbles are served one at a time, use 84 px render/collision bounds, and despawn when their left edge passes −90 px. Collection alone adds a charge, capped at three.
+
+An accepted fire validates a charge and free shot slot on the UI thread, then immediately clears visible active enemies of every kind, including zombies and enemies behind the hero. The visibility check excludes sprites entirely left of the field and uses the handoff's right-edge tolerance of `screenWidth + 10`. Each slot is marked scored before it is released or its score bridge runs, so a later despawn cannot award another ten points. Every cleared slot requests confetti at its sprite center; the shot continues toward the Barão. There is no persistent power window, so later spawns are unaffected.
 
 **The collision test only checks X (step 12).** Y overlap is implied: hero and candy are both vertically centred in the same lane, and lane membership is already checked with an integer comparison. Testing Y would be redundant work in the hot loop. The hitbox is the hero inset by `HERO_HITBOX_PADDING` (18 px) on the X axis, taken from the design's collision math.
 
@@ -173,9 +174,8 @@ The first spawn starts after the handoff warmup accumulator (`INITIAL_SPAWN_ACCU
 | `applyVillainHit`        | once per accepted shot reaching the villain           |
 | `applyPowerFired(index)` | once per accepted UI-thread fire                      |
 | `applyFoodCollected`     | once per bubble pickup                                |
-| `applyPowerCharge`       | once per crossed 100-point milestone                  |
 | `applyVillainBurst`      | once per crossed 100-point milestone                  |
-| `applyScore`             | once per enemy dodged                                 |
+| `applyScore`             | once per previously unscored enemy dodged or cleared   |
 
 ---
 
@@ -205,7 +205,7 @@ GameState = {
 
 Hero position, enemy/shot positions, bubble position, scroll offset, flicker phase and the authoritative UI-thread charge mirror are deliberately **not** React state. Putting per-frame values in the store is the single easiest way to destroy the frame rate. The store keeps the discrete UI projection and guards every terminal action by `screen === 'game'`.
 
-`hitHero` decrements lives; reaching 0 sets `screen: 'over'` and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 sets `screen: 'win'` and captures the record. `applyPowerFired` refuses to overdraw charges, `collectFood` caps food pickups at three, and `grantPowerCharge` handles the 100-point milestone toast. `triggerVillainBurst` exposes the discrete attack animation and random taunt, while `applyVillainHit` exposes the random ouch reaction. `reset` restores initial state but preserves `who`, `difficulty`, and `best`.
+`hitHero` decrements lives; reaching 0 sets `screen: 'over'` and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 sets `screen: 'win'` and captures the record. `applyPowerFired` refuses to overdraw charges and `collectFood` caps food pickups at three. There is no automatic milestone charge action or toast. `triggerVillainBurst` exposes the discrete attack animation and random taunt, while `applyVillainHit` exposes the random ouch reaction. `reset` restores initial state but preserves `who`, `difficulty`, and `best`.
 
 **Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `Hud` and the development loop readout own the leaf subscriptions, while `GameScreen` subscribes to scene selection, villain mood, villain attack state, and villain talk text, so unrelated combat HUD updates do not re-render the Canvas subtree.
 
@@ -307,14 +307,14 @@ A third `Gesture.Tap()` maps the tap's Y to a lane direction: top half moves up,
 | `VILLAIN_HP`                               | 5           | Shots required to win                                         |
 | `VILLAIN_RENDER_WIDTH` / `_HEIGHT`         | 224 / 242   | v0.0.4 Barão visual bounds                                    |
 | `ZOMBIE_RENDER_SIZE`                       | 96          | v0.0.3 zombie visual and hitbox basis                         |
-| `VILLAIN_BURST_COUNT`                      | 3           | Resistant zombies per 100-point milestone                     |
-| `MILESTONE_SCORE_STEP`                     | 100         | Score interval for charge and burst                           |
-| `POWER_MODE_SCORE_DURATION`                | 40          | Score points for normal-projectile clear mode                 |
+| `VILLAIN_BURST_COUNT`                      | 3           | Zombies per 100-point milestone                               |
+| `MILESTONE_SCORE_STEP`                     | 100         | Score interval for zombie bursts                              |
 | `POWER_MAX_CHARGES`                        | 3           | Charge cap                                                    |
 | `BUBBLE_EVERY`                             | 100         | Score threshold for a pending food bubble                     |
 | `POWER_SHOT_SPEED`                         | 620 px/s    | Horizontal shot speed                                         |
 | `ENEMY_POOL_SIZE` / `POWER_SHOT_POOL_SIZE` | 12 / 3      | Fixed enemy and shot pools                                    |
 | `BUBBLE_SIZE` / `ZOMBIE_SIZE`              | 72 / 76     | Bubble and zumbi geometry bases                               |
+| `BUBBLE_RENDER_SIZE` / `BUBBLE_DESPAWN_X`   | 84 / −90    | Bubble render bounds and left-edge recycle boundary            |
 | `VILLAIN_CYCLE_MS`                         | 1700 ms     | Full villain vertical cycle                                   |
 | `ENEMY_SPAWN_FROM_RIGHT` / `ENEMY_DESPAWN_X` | 210 / −120 | Projectile spawn and recycle boundaries                    |
 | `BUBBLE_HITBOX_PADDING`                    | 14          | Forgiving food-bubble collection padding                      |

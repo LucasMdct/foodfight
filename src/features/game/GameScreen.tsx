@@ -138,7 +138,11 @@ const FoodBubbleSlot = ({
   const transform = useDerivedValue(() => [{ translateX: x.value }, { translateY: y.value }]);
   return (
     <Group transform={transform} opacity={active}>
-      <FoodBubbleVisual />
+      <Group
+        transform={[{ scale: GAME_CONSTANTS.BUBBLE_RENDER_SIZE / GAME_CONSTANTS.BUBBLE_SIZE }]}
+      >
+        <FoodBubbleVisual />
+      </Group>
     </Group>
   );
 };

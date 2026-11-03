@@ -5,6 +5,21 @@ import { PROJECTILE_KIND, villainYAt } from './combatMath';
 import { runCombatScenario } from './combatSimulation';
 
 describe('combat simulation fire authorization', () => {
+  it('rejects a saturated shot pool without spending or clearing enemies', () => {
+    const result = runCombatScenario({
+      seed: 1,
+      charges: 3,
+      enemies: [{ x: 950, lane: 0, kind: PROJECTILE_KIND.lolli }],
+      bubble: { x: 140, lane: 1 },
+      frames: Array.from({ length: 4 }, () => ({ dtMs: 0, fire: true })),
+    });
+
+    expect(result.events.filter((event) => event.type === 'powerFired')).toHaveLength(3);
+    expect(result.events.filter((event) => event.type === 'spawnSkipped')).toHaveLength(1);
+    expect(result.snapshot.charges).toBe(1);
+    expect(result.snapshot.activeEnemies).toBe(1);
+  });
+
   it('accepts at most one fire from two requests with one charge', () => {
     const result = runCombatScenario({
       seed: 1,
@@ -50,6 +65,37 @@ describe('combat simulation result races', () => {
 });
 
 describe('combat simulation food bubble', () => {
+  it('uses the 84px bubble bounds for collection', () => {
+    const result = runCombatScenario({
+      seed: 1,
+      enemies: [],
+      bubble: { x: 10, lane: 1 },
+      frames: [{ dtMs: 0 }],
+    });
+
+    expect(result.snapshot.charges).toBe(1);
+    expect(result.events).toContainEqual({ type: 'foodCollected', charges: 1 });
+  });
+
+  it('queues each crossed threshold and serves one bubble after the active bubble passes -90', () => {
+    const result = runCombatScenario({
+      seed: 1,
+      score: 90,
+      charges: 1,
+      enemies: Array.from({ length: 12 }, () => ({
+        x: 600,
+        lane: 0,
+        kind: PROJECTILE_KIND.lolli,
+      })),
+      bubble: { x: -91, lane: 0 },
+      frames: [{ dtMs: 0, fire: true }, { dtMs: 0 }],
+    });
+
+    expect(result.snapshot.score).toBe(210);
+    expect(result.events.filter((event) => event.type === 'bubbleSpawned')).toHaveLength(1);
+    expect(result.snapshot).toMatchObject({ bubbleActive: true, bubblePending: 1, charges: 0 });
+  });
+
   it('collects a bubble using the approved collision padding', () => {
     const result = runCombatScenario({
       seed: 5,
@@ -84,6 +130,74 @@ describe('combat simulation food bubble', () => {
     });
 
     expect(result.events.some((event) => event.type === 'bubbleSpawned')).toBe(true);
+  });
+});
+
+describe('combat simulation full-screen clear', () => {
+  it('releases an already-scored slot without awarding it again', () => {
+    const result = runCombatScenario({
+      seed: 1,
+      charges: 1,
+      score: 10,
+      enemies: [{ x: 300, lane: 0, kind: PROJECTILE_KIND.lolli, scored: true }],
+      frames: [{ dtMs: 0, fire: true }, ...Array.from({ length: 100 }, () => ({ dtMs: 50 }))],
+    });
+
+    expect(result.snapshot.activeEnemies).toBe(0);
+    expect(result.snapshot.score).toBe(10);
+    expect(result.events.filter((event) => event.type === 'score')).toHaveLength(0);
+  });
+
+  it('requests confetti at each cleared sprite center', () => {
+    const result = runCombatScenario({
+      seed: 1,
+      charges: 1,
+      enemies: [
+        { x: 300, lane: 0, kind: PROJECTILE_KIND.lolli },
+        { x: 600, lane: 2, kind: PROJECTILE_KIND.zumbi, resistant: true },
+      ],
+      frames: [{ dtMs: 0, fire: true }],
+    });
+
+    const effects = result.events.filter((event) => event.type === 'confettiSpawned');
+    expect(effects).toHaveLength(2);
+    expect(effects[0].x).toBeCloseTo(333.8);
+    expect(effects[0].y).toBeCloseTo(520 / 6);
+    expect(effects[1].x).toBe(648);
+    expect(effects[1].y).toBeCloseTo((520 * 5) / 6);
+  });
+
+  it('still clears and scores all enemies when the fixed confetti pool saturates', () => {
+    const result = runCombatScenario({
+      seed: 1,
+      charges: 1,
+      enemies: Array.from({ length: 12 }, () => ({
+        x: 600,
+        lane: 0,
+        kind: PROJECTILE_KIND.zumbi,
+        resistant: true,
+      })),
+      frames: [{ dtMs: 0, fire: true }],
+    });
+
+    expect(result.snapshot.score).toBe(120);
+    expect(result.snapshot.activeEnemies).toBe(0);
+    expect(result.events.filter((event) => event.type === 'confettiSpawned')).toHaveLength(8);
+    expect(result.events.filter((event) => event.type === 'spawnSkipped')).toHaveLength(4);
+  });
+
+  it('leaves offscreen enemies alone and does not keep clearing after fire', () => {
+    const result = runCombatScenario({
+      seed: 1,
+      charges: 1,
+      enemies: [{ x: 920, lane: 0, kind: PROJECTILE_KIND.lolli }],
+      frames: [{ dtMs: 0, fire: true }, ...Array.from({ length: 30 }, () => ({ dtMs: 50 }))],
+    });
+
+    expect(result.snapshot.activeEnemies).toBe(1);
+    expect(result.snapshot.score).toBe(0);
+    expect(result.events.filter((event) => event.type === 'powerCleared')).toHaveLength(0);
+    expect(result.events.filter((event) => event.type === 'villainHit')).toHaveLength(1);
   });
 });
 
@@ -140,7 +254,7 @@ describe('combat simulation coverage', () => {
     ).toBeGreaterThan(0);
   });
 
-  it('emits one three-zombie burst and one capped charge at a 100-point milestone', () => {
+  it('queues a bubble and a three-zombie burst at 100 without granting power', () => {
     const result = runCombatScenario({
       seed: 11,
       score: 90,
@@ -151,9 +265,11 @@ describe('combat simulation coverage', () => {
     expect(result.events.filter((event) => event.type === 'villainBurst')).toEqual([
       { type: 'villainBurst', count: GAME_CONSTANTS.VILLAIN_BURST_COUNT, lane: 1 },
     ]);
-    expect(result.events.filter((event) => event.type === 'powerChargeGranted')).toEqual([
-      { type: 'powerChargeGranted', charges: 1 },
-    ]);
+    expect(result.events).not.toContainEqual(
+      expect.objectContaining({ type: 'powerChargeGranted' })
+    );
+    expect(result.events.filter((event) => event.type === 'bubbleSpawned')).toHaveLength(1);
+    expect(result.snapshot.charges).toBe(0);
   });
 
   it('staggers burst slots at the handoff timestamps', () => {
@@ -172,19 +288,23 @@ describe('combat simulation coverage', () => {
     expect(scenario(49).snapshot.activeEnemies).toBe(3);
   });
 
-  it('clears normal projectiles but preserves resistant burst projectiles in power mode', () => {
+  it('clears sweets and resistant zombies across the screen in one accepted fire', () => {
     const result = runCombatScenario({
       seed: 12,
       charges: 1,
       enemies: [
         { x: 300, lane: 0, kind: PROJECTILE_KIND.lolli },
         { x: 300, lane: 0, kind: PROJECTILE_KIND.zumbi, resistant: true },
+        { x: 750, lane: 2, kind: PROJECTILE_KIND.donut },
       ],
       frames: [{ dtMs: 16, fire: true }],
     });
 
-    expect(result.events.filter((event) => event.type === 'powerCleared')).toHaveLength(1);
-    expect(result.snapshot.activeEnemies).toBe(1);
+    expect(result.events.filter((event) => event.type === 'powerCleared')).toHaveLength(3);
+    expect(result.snapshot.activeEnemies).toBe(0);
+    expect(result.snapshot.score).toBe(30);
+    expect(result.snapshot.activeShots).toBe(1);
+    expect(result.snapshot.villainHp).toBe(5);
   });
 
   it('queues a food bubble when power clearing crosses a 100-point threshold', () => {
@@ -200,7 +320,7 @@ describe('combat simulation coverage', () => {
     expect(result.events.some((event) => event.type === 'bubbleSpawned')).toBe(true);
   });
 
-  it('does not power-clear a projectile that is already behind the hero', () => {
+  it('clears a visible projectile behind the hero before it can hit', () => {
     const result = runCombatScenario({
       seed: 16,
       charges: 1,
@@ -208,8 +328,8 @@ describe('combat simulation coverage', () => {
       frames: [{ dtMs: 16, fire: true }],
     });
 
-    expect(result.events.filter((event) => event.type === 'powerCleared')).toHaveLength(0);
-    expect(result.events.filter((event) => event.type === 'heroHit')).toHaveLength(1);
+    expect(result.events.filter((event) => event.type === 'powerCleared')).toHaveLength(1);
+    expect(result.events.filter((event) => event.type === 'heroHit')).toHaveLength(0);
   });
 
   it('spawns normal projectiles from the Barão current lane', () => {

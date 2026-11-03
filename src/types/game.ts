@@ -2,10 +2,7 @@ export type Who = 'alface' | 'feijao' | 'arroz';
 export type Difficulty = 'mfacil' | 'facil' | 'dificil' | 'impossivel';
 export type Screen = 'select' | 'difficulty' | 'game' | 'over' | 'win';
 export type GameToast =
-  | 'food-collected'
-  | 'milestone-power'
-  | { readonly type: 'power-fired'; readonly name: string }
-  | null;
+  'food-collected' | { readonly type: 'power-fired'; readonly name: string } | null;
 export type VillainMood = 'feliz' | 'bravo';
 export type VillainTalkKind = 'taunt' | 'ouch' | null;
 
@@ -42,7 +39,6 @@ export interface GameActions {
   incrementScore: (points: number) => void;
   applyVillainHit: () => void;
   applyPowerFired: (powerIndex: number) => void;
-  grantPowerCharge: () => void;
   collectFood: () => void;
   clearToast: (toastId: number) => void;
   clearVillainMood: () => void;

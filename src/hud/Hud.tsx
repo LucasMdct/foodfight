@@ -151,9 +151,7 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
                 ? 'Comida de verdade! +1 PODER'
                 : typeof toast !== 'string' && toast.type === 'power-fired'
                   ? toast.name
-                  : toast === 'milestone-power'
-                    ? '⭐ PODER +1!'
-                    : ''}
+                  : ''}
             </Text>
           </View>
         </View>
