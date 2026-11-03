@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   PROJECTILE_KIND,
   attackPhaseAt,
+  difficultyAtIndex,
   difficultyConfigAt,
+  difficultyIndexAt,
   milestoneCountAt,
   nextRngState,
   powerChargeAfterPickup,
@@ -43,6 +45,13 @@ describe('v0.0.3 difficulty presets', () => {
     expect(milestoneCountAt(100)).toBe(1);
     expect(milestoneCountAt(199)).toBe(1);
     expect(milestoneCountAt(200)).toBe(2);
+  });
+
+  it('maps difficulty keys to a UI-thread-safe numeric mirror', () => {
+    expect(difficultyIndexAt('mfacil')).toBe(0);
+    expect(difficultyIndexAt('impossivel')).toBe(3);
+    expect(difficultyAtIndex(2)).toBe('dificil');
+    expect(difficultyAtIndex(99)).toBe('facil');
   });
 });
 

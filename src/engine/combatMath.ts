@@ -45,6 +45,22 @@ export const difficultyConfigAt = (difficulty: Difficulty): DifficultyConfig => 
   return DIFFICULTY_CONFIG[difficulty] ?? DIFFICULTY_CONFIG.facil;
 };
 
+export const difficultyIndexAt = (difficulty: Difficulty): number => {
+  'worklet';
+  if (difficulty === 'mfacil') return 0;
+  if (difficulty === 'dificil') return 2;
+  if (difficulty === 'impossivel') return 3;
+  return 1;
+};
+
+export const difficultyAtIndex = (index: number): Difficulty => {
+  'worklet';
+  if (index === 0) return 'mfacil';
+  if (index === 2) return 'dificil';
+  if (index === 3) return 'impossivel';
+  return 'facil';
+};
+
 export const milestoneCountAt = (score: number): number => {
   'worklet';
   return Math.floor(score / GAME_CONSTANTS.MILESTONE_SCORE_STEP);
@@ -114,12 +130,16 @@ export const trackShotY = (
 };
 
 /** Top-Y of the villain, centred in the playfield and clamped away from edges. */
-export const villainYAt = (elapsedMs: number, height: number): number => {
+export const villainYAt = (
+  elapsedMs: number,
+  height: number,
+  villainHeight = GAME_CONSTANTS.VILLAIN_HEIGHT
+): number => {
   'worklet';
-  const centreY = height / 2 - GAME_CONSTANTS.VILLAIN_HEIGHT / 2;
+  const centreY = height / 2 - villainHeight / 2;
   const maxAmplitude = Math.max(
     0,
-    height / 2 - GAME_CONSTANTS.VILLAIN_HEIGHT / 2 - GAME_CONSTANTS.VILLAIN_EDGE_MARGIN
+    height / 2 - villainHeight / 2 - GAME_CONSTANTS.VILLAIN_EDGE_MARGIN
   );
   const amplitude = Math.min(height * GAME_CONSTANTS.VILLAIN_AMPLITUDE_RATIO, maxAmplitude);
   const phase = (elapsedMs / GAME_CONSTANTS.VILLAIN_CYCLE_MS) * 2 * Math.PI;

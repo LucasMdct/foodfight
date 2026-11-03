@@ -11,6 +11,9 @@ import { useGameStore } from '../store/gameStore';
 import { GAME_CONSTANTS } from '../types/constants';
 import {
   attackPhaseAt,
+  difficultyAtIndex,
+  difficultyConfigAt,
+  difficultyIndexAt,
   nextRngState,
   powerChargeAfterPickup,
   projectileKindAt,
@@ -21,8 +24,9 @@ import {
   trackShotY,
   villainYAt,
 } from '../engine/combatMath';
-import { candySpeedAt, laneTopY, rectsOverlapX, spawnIntervalAt } from '../engine/math';
+import { laneTopY, rectsOverlapX } from '../engine/math';
 import { useSpin } from '../render/anim';
+import type { Difficulty } from '../types/game';
 
 const LANE_COUNT = GAME_CONSTANTS.LANE_COUNT;
 const FLICKER_BLINKS = 4;
@@ -55,7 +59,11 @@ export interface RunnerEngine {
 }
 
 /** v0.0.2 combat loop: positions and authorization stay on the UI thread. */
-export const useRunnerEngine = (screenWidth: number, screenHeight: number): RunnerEngine => {
+export const useRunnerEngine = (
+  screenWidth: number,
+  screenHeight: number,
+  difficulty: Difficulty
+): RunnerEngine => {
   const laneHeight = screenHeight / LANE_COUNT;
   const heroX = screenWidth * GAME_CONSTANTS.HERO_X_RATIO;
   const heroTopY = useCallback(
@@ -78,6 +86,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
   const charges = useMemo(() => makeMutable(useGameStore.getState().state.charges), []);
   const powerIndex = useMemo(() => makeMutable(0), []);
   const rngState = useMemo(() => makeMutable(0xf00df1), []);
+  const difficultyIndex = useMemo(() => makeMutable(difficultyIndexAt(difficulty)), [difficulty]);
 
   const obstacleX = useMemo(
     () => Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () => makeMutable(-100)),
@@ -102,6 +111,10 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     () => Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () => makeMutable(0)),
     []
   );
+  const obstacleResistant = useMemo(
+    () => Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () => makeMutable(0)),
+    []
+  );
   const shotX = useMemo(
     () => Array.from({ length: GAME_CONSTANTS.POWER_SHOT_POOL_SIZE }, () => makeMutable(0)),
     []
@@ -123,6 +136,11 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
   const spawnAccum = useMemo(() => makeMutable(GAME_CONSTANTS.SPAWN_INTERVAL), []);
   const bubblePending = useMemo(() => makeMutable(0), []);
   const bubbleThreshold = useMemo(() => makeMutable(GAME_CONSTANTS.BUBBLE_EVERY), []);
+  const nextMilestone = useMemo(() => makeMutable(GAME_CONSTANTS.MILESTONE_SCORE_STEP), []);
+  const powerUntilScore = useMemo(() => makeMutable(-1), []);
+  const burstPending = useMemo(() => makeMutable(0), []);
+  const burstLane = useMemo(() => makeMutable(1), []);
+  const burstNextAt = useMemo(() => makeMutable(0), []);
   const fpsAccum = useMemo(() => makeMutable(0), []);
   const fpsFrames = useMemo(() => makeMutable(0), []);
 
@@ -138,6 +156,12 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
   const applyFoodCollected = useCallback(() => {
     useGameStore.getState().actions.collectFood();
   }, []);
+  const applyPowerCharge = useCallback(() => {
+    useGameStore.getState().actions.grantPowerCharge();
+  }, []);
+  const applyVillainBurst = useCallback(() => {
+    useGameStore.getState().actions.triggerVillainBurst();
+  }, []);
   const applyFps = useCallback((fps: number) => {
     useGameStore.getState().actions.updateFps(fps);
   }, []);
@@ -149,6 +173,10 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
   useEffect(() => {
     frozen.value = storeScreen === 'game' ? 0 : 1;
   }, [frozen, storeScreen]);
+
+  useEffect(() => {
+    difficultyIndex.value = difficultyIndexAt(difficulty);
+  }, [difficulty, difficultyIndex]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (next) => {
@@ -187,6 +215,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
       const acceptedPowerIndex = powerIndex.value;
       charges.value -= 1;
       powerIndex.value = (powerIndex.value + 1) % 3;
+      powerUntilScore.value = scoreMirror.value + GAME_CONSTANTS.POWER_MODE_SCORE_DURATION;
       shotX[slot].value = heroX + GAME_CONSTANTS.HERO_WIDTH;
       shotY[slot].value =
         heroLane.value * laneHeight + (laneHeight - GAME_CONSTANTS.HERO_HEIGHT) / 2;
@@ -201,6 +230,8 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     heroX,
     laneHeight,
     powerIndex,
+    powerUntilScore,
+    scoreMirror,
     shotActive,
     shotX,
     shotY,
@@ -215,7 +246,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     elapsedTime.value = 0;
     lastUpdateTime.value = 0;
     scrollX.value = 0;
-    spawnAccum.value = GAME_CONSTANTS.SPAWN_INTERVAL;
+    spawnAccum.value = difficultyConfigAt(difficulty).interval;
     bubblePending.value = 0;
     bubbleThreshold.value = GAME_CONSTANTS.BUBBLE_EVERY;
     const state = useGameStore.getState().state;
@@ -224,11 +255,18 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     scoreMirror.value = state.score;
     charges.value = state.charges;
     powerIndex.value = 0;
+    difficultyIndex.value = difficultyIndexAt(difficulty);
+    nextMilestone.value = GAME_CONSTANTS.MILESTONE_SCORE_STEP;
+    powerUntilScore.value = -1;
+    burstPending.value = 0;
+    burstLane.value = 1;
+    burstNextAt.value = 0;
     bubbleActive.value = 0;
     bubbleLane.value = 1;
-    villainY.value = villainYAt(0, screenHeight);
+    villainY.value = villainYAt(0, screenHeight, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT);
     for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
       obstacleActive[index].value = 0;
+      obstacleResistant[index].value = 0;
       obstacleX[index].value = GAME_CONSTANTS.ENEMY_DESPAWN_X;
     }
     for (let index = 0; index < GAME_CONSTANTS.POWER_SHOT_POOL_SIZE; index += 1) {
@@ -240,6 +278,8 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     bubblePending,
     bubbleThreshold,
     charges,
+    difficulty,
+    difficultyIndex,
     elapsedTime,
     frozen,
     heroLane,
@@ -250,22 +290,29 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     lastUpdateTime,
     livesMirror,
     obstacleActive,
+    obstacleResistant,
     obstacleX,
     powerIndex,
+    powerUntilScore,
+    nextMilestone,
     scoreMirror,
     screenHeight,
     scrollX,
     shotActive,
     spawnAccum,
+    burstLane,
+    burstNextAt,
+    burstPending,
     villainHpMirror,
     villainY,
   ]);
 
   useEffect(() => {
     heroY.value = heroTopY(heroLane.value);
-    villainY.value = villainYAt(0, screenHeight);
+    villainY.value = villainYAt(0, screenHeight, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT);
     for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
       obstacleActive[index].value = 0;
+      obstacleResistant[index].value = 0;
     }
   }, [heroLane, heroTopY, heroY, obstacleActive, screenHeight, villainY]);
 
@@ -295,21 +342,19 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
       fpsAccum.value = 0;
     }
     if (frozen.value === 1) return;
-    villainY.value = villainYAt(now, screenHeight);
+    villainY.value = villainYAt(now, screenHeight, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT);
 
     const dt = dtMs / 1000;
     scrollX.value = -((now / 900) % 1) * 88;
-    const speed = candySpeedAt(
-      now,
-      GAME_CONSTANTS.CANDY_BASE_SPEED,
-      GAME_CONSTANTS.CANDY_SPEED_RAMP_MAX,
-      GAME_CONSTANTS.CANDY_SPEED_RAMP_RATE
-    );
-    const interval = spawnIntervalAt(
-      now,
-      GAME_CONSTANTS.SPAWN_INTERVAL,
-      GAME_CONSTANTS.SPAWN_INTERVAL_MIN,
-      GAME_CONSTANTS.SPAWN_INTERVAL_RAMP_RATE
+    const difficultyConfig = difficultyConfigAt(difficultyAtIndex(difficultyIndex.value));
+    const speed = difficultyConfig.speed + Math.min(280, now * difficultyConfig.acceleration);
+    const interval = Math.max(400, difficultyConfig.interval - now * 0.003);
+    const villainLane = Math.max(
+      0,
+      Math.min(
+        LANE_COUNT - 1,
+        Math.floor((villainY.value + GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) / laneHeight)
+      )
     );
 
     spawnAccum.value += dtMs;
@@ -324,11 +369,9 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
       }
       const phase = attackPhaseAt(scoreMirror.value);
       let spawnCount = 1;
-      if (phase === GAME_CONSTANTS.ATTACK_PHASE_MAX) {
-        rngState.value = nextRngState(rngState.value);
-        spawnCount = rngUnit(rngState.value) < 0.5 ? 2 : 1;
-      }
-      let primaryLane = 0;
+      rngState.value = nextRngState(rngState.value);
+      if (rngUnit(rngState.value) < difficultyConfig.doubleSpawnChance) spawnCount = 2;
+      let primaryLane = villainLane;
       for (let spawnIndex = 0; spawnIndex < spawnCount; spawnIndex += 1) {
         slot = -1;
         for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
@@ -343,16 +386,43 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
         const kind = projectileKindAt(phase, random01);
         const lane =
           spawnIndex === 0
-            ? Math.floor(random01 * LANE_COUNT)
+            ? villainLane
             : (primaryLane + 1 + Math.floor(random01 * 2)) % LANE_COUNT;
         if (spawnIndex === 0) primaryLane = lane;
         obstacleKind[slot].value = kind;
         obstacleLane[slot].value = lane;
-        obstacleX[slot].value = screenWidth + GAME_CONSTANTS.ENEMY_SPAWN_X_OFFSET;
+        obstacleResistant[slot].value = 0;
+        obstacleX[slot].value = screenWidth - GAME_CONSTANTS.VILLAIN_RENDER_WIDTH;
         obstacleY[slot].value = laneTopY(
           lane,
           laneHeight,
-          kind === PROJECTILE_KIND.zumbi ? GAME_CONSTANTS.ZOMBIE_SIZE : GAME_CONSTANTS.CANDY_SIZE
+          kind === PROJECTILE_KIND.zumbi
+            ? GAME_CONSTANTS.ZOMBIE_RENDER_SIZE
+            : GAME_CONSTANTS.CANDY_SIZE * GAME_CONSTANTS.PROJECTILE_SIZE_MULTIPLIER
+        );
+        obstacleActive[slot].value = 1;
+      }
+    }
+
+    if (burstPending.value > 0 && now >= burstNextAt.value) {
+      let slot = -1;
+      for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
+        if (obstacleActive[index].value === 0) {
+          slot = index;
+          break;
+        }
+      }
+      burstPending.value -= 1;
+      burstNextAt.value = now + 140;
+      if (slot >= 0) {
+        obstacleKind[slot].value = PROJECTILE_KIND.zumbi;
+        obstacleLane[slot].value = burstLane.value;
+        obstacleResistant[slot].value = 1;
+        obstacleX[slot].value = screenWidth - GAME_CONSTANTS.VILLAIN_RENDER_WIDTH;
+        obstacleY[slot].value = laneTopY(
+          burstLane.value,
+          laneHeight,
+          GAME_CONSTANTS.ZOMBIE_RENDER_SIZE
         );
         obstacleActive[slot].value = 1;
       }
@@ -366,7 +436,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
       shotX[index].value += GAME_CONSTANTS.POWER_SHOT_SPEED * dt;
       shotY[index].value = trackShotY(
         shotY[index].value,
-        villainY.value + (GAME_CONSTANTS.VILLAIN_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2,
+        villainY.value + (GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2,
         dtMs,
         220
       );
@@ -386,7 +456,9 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
       if (obstacleActive[index].value === 0) continue;
       const kind = obstacleKind[index].value;
       const size =
-        kind === PROJECTILE_KIND.zumbi ? GAME_CONSTANTS.ZOMBIE_SIZE : GAME_CONSTANTS.CANDY_SIZE;
+        kind === PROJECTILE_KIND.zumbi
+          ? GAME_CONSTANTS.ZOMBIE_RENDER_SIZE
+          : GAME_CONSTANTS.CANDY_SIZE * GAME_CONSTANTS.PROJECTILE_SIZE_MULTIPLIER;
       obstacleX[index].value -= speed * projectileSpeedMultiplier(kind as ProjectileKind) * dt;
       const x = obstacleX[index].value;
       if (x + size < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
@@ -397,6 +469,16 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
           bubblePending.value += 1;
           bubbleThreshold.value += GAME_CONSTANTS.BUBBLE_EVERY;
         }
+        continue;
+      }
+      if (
+        scoreMirror.value < powerUntilScore.value &&
+        obstacleResistant[index].value === 0 &&
+        x < screenWidth * 0.62
+      ) {
+        obstacleActive[index].value = 0;
+        scoreMirror.value += GAME_CONSTANTS.SCORE_PER_DODGE;
+        scheduleOnRN(applyScore, GAME_CONSTANTS.SCORE_PER_DODGE);
         continue;
       }
       if (
@@ -415,6 +497,18 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
       }
     }
     if (frozen.value === 1) return;
+
+    while (scoreMirror.value >= nextMilestone.value) {
+      nextMilestone.value += GAME_CONSTANTS.MILESTONE_SCORE_STEP;
+      charges.value = powerChargeAfterPickup(charges.value);
+      burstPending.value += GAME_CONSTANTS.VILLAIN_BURST_COUNT;
+      burstLane.value = villainLane;
+      if (burstPending.value === GAME_CONSTANTS.VILLAIN_BURST_COUNT) {
+        burstNextAt.value = now;
+      }
+      scheduleOnRN(applyPowerCharge);
+      scheduleOnRN(applyVillainBurst);
+    }
 
     if (bubbleActive.value === 0 && bubblePending.value > 0) {
       bubblePending.value -= 1;

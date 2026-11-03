@@ -188,8 +188,8 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       shot.x += (GAME_CONSTANTS.POWER_SHOT_SPEED * dtMs) / 1000;
       shot.y = trackShotY(
         shot.y,
-        villainYAt(elapsedMs, SIMULATION_HEIGHT) +
-          (GAME_CONSTANTS.VILLAIN_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2,
+        villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+          (GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2,
         dtMs,
         220
       );
@@ -213,8 +213,8 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       enemy.x -= (speed * projectileSpeedMultiplier(enemy.kind) * dtMs) / 1000;
       const enemySize =
         enemy.kind === PROJECTILE_KIND.zumbi
-          ? GAME_CONSTANTS.ZOMBIE_SIZE
-          : GAME_CONSTANTS.CANDY_SIZE;
+          ? GAME_CONSTANTS.ZOMBIE_RENDER_SIZE
+          : GAME_CONSTANTS.CANDY_SIZE * GAME_CONSTANTS.PROJECTILE_SIZE_MULTIPLIER;
       if (enemy.x + enemySize < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
         enemy.active = false;
         score += GAME_CONSTANTS.SCORE_PER_DODGE;
@@ -253,7 +253,8 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       events.push({ type: 'powerChargeGranted', charges });
       const villainLane = clampLane(
         Math.floor(
-          (villainYAt(elapsedMs, SIMULATION_HEIGHT) + GAME_CONSTANTS.VILLAIN_HEIGHT / 2) /
+          (villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+            GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) /
             LANE_HEIGHT
         )
       );
@@ -339,7 +340,12 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
             spawnIndex === 0
               ? clampLane(
                   Math.floor(
-                    (villainYAt(elapsedMs, SIMULATION_HEIGHT) + GAME_CONSTANTS.VILLAIN_HEIGHT / 2) /
+                    (villainYAt(
+                      elapsedMs,
+                      SIMULATION_HEIGHT,
+                      GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT
+                    ) +
+                      GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) /
                       LANE_HEIGHT
                   )
                 )

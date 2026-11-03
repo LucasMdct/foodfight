@@ -41,6 +41,8 @@ export const useGameStore = create<GameStore>((set) => ({
           powerIndex: 0,
           toast: null,
           villainMood: 'feliz',
+          villainAttacking: false,
+          villainTaunt: '',
         },
       })),
 
@@ -98,6 +100,19 @@ export const useGameStore = create<GameStore>((set) => ({
         };
       }),
 
+    grantPowerCharge: () =>
+      set((s) => {
+        if (s.state.screen !== 'game') return s;
+        return {
+          state: {
+            ...s.state,
+            charges: Math.min(GAME_CONSTANTS.POWER_MAX_CHARGES, s.state.charges + 1),
+            toast: 'milestone-power',
+            toastId: s.state.toastId + 1,
+          },
+        };
+      }),
+
     collectFood: () =>
       set((s) => {
         if (s.state.screen !== 'game') return s;
@@ -119,6 +134,26 @@ export const useGameStore = create<GameStore>((set) => ({
       set((s) =>
         s.state.screen === 'game' && s.state.villainMood === 'bravo'
           ? { state: { ...s.state, villainMood: 'feliz' } }
+          : s
+      ),
+
+    triggerVillainBurst: () =>
+      set((s) =>
+        s.state.screen === 'game'
+          ? {
+              state: {
+                ...s.state,
+                villainAttacking: true,
+                villainTaunt: 'Você NUNCA vai comer essa comida!',
+              },
+            }
+          : s
+      ),
+
+    clearVillainBurst: () =>
+      set((s) =>
+        s.state.villainAttacking
+          ? { state: { ...s.state, villainAttacking: false, villainTaunt: '' } }
           : s
       ),
 

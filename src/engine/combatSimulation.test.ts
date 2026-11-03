@@ -138,7 +138,9 @@ describe('combat simulation coverage', () => {
     });
     const spawn = result.events.find((event) => event.type === 'projectileSpawned');
     const expectedLane = Math.floor(
-      (villainYAt(544, 520) + GAME_CONSTANTS.VILLAIN_HEIGHT / 2) / (520 / GAME_CONSTANTS.LANE_COUNT)
+      (villainYAt(544, 520, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+        GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) /
+        (520 / GAME_CONSTANTS.LANE_COUNT)
     );
 
     expect(spawn).toMatchObject({ type: 'projectileSpawned', lane: expectedLane });

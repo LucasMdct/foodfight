@@ -183,7 +183,8 @@ const LoopReadout = () => {
 
 export const GameScreen = () => {
   const { width, height } = useWindowDimensions();
-  const engine = useRunnerEngine(width, height);
+  const difficulty = useGameStore((s) => s.state.difficulty);
+  const engine = useRunnerEngine(width, height, difficulty);
   const laughFont = useFont(Fredoka_700Bold, 14);
   const screen = useGameStore((s) => s.state.screen);
   const who = useGameStore((s) => s.state.who);

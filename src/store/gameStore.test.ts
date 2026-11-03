@@ -40,6 +40,24 @@ describe('combat game store guards', () => {
     expect(useGameStore.getState().state.difficulty).toBe('impossivel');
   });
 
+  it('records the Barão burst feedback as discrete state', () => {
+    useGameStore.getState().actions.triggerVillainBurst();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      villainAttacking: true,
+      villainTaunt: 'Você NUNCA vai comer essa comida!',
+    });
+  });
+
+  it('grants milestone power without using the food pickup toast', () => {
+    useGameStore.getState().actions.grantPowerCharge();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      charges: 2,
+      toast: 'milestone-power',
+    });
+  });
+
   it('does not spend more than one charge when the accepted fire callback races', () => {
     const { applyPowerFired } = useGameStore.getState().actions;
 
