@@ -95,7 +95,10 @@ export const useRunnerEngine = (
   const difficultyIndex = useMemo(() => makeMutable(difficultyIndexAt(difficulty)), []);
 
   const obstacleX = useMemo(
-    () => Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () => makeMutable(-100)),
+    () =>
+      Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () =>
+        makeMutable(GAME_CONSTANTS.ENEMY_DESPAWN_X)
+      ),
     []
   );
   const obstacleY = useMemo(
@@ -605,8 +608,26 @@ export const useRunnerEngine = (
         dtMs,
         220
       );
-      if (shotX[index].value >= screenWidth - 100) {
+      if (shotX[index].value >= screenWidth - GAME_CONSTANTS.VILLAIN_SHOT_HIT_X_OFFSET) {
         shotActive[index].value = 0;
+        let effectSlot = -1;
+        for (
+          let effectIndex = 0;
+          effectIndex < GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE;
+          effectIndex += 1
+        ) {
+          if (burstFxActive[effectIndex].value === 0 || now >= burstFxUntil[effectIndex].value) {
+            effectSlot = effectIndex;
+            break;
+          }
+        }
+        if (effectSlot >= 0) {
+          burstFxX[effectSlot].value = screenWidth - GAME_CONSTANTS.VILLAIN_SHOT_EXPLOSION_X_OFFSET;
+          burstFxY[effectSlot].value = villainY.value + GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2;
+          burstFxRotation[effectSlot].value = index * 0.8 + now * 0.001;
+          burstFxUntil[effectSlot].value = now + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+          burstFxActive[effectSlot].value = 1;
+        }
         villainHpMirror.value = Math.max(0, villainHpMirror.value - 1);
         if (villainHpMirror.value === 0) {
           frozen.value = 1;

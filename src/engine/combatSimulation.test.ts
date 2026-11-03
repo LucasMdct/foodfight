@@ -77,6 +77,37 @@ describe('combat simulation result races', () => {
     expect(completed.events.some((event) => event.type === 'score')).toBe(false);
   });
 
+  it('triggers the Barão hit at W - 230 and spawns the hit explosion at W - 150 before the nine defeat bursts', () => {
+    const atOldBoundary = runCombatScenario({
+      seed: 2,
+      villainHp: 2,
+      charges: 1,
+      enemies: [],
+      frames: [{ dtMs: 50, fire: true }, ...Array.from({ length: 15 }, () => ({ dtMs: 50 }))],
+    });
+
+    expect(atOldBoundary.events).toContainEqual({ type: 'villainHit', villainHp: 1 });
+    expect(atOldBoundary.events).toContainEqual(
+      expect.objectContaining({
+        type: 'confettiSpawned',
+        x: 900 - GAME_CONSTANTS.VILLAIN_SHOT_EXPLOSION_X_OFFSET,
+      })
+    );
+
+    const defeatSequence = runCombatScenario({
+      seed: 2,
+      villainHp: 1,
+      charges: 1,
+      enemies: [],
+      frames: [{ dtMs: 50, fire: true }, ...Array.from({ length: 70 }, () => ({ dtMs: 50 }))],
+    });
+
+    expect(defeatSequence.events.filter((event) => event.type === 'confettiSpawned')).toHaveLength(
+      1 + GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_COUNT
+    );
+    expect(defeatSequence.snapshot.screen).toBe('win');
+  });
+
   it('removes an enemy hit without awarding dodge score', () => {
     const result = runCombatScenario({
       seed: 3,
@@ -156,6 +187,24 @@ describe('combat simulation food bubble', () => {
     });
 
     expect(result.events.some((event) => event.type === 'bubbleSpawned')).toBe(true);
+  });
+
+  it('queues bubbles across the 100, 200, and 300 point thresholds one at a time', () => {
+    const result = runCombatScenario({
+      seed: 6,
+      score: 90,
+      enemies: Array.from({ length: 21 }, (_, index) => ({
+        x: -200,
+        lane: index % 3,
+        kind: PROJECTILE_KIND.lolli,
+      })).slice(0, 12),
+      frames: [{ dtMs: 16 }],
+    });
+
+    expect(result.snapshot.score).toBe(210);
+    expect(result.events.filter((event) => event.type === 'bubbleSpawned')).toHaveLength(1);
+    expect(result.snapshot.bubbleActive).toBe(true);
+    expect(result.snapshot.bubblePending).toBe(1);
   });
 });
 

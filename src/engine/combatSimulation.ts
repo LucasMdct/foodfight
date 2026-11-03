@@ -20,7 +20,7 @@ const SIMULATION_WIDTH = 900;
 const HERO_X = SIMULATION_WIDTH * GAME_CONSTANTS.HERO_X_RATIO;
 const HERO_LEFT = HERO_X + GAME_CONSTANTS.HERO_HITBOX_PADDING;
 const HERO_RIGHT = HERO_X + GAME_CONSTANTS.HERO_WIDTH - GAME_CONSTANTS.HERO_HITBOX_PADDING;
-const VILLAIN_X = SIMULATION_WIDTH - 100;
+const VILLAIN_X = SIMULATION_WIDTH - GAME_CONSTANTS.VILLAIN_SHOT_HIT_X_OFFSET;
 const SIMULATION_HEIGHT = 520;
 const LANE_HEIGHT = SIMULATION_HEIGHT / GAME_CONSTANTS.LANE_COUNT;
 
@@ -365,15 +365,33 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       );
       if (shot.x >= VILLAIN_X) {
         shot.active = false;
+        const villainCenterY =
+          villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+          GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2;
+        let effectSlot = -1;
+        for (let index = 0; index < effectUntil.length; index += 1) {
+          if (effectUntil[index] <= elapsedMs) {
+            effectSlot = index;
+            break;
+          }
+        }
+        if (effectSlot >= 0) {
+          effectUntil[effectSlot] = elapsedMs + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+          events.push({
+            type: 'confettiSpawned',
+            x: SIMULATION_WIDTH - GAME_CONSTANTS.VILLAIN_SHOT_EXPLOSION_X_OFFSET,
+            y: villainCenterY,
+          });
+        } else {
+          events.push({ type: 'spawnSkipped' });
+        }
         villainHp = Math.max(0, villainHp - 1);
         events.push({ type: 'villainHit', villainHp });
         if (villainHp === 0) {
           defeatActive = true;
           defeatStartedAtMs = elapsedMs;
           defeatBurstIndex = 0;
-          defeatVillainCenterY =
-            villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
-            GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2;
+          defeatVillainCenterY = villainCenterY;
           events.push({ type: 'villainDefeatStarted' });
           break;
         }
