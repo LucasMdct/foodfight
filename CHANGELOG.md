@@ -26,6 +26,8 @@ This project has **two version tracks**, because it changed identity partway thr
 
 - Change the screen flow to Loading → Select hero → Choose difficulty → Game → Result.
 - Preserve the selected difficulty when replaying a match.
+- Lock difficulty speed, spawn interval, and double-spawn chance to each preset for v0.0.4; remove the elapsed-time ramp.
+- Set v0.0.4 enemy and effect pool sizes, spawn/despawn boundaries, bubble threshold, Barão bounds, and timing constants from the design handoff.
 
 ### Fixed
 

@@ -2,7 +2,7 @@
 
 Everything written about Food Fight, indexed. Start here.
 
-The project has two eras: the **POC** that tested React Native Skia, and the **game** (v0.0.1 onward) that replaced it. The current game feature is v0.0.3; the POC's frame-rate verdict is unresolved; see [results.md](./results.md). Docs describe the game unless they say otherwise.
+The project has two eras: the **POC** that tested React Native Skia, and the **game** (v0.0.1 onward) that replaced it. v0.0.4 implementation is in progress on top of v0.0.3; the POC's frame-rate verdict is unresolved; see [results.md](./results.md). Docs describe the game unless they say otherwise.
 
 ---
 
@@ -10,7 +10,7 @@ The project has two eras: the **POC** that tested React Native Skia, and the **g
 
 | Document                                   | What it covers                                                            | Read time |
 | ------------------------------------------ | ------------------------------------------------------------------------- | --------- |
-| [architecture.md](./architecture.md)       | How the v0.0.3 game is built and why each decision was made               | 20 min    |
+| [architecture.md](./architecture.md)       | How the current game is built, including v0.0.4 Task 2 constants         | 20 min    |
 | [testing.md](./testing.md)                 | The v0.0.3 validation protocol — automated checks pass; device QA pending | 12 min    |
 | [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix                                                     | reference |
 | [results.md](./results.md)                 | POC measurements and the unresolved frame-rate verdict                    | 8 min     |

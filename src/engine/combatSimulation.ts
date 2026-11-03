@@ -184,11 +184,11 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     }
 
     elapsedMs += dtMs;
-    const speed = difficulty.speed + Math.min(280, elapsedMs * difficulty.acceleration);
+    const speed = difficulty.speed;
 
     if (scenario.enemies === undefined || scenario.autoSpawn === true) {
       spawnAccumulatorMs += dtMs;
-      const spawnInterval = Math.max(400, difficulty.interval - elapsedMs * 0.003);
+      const spawnInterval = difficulty.interval;
       if (spawnAccumulatorMs >= spawnInterval) {
         spawnAccumulatorMs -= spawnInterval;
         const phase = attackPhaseAt(score);

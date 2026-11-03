@@ -410,8 +410,8 @@ export const useRunnerEngine = (
     const dt = dtMs / 1000;
     scrollX.value = -((now / 900) % 1) * 88;
     const difficultyConfig = difficultyConfigAt(difficultyAtIndex(difficultyIndex.value));
-    const speed = difficultyConfig.speed + Math.min(280, now * difficultyConfig.acceleration);
-    const interval = Math.max(400, difficultyConfig.interval - now * 0.003);
+    const speed = difficultyConfig.speed;
+    const interval = difficultyConfig.interval;
     const villainLane = Math.max(
       0,
       Math.min(

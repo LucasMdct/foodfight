@@ -99,6 +99,27 @@ describe('combat simulation coverage', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('keeps the selected spawn interval fixed as match time advances', () => {
+    const result = runCombatScenario({
+      seed: 10,
+      difficulty: 'dificil',
+      frames: Array.from({ length: 1117 }, () => ({ dtMs: 1, lane: 0 })),
+    });
+
+    expect(result.events.filter((event) => event.type === 'projectileSpawned')).toHaveLength(2);
+  });
+
+  it('keeps projectile travel speed fixed over a long match', () => {
+    const result = runCombatScenario({
+      seed: 18,
+      difficulty: 'mfacil',
+      enemies: [{ x: 2000, lane: 0, kind: PROJECTILE_KIND.lolli }],
+      frames: Array.from({ length: 200 }, () => ({ dtMs: 50, lane: 1 })),
+    });
+
+    expect(result.snapshot.activeEnemies).toBe(1);
+  });
+
   it('honours the 400ms handoff warmup before the first spawn', () => {
     const beforeWarmup = runCombatScenario({
       seed: 15,
@@ -144,10 +165,11 @@ describe('combat simulation coverage', () => {
         frames: Array.from({ length: frameCount }, () => ({ dtMs: 16 })),
       });
 
-    expect(scenario(9).snapshot.activeEnemies).toBe(0);
-    expect(scenario(10).snapshot.activeEnemies).toBe(1);
-    expect(scenario(29).snapshot.activeEnemies).toBe(2);
-    expect(scenario(48).snapshot.activeEnemies).toBe(3);
+    expect(scenario(10).snapshot.activeEnemies).toBe(0);
+    expect(scenario(11).snapshot.activeEnemies).toBe(1);
+    expect(scenario(29).snapshot.activeEnemies).toBe(1);
+    expect(scenario(30).snapshot.activeEnemies).toBe(2);
+    expect(scenario(49).snapshot.activeEnemies).toBe(3);
   });
 
   it('clears normal projectiles but preserves resistant burst projectiles in power mode', () => {
@@ -165,10 +187,10 @@ describe('combat simulation coverage', () => {
     expect(result.snapshot.activeEnemies).toBe(1);
   });
 
-  it('queues a food bubble when power clearing crosses a 300-point threshold', () => {
+  it('queues a food bubble when power clearing crosses a 100-point threshold', () => {
     const result = runCombatScenario({
       seed: 14,
-      score: 290,
+      score: 90,
       charges: 1,
       enemies: [{ x: 300, lane: 0, kind: PROJECTILE_KIND.lolli }],
       frames: [{ dtMs: 16, fire: true }],
@@ -233,7 +255,7 @@ describe('combat simulation coverage', () => {
       seed: 8,
       autoSpawn: true,
       difficulty: 'facil',
-      enemies: Array.from({ length: 10 }, (_, index) => ({
+      enemies: Array.from({ length: 12 }, (_, index) => ({
         x: 600,
         lane: index % 3,
         kind: PROJECTILE_KIND.lolli,

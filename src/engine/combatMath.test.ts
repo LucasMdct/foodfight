@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { GAME_CONSTANTS } from '../types/constants';
 import {
   PROJECTILE_KIND,
   attackPhaseAt,
@@ -16,14 +17,13 @@ import {
   villainYAt,
 } from './combatMath';
 
-describe('v0.0.3 difficulty presets', () => {
+describe('v0.0.4 fixed difficulty presets', () => {
   it('exposes the four handoff presets', () => {
     expect(difficultyConfigAt('mfacil')).toMatchObject({
       label: 'Muito Fácil',
       speed: 215,
       interval: 1450,
       doubleSpawnChance: 0,
-      acceleration: 0.002,
     });
     expect(difficultyConfigAt('facil').label).toBe('Fácil');
     expect(difficultyConfigAt('dificil').label).toBe('Difícil');
@@ -32,7 +32,6 @@ describe('v0.0.3 difficulty presets', () => {
       speed: 560,
       interval: 540,
       doubleSpawnChance: 0.55,
-      acceleration: 0.009,
     });
   });
 
@@ -40,12 +39,18 @@ describe('v0.0.3 difficulty presets', () => {
     expect(difficultyConfigAt('invalid' as never)).toEqual(difficultyConfigAt('facil'));
   });
 
-  it('increases deterministic projectile speed across difficulty presets', () => {
+  it('keeps speed and spawn interval fixed within each preset', () => {
     const easy = difficultyConfigAt('mfacil');
+    const hard = difficultyConfigAt('dificil');
     const impossible = difficultyConfigAt('impossivel');
 
     expect(easy.speed).toBeLessThan(impossible.speed);
-    expect(easy.acceleration).toBeLessThan(impossible.acceleration);
+    expect(hard.speed).toBe(430);
+    expect(hard.interval).toBe(760);
+    expect(hard.doubleSpawnChance).toBe(0.3);
+    expect('acceleration' in easy).toBe(false);
+    expect('acceleration' in hard).toBe(false);
+    expect('acceleration' in impossible).toBe(false);
   });
 
   it('counts score milestones at each 100-point boundary', () => {
@@ -96,11 +101,40 @@ describe('projectile kinds', () => {
     expect(projectileKindAt(4, 0.999)).toBe(PROJECTILE_KIND.donut);
   });
 
-  it('applies type multipliers to current ramped speed', () => {
+  it('applies type multipliers to the selected preset speed', () => {
     expect(projectileSpeedMultiplier(PROJECTILE_KIND.lolli)).toBe(1);
     expect(projectileSpeedMultiplier(PROJECTILE_KIND.donut)).toBe(1);
     expect(projectileSpeedMultiplier(PROJECTILE_KIND.candy)).toBe(1.3);
     expect(projectileSpeedMultiplier(PROJECTILE_KIND.zumbi)).toBe(0.8);
+  });
+});
+
+describe('v0.0.4 handoff constants', () => {
+  it.each([
+    ['ENEMY_POOL_SIZE', 12],
+    ['BURST_EFFECT_POOL_SIZE', 8],
+    ['ENEMY_SPAWN_FROM_RIGHT', 210],
+    ['ENEMY_DESPAWN_X', -120],
+    ['BUBBLE_RENDER_SIZE', 84],
+    ['BUBBLE_DESPAWN_X', -90],
+    ['VILLAIN_RENDER_WIDTH', 224],
+    ['VILLAIN_RENDER_HEIGHT', 242],
+    ['VILLAIN_SHOT_HIT_X_OFFSET', 230],
+    ['VILLAIN_SHOT_EXPLOSION_X_OFFSET', 150],
+    ['VILLAIN_DEFEAT_DURATION_MS', 2500],
+    ['DIALOGUE_CHAR_INTERVAL_MS', 65],
+    ['VILLAIN_TAUNT_DURATION_MS', 2800],
+    ['VILLAIN_OUCH_DURATION_MS', 2200],
+    ['VILLAIN_TALK_DELAY_MS', 800],
+    ['VILLAIN_BRAVO_DURATION_MS', 1400],
+    ['VILLAIN_SHAKE_DURATION_MS', 450],
+    ['BUBBLE_EVERY', 100],
+  ] as const)('sets %s to %i', (name, expected) => {
+    expect(GAME_CONSTANTS[name]).toBe(expected);
+  });
+
+  it('uses the three v0.0.4 burst offsets', () => {
+    expect(GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS).toEqual([160, 460, 760]);
   });
 });
 
