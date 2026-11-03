@@ -25,6 +25,10 @@ Project entry point and quick start live in the [root README](../README.md). Ver
 
 **It is the source of truth for shapes and colours**, not the code. `src/render/foodie/characters/*` port coordinates verbatim from `design/project/Foodie.dc.html`; visual changes start there and are ported, never the other way round.
 
+| Design handoff | Purpose |
+|---|---|
+| [FoodFight v0.0.4.dc.html](./design/project/FoodFight%20v0.0.4.dc.html) | v0.0.4 gameplay design handoff |
+
 ---
 
 ## Specs
