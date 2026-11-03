@@ -33,6 +33,9 @@ export const makeStyles = (theme: Theme, s: number) => {
       shadowRadius: 60,
       elevation: 10,
     },
+    overlayWin: {
+      backgroundColor: theme.colors.winOverlay,
+    },
     villainCanvas: {
       width: r(110),
       height: r(120),
@@ -43,6 +46,9 @@ export const makeStyles = (theme: Theme, s: number) => {
       lineHeight: Math.max(26, r(40)),
       color: theme.colors.brand,
       textAlign: 'center',
+    },
+    titleWin: {
+      color: theme.colors.positive,
     },
     subtitle: {
       fontFamily: theme.font.medium,
@@ -62,6 +68,9 @@ export const makeStyles = (theme: Theme, s: number) => {
       paddingVertical: r(theme.space.sm),
       paddingHorizontal: theme.space.lg,
     },
+    statBlockWin: {
+      backgroundColor: theme.colors.winSurface,
+    },
     statLabel: {
       fontFamily: theme.font.semibold,
       fontSize: 12,
@@ -69,10 +78,16 @@ export const makeStyles = (theme: Theme, s: number) => {
       textTransform: 'uppercase',
       letterSpacing: 1,
     },
+    statLabelWin: {
+      color: theme.colors.positiveShadow,
+    },
     statValue: {
       fontFamily: theme.font.bold,
       fontSize: Math.max(20, r(28)),
       color: theme.colors.textStrong,
+    },
+    statValueWin: {
+      color: theme.colors.winText,
     },
     buttonsRow: {
       flexDirection: 'row',

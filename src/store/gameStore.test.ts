@@ -11,6 +11,12 @@ describe('combat game store guards', () => {
     }));
   });
 
+  it('starts a match with no power charges until a food bubble is collected', () => {
+    useGameStore.getState().actions.reset();
+    useGameStore.getState().actions.start();
+    expect(useGameStore.getState().state.charges).toBe(0);
+  });
+
   it('does not spend more than one charge when the accepted fire callback races', () => {
     const { applyPowerFired } = useGameStore.getState().actions;
 
@@ -19,6 +25,15 @@ describe('combat game store guards', () => {
 
     expect(useGameStore.getState().state.charges).toBe(0);
     expect(useGameStore.getState().state.powerIndex).toBe(1);
+  });
+
+  it('resolves the accepted fire index to the selected hero power name', () => {
+    useGameStore.getState().actions.applyPowerFired(0);
+
+    expect(useGameStore.getState().state.toast).toEqual({
+      type: 'power-fired',
+      name: 'Folha Bumerangue',
+    });
   });
 
   it('freezes the result after the villain reaches zero HP', () => {
@@ -43,6 +58,26 @@ describe('combat game store guards', () => {
 
     expect(useGameStore.getState().state.charges).toBe(3);
     expect(useGameStore.getState().state.toastId).toBe(4);
-    expect(useGameStore.getState().state.toast).toBe('power-full');
+    expect(useGameStore.getState().state.toast).toBe('food-collected');
+  });
+
+  it('resets combat state for replay while preserving the selected hero and best score', () => {
+    const { pick, start, reset } = useGameStore.getState().actions;
+    pick('arroz');
+    start();
+    useGameStore.setState((current) => ({
+      state: { ...current.state, score: 120, best: 200, charges: 2, villainHp: 1 },
+    }));
+
+    reset();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      screen: 'select',
+      who: 'arroz',
+      score: 0,
+      best: 200,
+      charges: 0,
+      villainHp: 5,
+    });
   });
 });

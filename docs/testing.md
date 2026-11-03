@@ -193,8 +193,11 @@ npm test
 
 The automated suite includes `src/engine/combatMath.test.ts`,
 `src/engine/combatSimulation.test.ts` and `src/store/gameStore.test.ts`. These
-cover phase boundaries, seeded distribution, clamped villain motion, charge
-authorization, food pickup caps and terminal result races.
+cover phase boundaries, seeded distribution, clamped villain motion, soft shot
+tracking, UI-thread charge authorization, zero-charge starts, food pickup caps
+and padding, automatic bubble thresholds, invulnerability, zombie hitboxes,
+phase-four sugar rain, pool saturation, power rotation, reset/replay and
+terminal result races.
 
 Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint. GitHub Actions runs typecheck, lint and tests on every PR.
 

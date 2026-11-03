@@ -52,6 +52,17 @@ export const powerChargeAfterPickup = (charges: number): number => {
   return Math.min(GAME_CONSTANTS.POWER_MAX_CHARGES, charges + 1);
 };
 
+export const trackShotY = (
+  currentY: number,
+  targetY: number,
+  dtMs: number,
+  trackingDurationMs: number
+): number => {
+  'worklet';
+  const amount = Math.min(1, Math.max(0, dtMs / trackingDurationMs));
+  return currentY + (targetY - currentY) * amount;
+};
+
 /** Top-Y of the villain, centred in the playfield and clamped away from edges. */
 export const villainYAt = (elapsedMs: number, height: number): number => {
   'worklet';

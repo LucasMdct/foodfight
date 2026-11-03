@@ -7,6 +7,12 @@ interface GameStore {
   actions: GameActions;
 }
 
+export const POWER_NAMES: Record<Who, readonly [string, string, string]> = {
+  alface: ['Folha Bumerangue', 'Furacão Verde', 'Muralha de Salada'],
+  feijao: ['Meteoro Carioca', 'Rajada de Feijão', 'Escudo de Caldo'],
+  arroz: ['Grão Turbo', 'Chuva de Arroz', 'Broto Explosivo'],
+};
+
 export const useGameStore = create<GameStore>((set) => ({
   state: INITIAL_GAME_STATE,
 
@@ -21,7 +27,7 @@ export const useGameStore = create<GameStore>((set) => ({
           lives: START_LIVES,
           score: 0,
           villainHp: GAME_CONSTANTS.VILLAIN_HP,
-          charges: GAME_CONSTANTS.POWER_MAX_CHARGES,
+          charges: 0,
           powerIndex: 0,
           toast: null,
           villainMood: 'feliz',
@@ -76,6 +82,8 @@ export const useGameStore = create<GameStore>((set) => ({
             ...s.state,
             charges: s.state.charges - 1,
             powerIndex: (powerIndex + 1) % 3,
+            toast: { type: 'power-fired', name: POWER_NAMES[s.state.who][powerIndex % 3] },
+            toastId: s.state.toastId + 1,
           },
         };
       }),
@@ -88,7 +96,7 @@ export const useGameStore = create<GameStore>((set) => ({
           state: {
             ...s.state,
             charges,
-            toast: charges === GAME_CONSTANTS.POWER_MAX_CHARGES ? 'power-full' : 'power-charged',
+            toast: 'food-collected',
             toastId: s.state.toastId + 1,
           },
         };

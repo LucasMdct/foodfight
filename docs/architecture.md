@@ -123,8 +123,8 @@ useFrameCallback(frame):
   6. if frozen → return                      ← freezes everything below
   7. tablecloth scroll: 88px loop every 900ms
   8. difficulty ramp: derive current speed and spawn interval from elapsed time
-  9. spawn: on interval, advance the seeded PRNG and activate one typed slot
- 10. move active power shots and resolve villain hits first
+  9. spawn: on interval, advance the seeded PRNG and activate one typed slot (or a seeded double in phase 4)
+  10. move active power shots with soft villain-Y tracking and resolve villain hits first
  11. for each active enemy:
        move left by speed * dt
        off-screen? → deactivate, +10 score
@@ -195,7 +195,7 @@ Hero position, enemy/shot positions, bubble position, scroll offset, flicker pha
 
 `hitHero` decrements lives; reaching 0 sets `screen: 'over'` and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 sets `screen: 'win'` and captures the record. `applyPowerFired` refuses to overdraw charges, and `collectFood` caps them at three while incrementing the toast event. `reset` restores initial state but preserves `who` and `best`.
 
-**Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `GameScreen` subscribes field by field for exactly this reason.
+**Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `Hud` and the development loop readout own the leaf subscriptions, while `GameScreen` subscribes only to scene selection and villain mood, so combat HUD updates do not re-render the Canvas subtree.
 
 ---
 
@@ -301,6 +301,7 @@ A third `Gesture.Tap()` maps the tap's Y to a lane direction: top half moves up,
 | `BUBBLE_SIZE` / `ZOMBIE_SIZE`              | 72 / 76     | Bubble and zumbi geometry bases                               |
 | `VILLAIN_CYCLE_MS`                         | 1700 ms     | Full villain vertical cycle                                   |
 | `ENEMY_SPAWN_X_OFFSET` / `ENEMY_DESPAWN_X` | 90 / −100   | Spawn and recycle boundaries                                  |
+| `BUBBLE_HITBOX_PADDING`                    | 14          | Forgiving food-bubble collection padding                      |
 
 ---
 
@@ -330,7 +331,7 @@ A third `Gesture.Tap()` maps the tap's Y to a lane direction: top half moves up,
 
 The POC's frame-rate criterion is unresolved: the last recorded run measured 30–50 fps on mid-range ARM with a much simpler scene, and that figure has not been re-measured. v0.0.2 adds ten four-variant enemy slots, shots and bubbles, so the POC's result does not transfer automatically. **The v0.0.2 device measurement is still outstanding.** The acceptance gate is average ≥55 fps and minimum ≥50 fps when the v0.0.1 baseline meets those bars; otherwise the relative gate is p95 frame time no more than 10% above baseline, recorded with `dumpsys gfxinfo` or Metal System Trace.
 
-The loop itself is O(8) with no allocation and is not the bottleneck. Cost is in the Skia render path.
+The loop itself is O(10) over the fixed enemy pool with no allocation and is not the bottleneck. Cost is in the Skia render path.
 
 Cheapest levers, in order:
 

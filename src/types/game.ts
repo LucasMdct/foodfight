@@ -1,6 +1,7 @@
 export type Who = 'alface' | 'feijao' | 'arroz';
 export type Screen = 'select' | 'game' | 'over' | 'win';
-export type GameToast = 'power-charged' | 'power-full' | null;
+export type GameToast =
+  'food-collected' | { readonly type: 'power-fired'; readonly name: string } | null;
 export type VillainMood = 'feliz' | 'bravo';
 
 /**

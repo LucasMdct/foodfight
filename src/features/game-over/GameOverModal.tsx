@@ -13,8 +13,10 @@ export const GameOverModal = () => {
   const scale = useUiScale();
   const styles = useMemo(() => makeStyles(theme, scale), [theme, scale]);
   const villainSize = Math.round(110 * scale);
+  const heroSize = Math.round(110 * scale);
   const score = useGameStore((s) => s.state.score);
   const best = useGameStore((s) => s.state.best);
+  const who = useGameStore((s) => s.state.who);
   const screen = useGameStore((s) => s.state.screen);
   const actions = useGameStore((s) => s.actions);
   const pop = useRef(new RNAnimated.Value(0)).current;
@@ -36,12 +38,18 @@ export const GameOverModal = () => {
   const won = screen === 'win';
 
   return (
-    <View style={styles.overlay} pointerEvents="auto">
+    <View style={[styles.overlay, won && styles.overlayWin]} pointerEvents="auto">
       <RNAnimated.View style={[styles.card, { opacity: pop, transform: [{ scale: cardScale }] }]}>
         <Canvas style={styles.villainCanvas}>
-          <Foodie who="vilao" size={villainSize} mood={won ? 'bravo' : 'feliz'} />
+          <Foodie
+            who={won ? who : 'vilao'}
+            size={won ? heroSize : villainSize}
+            mood={won ? 'bravo' : 'feliz'}
+          />
         </Canvas>
-        <Text style={styles.title}>{won ? 'Você venceu!' : 'Doce demais!'}</Text>
+        <Text style={[styles.title, won && styles.titleWin]}>
+          {won ? 'VOCÊ VENCEU!' : 'Doce demais!'}
+        </Text>
         <Text style={styles.subtitle}>
           {won
             ? 'O Barão Brigadeiro caiu… comida de verdade venceu!'
@@ -49,13 +57,13 @@ export const GameOverModal = () => {
         </Text>
 
         <View style={styles.statsRow}>
-          <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Pontos</Text>
-            <Text style={styles.statValue}>{score}</Text>
+          <View style={[styles.statBlock, won && styles.statBlockWin]}>
+            <Text style={[styles.statLabel, won && styles.statLabelWin]}>Pontos</Text>
+            <Text style={[styles.statValue, won && styles.statValueWin]}>{score}</Text>
           </View>
-          <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Recorde</Text>
-            <Text style={styles.statValue}>{best}</Text>
+          <View style={[styles.statBlock, won && styles.statBlockWin]}>
+            <Text style={[styles.statLabel, won && styles.statLabelWin]}>Recorde</Text>
+            <Text style={[styles.statValue, won && styles.statValueWin]}>{best}</Text>
           </View>
         </View>
 

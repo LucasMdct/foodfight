@@ -2,8 +2,8 @@
 
 A mobile endless runner built with **Expo SDK 56**, **React Native Skia** and **Reanimated**.
 
-**Version:** 0.0.1 ([changelog](./CHANGELOG.md))
-**Status:** v0.0.1 released — POC verdict unresolved, v0.0.2 combat implemented in development, hardware QA pending
+**Version:** 0.0.2 ([changelog](./CHANGELOG.md))
+**Status:** v0.0.2 implemented — release candidate available, hardware QA pending
 
 Pick a Foodie, dodge the candy the Barão Brigadeiro throws across three lanes of a rolling kitchen table, and keep your three lives.
 

@@ -7,6 +7,8 @@ import {
   PROJECTILE_KIND,
   ProjectileKind,
   rngUnit,
+  trackShotY,
+  villainYAt,
 } from './combatMath';
 import { candySpeedAt, rectsOverlapX, spawnIntervalAt } from './math';
 import { GAME_CONSTANTS } from '../types/constants';
@@ -16,6 +18,8 @@ const HERO_X = SIMULATION_WIDTH * GAME_CONSTANTS.HERO_X_RATIO;
 const HERO_LEFT = HERO_X + GAME_CONSTANTS.HERO_HITBOX_PADDING;
 const HERO_RIGHT = HERO_X + GAME_CONSTANTS.HERO_WIDTH - GAME_CONSTANTS.HERO_HITBOX_PADDING;
 const VILLAIN_X = SIMULATION_WIDTH - 100;
+const SIMULATION_HEIGHT = 520;
+const LANE_HEIGHT = SIMULATION_HEIGHT / GAME_CONSTANTS.LANE_COUNT;
 
 export type CombatSimulationScreen = 'game' | 'over' | 'win';
 
@@ -38,6 +42,7 @@ export interface CombatScenario {
   readonly charges?: number;
   readonly lives?: number;
   readonly enemies?: readonly CombatEnemySeed[];
+  readonly autoSpawn?: boolean;
   readonly bubble?: { readonly x: number; readonly lane: number };
   readonly frames: readonly CombatFrame[];
 }
@@ -50,6 +55,7 @@ export type CombatEvent =
   | { readonly type: 'score'; readonly score: number }
   | { readonly type: 'win' }
   | { readonly type: 'over' }
+  | { readonly type: 'bubbleSpawned' }
   | { readonly type: 'spawnSkipped' };
 
 export interface CombatSnapshot {
@@ -77,6 +83,7 @@ interface EnemySlot {
 interface ShotSlot {
   active: boolean;
   x: number;
+  y: number;
   lane: number;
   powerIndex: number;
 }
@@ -88,12 +95,14 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   const enemies: EnemySlot[] = Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () => ({
     active: false,
     x: 0,
+    y: 0,
     lane: 0,
     kind: PROJECTILE_KIND.lolli,
   }));
   const shots: ShotSlot[] = Array.from({ length: GAME_CONSTANTS.POWER_SHOT_POOL_SIZE }, () => ({
     active: false,
     x: 0,
+    y: 0,
     lane: 0,
     powerIndex: 0,
   }));
@@ -119,7 +128,11 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
 
   let bubbleActive = scenario.bubble !== undefined;
   let bubbleX = scenario.bubble?.x ?? 0;
-  const bubbleLane = clampLane(scenario.bubble?.lane ?? 0);
+  let bubbleLane = clampLane(scenario.bubble?.lane ?? 0);
+  let bubblePending = 0;
+  let bubbleThreshold =
+    (Math.floor(score / GAME_CONSTANTS.BUBBLE_EVERY) + 1) * GAME_CONSTANTS.BUBBLE_EVERY;
+  let invulnerableUntilMs = 0;
 
   for (let frameIndex = 0; frameIndex < scenario.frames.length; frameIndex += 1) {
     if (screen !== 'game') break;
@@ -140,6 +153,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         charges -= 1;
         shots[shotSlot].active = true;
         shots[shotSlot].x = HERO_X + GAME_CONSTANTS.HERO_WIDTH;
+        shots[shotSlot].y = lane * LANE_HEIGHT + (LANE_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2;
         shots[shotSlot].lane = lane;
         shots[shotSlot].powerIndex = powerIndex;
         events.push({ type: 'powerFired', powerIndex });
@@ -161,6 +175,13 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       const shot = shots[shotIndex];
       if (!shot.active) continue;
       shot.x += (GAME_CONSTANTS.POWER_SHOT_SPEED * dtMs) / 1000;
+      shot.y = trackShotY(
+        shot.y,
+        villainYAt(elapsedMs, SIMULATION_HEIGHT) +
+          (GAME_CONSTANTS.VILLAIN_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2,
+        dtMs,
+        220
+      );
       if (shot.x >= VILLAIN_X) {
         shot.active = false;
         villainHp = Math.max(0, villainHp - 1);
@@ -183,32 +204,52 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         enemy.kind === PROJECTILE_KIND.zumbi
           ? GAME_CONSTANTS.ZOMBIE_SIZE
           : GAME_CONSTANTS.CANDY_SIZE;
-      if (
+      if (enemy.x + enemySize < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
+        enemy.active = false;
+        score += GAME_CONSTANTS.SCORE_PER_DODGE;
+        events.push({ type: 'score', score });
+        while (score >= bubbleThreshold) {
+          bubblePending += 1;
+          bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
+        }
+      } else if (
+        elapsedMs >= invulnerableUntilMs &&
         enemy.lane === lane &&
         rectsOverlapX(enemy.x, enemy.x + enemySize, HERO_LEFT, HERO_RIGHT)
       ) {
         enemy.active = false;
         lives = Math.max(0, lives - 1);
+        invulnerableUntilMs = elapsedMs + GAME_CONSTANTS.INVULN_DURATION;
         events.push({ type: 'heroHit', lives });
         if (lives === 0) {
           screen = 'over';
           events.push({ type: 'over' });
           break;
         }
-      } else if (enemy.x + enemySize < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
-        enemy.active = false;
-        score += GAME_CONSTANTS.SCORE_PER_DODGE;
-        events.push({ type: 'score', score });
       }
     }
 
     if (screen !== 'game') break;
 
+    if (!bubbleActive && bubblePending > 0) {
+      bubblePending -= 1;
+      bubbleActive = true;
+      rngState = nextRngState(rngState);
+      bubbleLane = Math.floor(rngUnit(rngState) * GAME_CONSTANTS.LANE_COUNT);
+      bubbleX = SIMULATION_WIDTH + GAME_CONSTANTS.ENEMY_SPAWN_X_OFFSET;
+      events.push({ type: 'bubbleSpawned' });
+    }
+
     if (bubbleActive) {
-      bubbleX -= (speed * dtMs) / 1000;
+      bubbleX -= (speed * 0.55 * dtMs) / 1000;
       if (
         bubbleLane === lane &&
-        rectsOverlapX(bubbleX, bubbleX + GAME_CONSTANTS.BUBBLE_SIZE, HERO_LEFT, HERO_RIGHT)
+        rectsOverlapX(
+          bubbleX - GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
+          bubbleX + GAME_CONSTANTS.BUBBLE_SIZE + GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
+          HERO_LEFT,
+          HERO_RIGHT
+        )
       ) {
         bubbleActive = false;
         charges = powerChargeAfterPickup(charges);
@@ -218,7 +259,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       }
     }
 
-    if (scenario.enemies === undefined) {
+    if (scenario.enemies === undefined || scenario.autoSpawn === true) {
       spawnAccumulatorMs += dtMs;
       const spawnInterval = spawnIntervalAt(
         elapsedMs,
@@ -228,23 +269,36 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       );
       if (spawnAccumulatorMs >= spawnInterval) {
         spawnAccumulatorMs -= spawnInterval;
-        let spawnSlot = -1;
-        for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
-          if (!enemies[enemyIndex].active) {
-            spawnSlot = enemyIndex;
+        const phase = attackPhaseAt(score);
+        let spawnCount = 1;
+        rngState = nextRngState(rngState);
+        if (phase === GAME_CONSTANTS.ATTACK_PHASE_MAX && rngUnit(rngState) < 0.5) {
+          spawnCount = 2;
+        }
+        let primaryLane = 0;
+        for (let spawnIndex = 0; spawnIndex < spawnCount; spawnIndex += 1) {
+          let spawnSlot = -1;
+          for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
+            if (!enemies[enemyIndex].active) {
+              spawnSlot = enemyIndex;
+              break;
+            }
+          }
+          if (spawnSlot < 0) {
+            events.push({ type: 'spawnSkipped' });
             break;
           }
-        }
-        rngState = nextRngState(rngState);
-        if (spawnSlot < 0) {
-          events.push({ type: 'spawnSkipped' });
-        } else {
+          rngState = nextRngState(rngState);
           const random01 = rngUnit(rngState);
           const spawnedEnemy = enemies[spawnSlot];
           spawnedEnemy.active = true;
           spawnedEnemy.x = SIMULATION_WIDTH + GAME_CONSTANTS.ENEMY_SPAWN_X_OFFSET;
-          spawnedEnemy.lane = Math.floor(random01 * GAME_CONSTANTS.LANE_COUNT);
-          spawnedEnemy.kind = projectileKindAt(attackPhaseAt(score), random01);
+          spawnedEnemy.lane =
+            spawnIndex === 0
+              ? Math.floor(random01 * GAME_CONSTANTS.LANE_COUNT)
+              : (primaryLane + 1 + Math.floor(random01 * 2)) % GAME_CONSTANTS.LANE_COUNT;
+          if (spawnIndex === 0) primaryLane = spawnedEnemy.lane;
+          spawnedEnemy.kind = projectileKindAt(phase, random01);
         }
       }
     }

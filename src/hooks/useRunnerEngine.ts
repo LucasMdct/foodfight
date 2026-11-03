@@ -12,11 +12,13 @@ import { GAME_CONSTANTS } from '../types/constants';
 import {
   attackPhaseAt,
   nextRngState,
+  powerChargeAfterPickup,
   projectileKindAt,
   projectileSpeedMultiplier,
   PROJECTILE_KIND,
   type ProjectileKind,
   rngUnit,
+  trackShotY,
   villainYAt,
 } from '../engine/combatMath';
 import { candySpeedAt, laneTopY, rectsOverlapX, spawnIntervalAt } from '../engine/math';
@@ -62,7 +64,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
   );
 
   const heroLane = useMemo(() => makeMutable(1), []);
-  const heroY = useMemo(() => makeMutable(heroTopY(1)), [heroTopY]);
+  const heroY = useMemo(() => makeMutable(0), []);
   const heroOpacity = useMemo(() => makeMutable(1), []);
   const invulnUntil = useMemo(() => makeMutable(0), []);
   const elapsedTime = useMemo(() => makeMutable(0), []);
@@ -116,7 +118,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
   const bubbleY = useMemo(() => makeMutable(0), []);
   const bubbleLane = useMemo(() => makeMutable(0), []);
   const bubbleActive = useMemo(() => makeMutable(0), []);
-  const villainY = useMemo(() => makeMutable(villainYAt(0, screenHeight)), [screenHeight]);
+  const villainY = useMemo(() => makeMutable(0), []);
   const candySpin = useSpin(900);
   const spawnAccum = useMemo(() => makeMutable(GAME_CONSTANTS.SPAWN_INTERVAL), []);
   const bubblePending = useMemo(() => makeMutable(0), []);
@@ -292,8 +294,8 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
       fpsFrames.value = 0;
       fpsAccum.value = 0;
     }
-    villainY.value = villainYAt(now, screenHeight);
     if (frozen.value === 1) return;
+    villainY.value = villainYAt(now, screenHeight);
 
     const dt = dtMs / 1000;
     scrollX.value = -((now / 900) % 1) * 88;
@@ -362,6 +364,12 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     for (let index = 0; index < GAME_CONSTANTS.POWER_SHOT_POOL_SIZE; index += 1) {
       if (shotActive[index].value === 0) continue;
       shotX[index].value += GAME_CONSTANTS.POWER_SHOT_SPEED * dt;
+      shotY[index].value = trackShotY(
+        shotY[index].value,
+        villainY.value + (GAME_CONSTANTS.VILLAIN_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2,
+        dtMs,
+        220
+      );
       if (shotX[index].value >= screenWidth - 100) {
         shotActive[index].value = 0;
         villainHpMirror.value = Math.max(0, villainHpMirror.value - 1);
@@ -428,6 +436,7 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
         )
       ) {
         bubbleActive.value = 0;
+        charges.value = powerChargeAfterPickup(charges.value);
         scheduleOnRN(applyFoodCollected);
       } else if (bubbleX.value + GAME_CONSTANTS.BUBBLE_SIZE < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
         bubbleActive.value = 0;
@@ -443,30 +452,56 @@ export const useRunnerEngine = (screenWidth: number, screenHeight: number): Runn
     }
   });
 
-  return {
-    heroX,
-    heroY,
-    heroOpacity,
-    obstacleX,
-    obstacleY,
-    obstacleLane,
-    obstacleKind,
-    obstacleActive,
-    poolSize: GAME_CONSTANTS.ENEMY_POOL_SIZE,
-    shotX,
-    shotY,
-    shotActive,
-    shotPoolSize: GAME_CONSTANTS.POWER_SHOT_POOL_SIZE,
-    bubbleX,
-    bubbleY,
-    bubbleLane,
-    bubbleActive,
-    villainY,
-    charges,
-    candySpin,
-    scrollX,
-    moveLane,
-    firePower,
-    reset,
-  };
+  return useMemo(
+    () => ({
+      heroX,
+      heroY,
+      heroOpacity,
+      obstacleX,
+      obstacleY,
+      obstacleLane,
+      obstacleKind,
+      obstacleActive,
+      poolSize: GAME_CONSTANTS.ENEMY_POOL_SIZE,
+      shotX,
+      shotY,
+      shotActive,
+      shotPoolSize: GAME_CONSTANTS.POWER_SHOT_POOL_SIZE,
+      bubbleX,
+      bubbleY,
+      bubbleLane,
+      bubbleActive,
+      villainY,
+      charges,
+      candySpin,
+      scrollX,
+      moveLane,
+      firePower,
+      reset,
+    }),
+    [
+      bubbleActive,
+      bubbleLane,
+      bubbleX,
+      bubbleY,
+      candySpin,
+      charges,
+      firePower,
+      heroX,
+      heroOpacity,
+      heroY,
+      moveLane,
+      obstacleActive,
+      obstacleKind,
+      obstacleLane,
+      obstacleX,
+      obstacleY,
+      reset,
+      scrollX,
+      shotActive,
+      shotX,
+      shotY,
+      villainY,
+    ]
+  );
 };

@@ -8,6 +8,7 @@ import {
   projectileKindAt,
   projectileSpeedMultiplier,
   rngUnit,
+  trackShotY,
   villainYAt,
 } from './combatMath';
 
@@ -74,5 +75,10 @@ describe('combat thresholds and villain motion', () => {
     expect(villainYAt(0, 400)).toBe(200 - 71);
     expect(villainYAt(425, 400)).toBe(200 - 71 + 121);
     expect(villainYAt(1275, 400)).toBe(200 - 71 - 121);
+  });
+
+  it('moves a power shot toward the villain without teleporting', () => {
+    expect(trackShotY(100, 300, 110, 220)).toBeCloseTo(200);
+    expect(trackShotY(100, 300, 440, 220)).toBe(300);
   });
 });

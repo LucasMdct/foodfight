@@ -15,6 +15,11 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ## [Unreleased]
 
+- Fix power-charge mirroring, zero-charge match starts and soft vertical tracking for power shots.
+- Align the combat harness with production for bubble thresholds, hitbox padding, invulnerability, phase-four double spawns and pool saturation.
+- Port bubble reflections, zombie laugh pill, typed power-shot visuals, combat HUD markers and the hero victory modal from the v0.0.2 handoff.
+- Move combat colours into the shared theme and memoize the Skia canvas away from leaf HUD updates.
+
 ### Fixed
 
 - Fixed the select-screen footer to read the current app version from `app.json` instead of displaying the stale `v0.0.1` label.
