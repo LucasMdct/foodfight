@@ -314,7 +314,7 @@ export const useRunnerEngine = (
       obstacleActive[index].value = 0;
       obstacleResistant[index].value = 0;
     }
-  }, [heroLane, heroTopY, heroY, obstacleActive, screenHeight, villainY]);
+  }, [heroLane, heroTopY, heroY, obstacleActive, obstacleResistant, screenHeight, villainY]);
 
   useFrameCallback((frame) => {
     'worklet';
