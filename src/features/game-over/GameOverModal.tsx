@@ -10,20 +10,17 @@ const POP_DURATION_MS = 350;
 
 export const GameOverModal = () => {
   const theme = useTheme();
-  // Same fit-to-screen scaling as SelectScreen: the modal's vertical stack
-  // (villain + title + stats + two buttons) overflows a landscape phone and
-  // would clip the buttons, so scale it down to always fit.
   const scale = useUiScale();
   const styles = useMemo(() => makeStyles(theme, scale), [theme, scale]);
   const villainSize = Math.round(110 * scale);
-
+  const heroSize = Math.round(110 * scale);
   const score = useGameStore((s) => s.state.score);
   const best = useGameStore((s) => s.state.best);
+  const who = useGameStore((s) => s.state.who);
+  const screen = useGameStore((s) => s.state.screen);
   const actions = useGameStore((s) => s.actions);
-
-  // Entrance animation matching the design's `ff-pop` keyframe: card scales up
-  // from slightly-small while fading in.
   const pop = useRef(new RNAnimated.Value(0)).current;
+
   useEffect(() => {
     pop.setValue(0);
     RNAnimated.timing(pop, {
@@ -34,32 +31,39 @@ export const GameOverModal = () => {
   }, [pop]);
 
   const cardScale = pop.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] });
-
   const playAgain = () => {
     actions.reset();
     actions.start();
   };
+  const won = screen === 'win';
 
   return (
-    <View style={styles.overlay} pointerEvents="auto">
+    <View style={[styles.overlay, won && styles.overlayWin]} pointerEvents="auto">
       <RNAnimated.View style={[styles.card, { opacity: pop, transform: [{ scale: cardScale }] }]}>
         <Canvas style={styles.villainCanvas}>
-          <Foodie who="vilao" size={villainSize} />
+          <Foodie
+            who={won ? who : 'vilao'}
+            size={won ? heroSize : villainSize}
+            mood={won ? 'bravo' : 'feliz'}
+          />
         </Canvas>
-
-        <Text style={styles.title}>Doce demais!</Text>
+        <Text style={[styles.title, won && styles.titleWin]}>
+          {won ? 'VOCÊ VENCEU!' : 'Doce demais!'}
+        </Text>
         <Text style={styles.subtitle}>
-          O Barão Brigadeiro venceu dessa vez…{'\n'}mas comida de verdade nunca desiste!
+          {won
+            ? 'O Barão Brigadeiro caiu… comida de verdade venceu!'
+            : 'O Barão Brigadeiro venceu dessa vez… mas comida de verdade nunca desiste!'}
         </Text>
 
         <View style={styles.statsRow}>
-          <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Pontos</Text>
-            <Text style={styles.statValue}>{score}</Text>
+          <View style={[styles.statBlock, won && styles.statBlockWin]}>
+            <Text style={[styles.statLabel, won && styles.statLabelWin]}>Pontos</Text>
+            <Text style={[styles.statValue, won && styles.statValueWin]}>{score}</Text>
           </View>
-          <View style={styles.statBlock}>
-            <Text style={styles.statLabel}>Recorde</Text>
-            <Text style={styles.statValue}>{best}</Text>
+          <View style={[styles.statBlock, won && styles.statBlockWin]}>
+            <Text style={[styles.statLabel, won && styles.statLabelWin]}>Recorde</Text>
+            <Text style={[styles.statValue, won && styles.statValueWin]}>{best}</Text>
           </View>
         </View>
 

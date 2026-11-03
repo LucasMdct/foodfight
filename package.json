@@ -1,6 +1,6 @@
 {
   "name": "foodfight",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -19,6 +19,7 @@
     "expo-font": "~56.0.7",
     "expo-linear-gradient": "~56.0.4",
     "expo-screen-orientation": "~56.0.5",
+    "expo-splash-screen": "~56.0.16",
     "expo-status-bar": "~56.0.4",
     "react": "19.2.3",
     "react-native": "0.85.3",

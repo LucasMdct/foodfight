@@ -1,85 +1,211 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text, useWindowDimensions, View } from 'react-native';
-import { Canvas, Group, Oval } from '@shopify/react-native-skia';
+import { Text as RNText, useWindowDimensions, View } from 'react-native';
+import { Canvas, Group, Oval, useFont, type SkFont } from '@shopify/react-native-skia';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
+import { Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import { useGameStore } from '../../store/gameStore';
 import { useRunnerEngine } from '../../hooks/useRunnerEngine';
 import { SwipeHandler } from '../../components/SwipeHandler';
 import { Tablecloth } from '../../render/scenario/Tablecloth';
 import { LaneDividers } from '../../render/scenario/LaneDividers';
 import { Foodie } from '../../render/foodie/Foodie';
-import { Candy, type CandyType } from '../../render/candies/Candy';
-import { useBob } from '../../render/anim';
+import { Candy } from '../../render/candies/Candy';
+import { Zombie } from '../../render/candies/Zombie';
+import { FoodBubble as FoodBubbleVisual } from '../../render/candies/FoodBubble';
+import { PowerShot } from '../../render/candies/PowerShot';
 import { Hud } from '../../hud/Hud';
 import { GameOverModal } from '../game-over';
 import { GAME_CONSTANTS } from '../../types/constants';
+import { PROJECTILE_KIND } from '../../engine/combatMath';
 import type { Who } from '../../types/game';
 import theme from '../../theme/tokens';
 
-// Candy type is fixed per pool-slot index (not tracked by the engine): slot i
-// is always ['lolli','candy','donut'][i % 3], matching the mockup exactly and
-// avoiding a shared value/re-render just to carry a constant per slot.
-const CANDY_TYPES: CandyType[] = ['lolli', 'candy', 'donut'];
-const HERO_NAME: Record<Who, string> = { alface: 'Alface', feijao: 'Feijão', arroz: 'Arroz' };
+const useKindOpacity = (active: SharedValue<number>, kind: SharedValue<number>, expected: number) =>
+  useDerivedValue(() => (active.value === 1 && kind.value === expected ? 1 : 0));
 
-/** One candy slot: position/active are shared values, so this never re-renders. */
 const CandySlot = ({
   x,
   y,
   active,
+  kind,
   spin,
-  type,
+  laughFont,
 }: {
   x: SharedValue<number>;
   y: SharedValue<number>;
   active: SharedValue<number>;
+  kind: SharedValue<number>;
   spin: SharedValue<number>;
-  type: CandyType;
+  laughFont: SkFont | null;
+}) => {
+  const lolliOpacity = useKindOpacity(active, kind, PROJECTILE_KIND.lolli);
+  const candyOpacity = useKindOpacity(active, kind, PROJECTILE_KIND.candy);
+  const donutOpacity = useKindOpacity(active, kind, PROJECTILE_KIND.donut);
+  const zombieOpacity = useKindOpacity(active, kind, PROJECTILE_KIND.zumbi);
+  const transform = useDerivedValue(() => [{ translateX: x.value }, { translateY: y.value }]);
+
+  return (
+    <Group transform={transform}>
+      <Group opacity={lolliOpacity}>
+        <Candy type="lolli" spin={spin} />
+      </Group>
+      <Group opacity={candyOpacity}>
+        <Candy type="candy" spin={spin} />
+      </Group>
+      <Group opacity={donutOpacity}>
+        <Candy type="donut" spin={spin} />
+      </Group>
+      <Group opacity={zombieOpacity}>
+        <Zombie laughFont={laughFont} />
+      </Group>
+    </Group>
+  );
+};
+
+const PowerShotSlot = ({
+  x,
+  y,
+  active,
+  who,
+}: {
+  x: SharedValue<number>;
+  y: SharedValue<number>;
+  active: SharedValue<number>;
+  who: Who;
 }) => {
   const transform = useDerivedValue(() => [{ translateX: x.value }, { translateY: y.value }]);
   return (
     <Group transform={transform} opacity={active}>
-      <Candy type={type} spin={spin} />
+      <PowerShot who={who} />
     </Group>
+  );
+};
+
+const FoodBubbleSlot = ({
+  x,
+  y,
+  active,
+}: {
+  x: SharedValue<number>;
+  y: SharedValue<number>;
+  active: SharedValue<number>;
+}) => {
+  const transform = useDerivedValue(() => [{ translateX: x.value }, { translateY: y.value }]);
+  return (
+    <Group transform={transform} opacity={active}>
+      <FoodBubbleVisual />
+    </Group>
+  );
+};
+
+const GameCanvas = React.memo(
+  ({
+    engine,
+    width,
+    height,
+    who,
+    villainMood,
+    laughFont,
+  }: {
+    engine: ReturnType<typeof useRunnerEngine>;
+    width: number;
+    height: number;
+    who: Who;
+    villainMood: 'feliz' | 'bravo';
+    laughFont: SkFont | null;
+  }) => {
+    const villainTransform = useDerivedValue(() => [
+      { translateX: width - 100 },
+      { translateY: engine.villainY.value },
+    ]);
+    const heroTransform = useDerivedValue(() => [
+      { translateX: engine.heroX },
+      { translateY: engine.heroY.value },
+    ]);
+
+    return (
+      <Canvas style={{ flex: 1 }}>
+        <Tablecloth width={width} height={height} scrollX={engine.scrollX} />
+        <LaneDividers width={width} height={height} />
+
+        <Group transform={villainTransform}>
+          <Foodie who="vilao" size={132} animated={false} mood={villainMood} />
+        </Group>
+
+        {Array.from({ length: engine.poolSize }, (_, index) => (
+          <CandySlot
+            key={index}
+            x={engine.obstacleX[index]}
+            y={engine.obstacleY[index]}
+            active={engine.obstacleActive[index]}
+            kind={engine.obstacleKind[index]}
+            spin={engine.candySpin}
+            laughFont={laughFont}
+          />
+        ))}
+
+        {Array.from({ length: engine.shotPoolSize }, (_, index) => (
+          <PowerShotSlot
+            key={`shot-${index}`}
+            x={engine.shotX[index]}
+            y={engine.shotY[index]}
+            active={engine.shotActive[index]}
+            who={who}
+          />
+        ))}
+        <FoodBubbleSlot x={engine.bubbleX} y={engine.bubbleY} active={engine.bubbleActive} />
+
+        <Group transform={heroTransform} opacity={engine.heroOpacity}>
+          <Oval
+            x={8}
+            y={GAME_CONSTANTS.HERO_HEIGHT - 14}
+            width={GAME_CONSTANTS.HERO_WIDTH - 16}
+            height={16}
+            color={theme.colors.heroShadow}
+          />
+          <Foodie who={who} size={96} />
+        </Group>
+      </Canvas>
+    );
+  }
+);
+GameCanvas.displayName = 'GameCanvas';
+
+const LoopReadout = () => {
+  const fps = useGameStore((s) => s.state.fps);
+  if (!__DEV__) return null;
+  return (
+    <View style={{ position: 'absolute', top: 6, left: 6 }} pointerEvents="none">
+      <RNText style={{ color: theme.colors.surface, fontSize: 11 }}>LOOP {fps}</RNText>
+    </View>
   );
 };
 
 export const GameScreen = () => {
   const { width, height } = useWindowDimensions();
   const engine = useRunnerEngine(width, height);
-
-  // Discrete state only (screen, who, lives, score, fps) — safe to subscribe
-  // to directly since these change at most a few times per second, never
-  // per-frame. Per-frame values never flow through this store.
+  const laughFont = useFont(Fredoka_700Bold, 14);
   const screen = useGameStore((s) => s.state.screen);
   const who = useGameStore((s) => s.state.who);
-  const lives = useGameStore((s) => s.state.lives);
-  const score = useGameStore((s) => s.state.score);
-  const fps = useGameStore((s) => s.state.fps);
+  const villainMood = useGameStore((s) => s.state.villainMood);
   const actions = useGameStore((s) => s.actions);
-
-  // The control hint hides after the player's first lane change and reappears
-  // on a fresh match. `hasMoved` is discrete (flips at most once per match), so
-  // it never causes a per-frame re-render.
   const [hasMoved, setHasMoved] = useState(false);
 
-  // GameScreen stays mounted across 'game' <-> 'over' (App.tsx renders it for
-  // both), so a future "Play Again" re-enters 'game' without a remount.
-  // Resetting on every transition into 'game' covers both the initial mount
-  // and any later restart with one code path.
   useEffect(() => {
     if (screen === 'game') {
       engine.reset();
-      // Reset-on-transition sits with the imperative engine reset, which must
-      // live in the effect; suppressing here keeps both in one place.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasMoved(false);
     }
-    // engine.reset is stable for the component's lifetime; only `screen` should retrigger this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
 
-  // Wrap the engine's lane move so the first interaction dismisses the hint.
+  useEffect(() => {
+    if (screen !== 'game' || villainMood !== 'bravo') return;
+    const timeout = setTimeout(() => actions.clearVillainMood(), 1200);
+    return () => clearTimeout(timeout);
+  }, [actions, screen, villainMood]);
+
   const handleMoveLane = useCallback(
     (direction: -1 | 1) => {
       setHasMoved(true);
@@ -88,73 +214,26 @@ export const GameScreen = () => {
     [engine]
   );
 
-  const villainFloat = useBob(12, 900);
-  const villainX = width - 100;
-  const villainBaseY = height * 0.16;
-  const villainTransform = useDerivedValue(() => [
-    { translateX: villainX },
-    { translateY: villainBaseY + villainFloat.value },
-  ]);
-
-  const heroTransform = useDerivedValue(() => [
-    { translateX: engine.heroX },
-    { translateY: engine.heroY.value },
-  ]);
-
   return (
     <View style={{ flex: 1 }}>
-      {/* Gestures cover the playfield only; HUD and modal buttons sit outside. */}
       <SwipeHandler onMoveLane={handleMoveLane}>
         <View style={{ flex: 1 }}>
-          <Canvas style={{ flex: 1 }}>
-            <Tablecloth width={width} height={height} scrollX={engine.scrollX} />
-            <LaneDividers width={width} height={height} />
-
-            <Group transform={villainTransform}>
-              <Foodie who="vilao" size={132} />
-            </Group>
-
-            {Array.from({ length: engine.poolSize }, (_, i) => (
-              <CandySlot
-                key={i}
-                x={engine.obstacleX[i]}
-                y={engine.obstacleY[i]}
-                active={engine.obstacleActive[i]}
-                spin={engine.candySpin}
-                type={CANDY_TYPES[i % 3]}
-              />
-            ))}
-
-            <Group transform={heroTransform} opacity={engine.heroOpacity}>
-              <Oval
-                x={8}
-                y={GAME_CONSTANTS.HERO_HEIGHT - 14}
-                width={GAME_CONSTANTS.HERO_WIDTH - 16}
-                height={16}
-                color={theme.colors.heroShadow}
-              />
-              <Foodie who={who} size={96} />
-            </Group>
-          </Canvas>
+          <GameCanvas
+            engine={engine}
+            width={width}
+            height={height}
+            who={who}
+            villainMood={villainMood}
+            laughFont={laughFont}
+          />
         </View>
       </SwipeHandler>
 
-      <Hud
-        who={who}
-        name={HERO_NAME[who]}
-        lives={lives}
-        score={score}
-        onExit={actions.toSelect}
-        showHint={!hasMoved}
-      />
+      <Hud onFire={engine.firePower} onExit={actions.toSelect} showHint={!hasMoved} />
 
-      {screen === 'over' && <GameOverModal />}
+      {(screen === 'over' || screen === 'win') && <GameOverModal />}
 
-      {__DEV__ && (
-        <View style={{ position: 'absolute', top: 6, left: 6 }} pointerEvents="none">
-          <Text style={{ color: theme.colors.surface, fontSize: 11 }}>LOOP {fps}</Text>
-        </View>
-      )}
+      <LoopReadout />
     </View>
   );
 };

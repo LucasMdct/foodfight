@@ -2,7 +2,7 @@
   "expo": {
     "name": "FoodFight",
     "slug": "foodfight-poc",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "orientation": "landscape",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -29,6 +29,17 @@
       }
     },
     "owner": "medeirosdev",
-    "plugins": ["expo-font"]
+    "plugins": [
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFF3E2",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120,
+          "resizeMode": "contain"
+        }
+      ]
+    ]
   }
 }

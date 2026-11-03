@@ -8,6 +8,7 @@ import { Foodie } from '../../render/foodie/Foodie';
 import { Heart } from '../../hud/Heart';
 import { makeStyles } from './SelectScreen.styles';
 import type { Who } from '../../types/game';
+import { APP_VERSION } from '../../config/appVersion';
 
 // Character name colors are per-character identity (not UI/theme colors), same
 // rationale as `src/render/foodie/palette.ts` — kept as documented local
@@ -128,7 +129,7 @@ export const SelectScreen = () => {
           </View>
         </View>
 
-        <Text style={styles.footer}> FOOD FIGHT · estilo v0.0.1 - By Lucas Medeiros</Text>
+        <Text style={styles.footer}> FOOD FIGHT · estilo v{APP_VERSION} - By Lucas Medeiros</Text>
       </View>
     </LinearGradient>
   );

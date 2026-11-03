@@ -4,6 +4,7 @@ import { Alface } from './characters/Alface';
 import { Feijao } from './characters/Feijao';
 import { Arroz } from './characters/Arroz';
 import { Vilao } from './characters/Vilao';
+import type { VillainMood } from '../../types/game';
 
 export type Who = 'alface' | 'feijao' | 'arroz' | 'vilao';
 
@@ -19,14 +20,24 @@ const VIEWBOX: Record<Who, [number, number]> = {
  * Renders a Foodie character scaled to `size` (uniform scale by design width).
  * Must be placed inside a Skia <Canvas>.
  */
-export const Foodie = ({ who, size }: { who: Who; size: number }) => {
+export const Foodie = ({
+  who,
+  size,
+  animated = true,
+  mood,
+}: {
+  who: Who;
+  size: number;
+  animated?: boolean;
+  mood?: VillainMood;
+}) => {
   const [vw] = VIEWBOX[who];
   const s = size / vw;
   const Body =
     who === 'alface' ? Alface : who === 'feijao' ? Feijao : who === 'arroz' ? Arroz : Vilao;
   return (
     <Group transform={[{ scale: s }]}>
-      <Body />
+      {who === 'vilao' ? <Vilao animated={animated} mood={mood} /> : <Body />}
     </Group>
   );
 };

@@ -66,7 +66,7 @@ Note the loop-rate readout only renders under `__DEV__`. In a release build, rea
 
 If the reading is valid, the levers in order of effect:
 
-1. Lower `OBSTACLE_MAX_ACTIVE` (8 → 6) — removes draw calls directly, biggest win
+1. Lower `ENEMY_POOL_SIZE` (10 → 6) — removes draw calls directly, biggest win
 2. Raise `SPAWN_INTERVAL_MIN` (420 → 600 ms) — fewer simultaneous candies late in a match
 3. Simplify `Tablecloth` — a full-screen layer repainted every frame, the largest single draw
 4. Reduce path complexity in `src/render/foodie/characters/`
@@ -138,7 +138,7 @@ Only the X axis is tested; Y overlap is implied by the lane-index check. If lane
 
 ### Candies stop spawning
 
-All 8 pool slots are occupied, so the spawn tick finds nothing free and skips silently. The difficulty ramp tightens the interval toward 420 ms as a match runs, which narrows the margin. Raise `SPAWN_INTERVAL_MIN` or `OBSTACLE_MAX_ACTIVE`.
+All 10 enemy slots are occupied, so the spawn tick finds nothing free and skips silently. The difficulty ramp tightens the interval toward 420 ms as a match runs, which narrows the margin. Raise `SPAWN_INTERVAL_MIN` or `ENEMY_POOL_SIZE`.
 
 ### All candies spin identically
 

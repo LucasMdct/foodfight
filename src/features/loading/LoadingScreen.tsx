@@ -4,10 +4,17 @@ import { Canvas } from '@shopify/react-native-skia';
 import { useTheme } from '../../theme';
 import { Foodie } from '../../render/foodie/Foodie';
 import { makeStyles } from './LoadingScreen.styles';
+import { LOADING_BURST_SCALE } from './loadingConfig';
 
 const BAR_DURATION_MS = 1200;
 
-export const LoadingScreen = ({ ready, onFinished }: { ready: boolean; onFinished: () => void }) => {
+export const LoadingScreen = ({
+  ready,
+  onFinished,
+}: {
+  ready: boolean;
+  onFinished: () => void;
+}) => {
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
 
@@ -33,7 +40,11 @@ export const LoadingScreen = ({ ready, onFinished }: { ready: boolean; onFinishe
 
   const burst = useCallback(() => {
     RNAnimated.parallel([
-      RNAnimated.spring(scaleAnim, { toValue: 4, damping: 12, useNativeDriver: true }),
+      RNAnimated.spring(scaleAnim, {
+        toValue: LOADING_BURST_SCALE,
+        damping: 12,
+        useNativeDriver: true,
+      }),
       RNAnimated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
     ]).start(() => {
       onFinishedRef.current();

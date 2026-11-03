@@ -2,8 +2,8 @@
 
 A mobile endless runner built with **Expo SDK 56**, **React Native Skia** and **Reanimated**.
 
-**Version:** 0.0.1 ([changelog](./CHANGELOG.md))
-**Status:** feature complete — POC verdict unresolved, v0.0.1 built, hardware QA pending
+**Version:** 0.0.2 ([changelog](./CHANGELOG.md))
+**Status:** v0.0.2 implemented — release candidate available, hardware QA pending
 
 Pick a Foodie, dodge the candy the Barão Brigadeiro throws across three lanes of a rolling kitchen table, and keep your three lives.
 
@@ -33,7 +33,7 @@ The architecture is still the strongest part: the loop runs entirely on the UI t
 
 > The 30–50 fps figure is disputed in this branch: commit `2c21cd2` claimed it came from an old README and removed it. No replacement measurement exists, so the figure is retained as the last recorded result and the verdict is marked unresolved rather than approved.
 
-### Phase 2 — Game v0.0.1 · **feature complete, QA pending**
+### Phase 2 — Game v0.0.1 · **released, QA pending**
 
 From v0.0.1 the project stops being a POC and becomes the game, implementing the `FoodFight v0.0.1` design in full.
 

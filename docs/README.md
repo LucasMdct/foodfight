@@ -11,7 +11,7 @@ The project has two eras: the **POC** that tested React Native Skia, and the **g
 | Document | What it covers | Read time |
 |---|---|---|
 | [architecture.md](./architecture.md) | How the game is built and why each decision was made | 20 min |
-| [testing.md](./testing.md) | The validation protocol — not yet run against v0.0.1 | 12 min |
+| [testing.md](./testing.md) | The v0.0.2 validation protocol — automated checks pass; device QA pending | 12 min |
 | [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix | reference |
 | [results.md](./results.md) | POC measurements and the unresolved frame-rate verdict | 8 min |
 
@@ -34,6 +34,7 @@ Written before implementation, one per feature.
 | Spec | Subject |
 |---|---|
 | [2026-07-05-foodfight-v001-design.md](./specs/2026-07-05-foodfight-v001-design.md) | **v0.0.1 game design** — heroes, villain, screens, theme |
+| [2026-11-02-foodfight-v002-combat.md](./specs/2026-11-02-foodfight-v002-combat.md) | **v0.0.2 combat loop** — attacks, powers, food bubble, victory/defeat, pools and harness |
 | [poc-runner-skia.md](./specs/poc-runner-skia.md) | The original POC specification and acceptance criteria |
 | [2026-07-04-play-again-button.md](./specs/2026-07-04-play-again-button.md) | Game Over modal and replay flow |
 | [2026-07-04-orientation.md](./specs/2026-07-04-orientation.md) | Orientation selection *(superseded — v0.0.1 locks landscape)* |
@@ -46,6 +47,7 @@ Step-by-step implementation plans derived from the specs above.
 | Plan | Subject |
 |---|---|
 | [2026-07-05-foodfight-v001.md](./plans/2026-07-05-foodfight-v001.md) | **v0.0.1 game implementation** |
+| [2026-11-02-foodfight-v002-combat.md](./plans/2026-11-02-foodfight-v002-combat.md) | **v0.0.2 combat implementation** |
 | [2026-07-04-play-again-button.md](./plans/2026-07-04-play-again-button.md) | Game Over modal (POC) |
 | [2026-07-04-dopamine-loader.md](./plans/2026-07-04-dopamine-loader.md) | Loading screen (POC) |
 
@@ -59,7 +61,7 @@ Step-by-step implementation plans derived from the specs above.
 
 **Changing how something looks** → [`design/`](./design/) first, then port.
 
-**Testing on a device** → [testing.md](./testing.md). v0.0.1 has never been measured on hardware; that is the largest open item on the project.
+**Testing on a device** → [testing.md](./testing.md). The released v0.0.1 baseline and v0.0.2 combat scene still need physical-device measurement; that is the largest open item on the project.
 
 **Something is broken** → [troubleshooting.md](./troubleshooting.md)
 
