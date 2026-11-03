@@ -49,6 +49,7 @@ Step-by-step implementation plans derived from the specs above.
 |---|---|
 | [2026-07-05-foodfight-v001.md](./plans/2026-07-05-foodfight-v001.md) | **v0.0.1 game implementation** |
 | [2026-11-02-foodfight-v002-combat.md](./plans/2026-11-02-foodfight-v002-combat.md) | **v0.0.2 combat implementation** |
+| [2026-11-03-foodfight-v004.md](./plans/2026-11-03-foodfight-v004.md) | **v0.0.4 gameplay implementation** |
 | [2026-07-04-play-again-button.md](./plans/2026-07-04-play-again-button.md) | Game Over modal (POC) |
 | [2026-07-04-dopamine-loader.md](./plans/2026-07-04-dopamine-loader.md) | Loading screen (POC) |
 
