@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text as RNText, useWindowDimensions, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Text as RNText, useWindowDimensions, View } from 'react-native';
 import {
   Canvas,
   Circle,
@@ -36,26 +36,8 @@ import { GAME_CONSTANTS } from '../../types/constants';
 import { PROJECTILE_KIND } from '../../engine/combatMath';
 import type { Who } from '../../types/game';
 import theme from '../../theme/tokens';
-
-const GAME_SCREEN_STYLES = StyleSheet.create({
-  root: { flex: 1 },
-  canvasContainer: { flex: 1 },
-  canvas: { flex: 1 },
-  loopReadout: { position: 'absolute', top: 6, left: 6 },
-  loopText: { color: theme.colors.surface, fontSize: 11 },
-  tauntBubble: {
-    position: 'absolute',
-    right: GAME_CONSTANTS.VILLAIN_RENDER_WIDTH - theme.space.sm,
-    maxWidth: 220,
-    paddingVertical: theme.space.sm,
-    paddingHorizontal: 12,
-    borderWidth: 2,
-    borderColor: theme.colors.villainBorder,
-    borderRadius: theme.radii.md,
-    backgroundColor: theme.colors.surface,
-  },
-  tauntText: { color: theme.colors.villain, fontFamily: theme.font.semibold },
-});
+import { GAME_SCREEN_STYLES } from './GameScreen.styles';
+import { createVillainDialogueController } from './villainDialogue';
 
 const useKindOpacity = (active: SharedValue<number>, kind: SharedValue<number>, expected: number) =>
   useDerivedValue(() => (active.value === 1 && kind.value === expected ? 1 : 0));
@@ -414,16 +396,42 @@ export const GameScreen = () => {
   const villainAttacking = useGameStore((s) => s.state.villainAttacking);
   const villainTalking = useGameStore((s) => s.state.villainTalking);
   const villainDying = useGameStore((s) => s.state.villainDying);
-  const villainTaunt = useGameStore((s) => s.state.villainTaunt);
+  const villainTalk = useGameStore((s) => s.state.villainTalk);
   const villainTalkDurationMs = useGameStore((s) => s.state.villainTalkDurationMs);
   const actions = useGameStore((s) => s.actions);
   const [hasMoved, setHasMoved] = useState(false);
+  const [typedTalk, setTypedTalk] = useState('');
+  const dialogueControllerRef = useRef<ReturnType<typeof createVillainDialogueController> | null>(
+    null
+  );
+  if (dialogueControllerRef.current === null) {
+    dialogueControllerRef.current = createVillainDialogueController(
+      (nextText) => {
+        setTypedTalk(nextText);
+        if (nextText === '' && !useGameStore.getState().state.villainTalking) {
+          useGameStore.getState().actions.clearVillainTaunt();
+        }
+      },
+      () => {
+        useGameStore.getState().actions.setVillainTalking(false);
+      }
+    );
+  }
+
+  useEffect(() => {
+    return () => {
+      dialogueControllerRef.current?.dispose();
+    };
+  }, []);
 
   useEffect(() => {
     if (screen === 'game') {
       engine.reset();
+      dialogueControllerRef.current?.cancel();
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasMoved(false);
+    } else {
+      dialogueControllerRef.current?.cancel();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
@@ -453,12 +461,14 @@ export const GameScreen = () => {
   }, [actions, screen, villainDying]);
 
   useEffect(() => {
-    if (!villainTaunt || villainTalkDurationMs <= 0) return;
-    const timeout = setTimeout(() => actions.clearVillainTaunt(), villainTalkDurationMs);
-    return () => clearTimeout(timeout);
-  }, [actions, villainTalkDurationMs, villainTaunt]);
+    if (!villainTalk || villainTalkDurationMs <= 0) {
+      dialogueControllerRef.current?.cancel();
+      return;
+    }
+    dialogueControllerRef.current?.show(villainTalk, villainTalkDurationMs);
+  }, [villainTalk, villainTalkDurationMs]);
 
-  const tauntStyle = useAnimatedStyle(() => ({ top: engine.villainY.value - 6 }));
+  const tauntStyle = useAnimatedStyle(() => ({ top: engine.villainY.value - 4 }));
 
   const handleMoveLane = useCallback(
     (direction: -1 | 1) => {
@@ -488,15 +498,14 @@ export const GameScreen = () => {
 
       <Hud onFire={engine.firePower} onExit={actions.toSelect} showHint={!hasMoved} />
 
-      {villainTaunt ? (
+      {typedTalk ? (
         <Animated.View pointerEvents="none" style={[GAME_SCREEN_STYLES.tauntBubble, tauntStyle]}>
-          <RNText style={GAME_SCREEN_STYLES.tauntText}>{villainTaunt}</RNText>
+          <RNText style={GAME_SCREEN_STYLES.tauntText}>{typedTalk}</RNText>
         </Animated.View>
       ) : null}
 
-      {(screen === 'over' || screen === 'win') && <GameOverModal />}
-
       <LoopReadout />
+      <GameOverModal />
     </View>
   );
 };
