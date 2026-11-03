@@ -15,6 +15,22 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ## [Unreleased]
 
+### Added
+
+- Add the v0.0.3 difficulty flow with Muito Fácil, Fácil, Difícil, and Impossível presets.
+- Add Barão 2.0 gameplay with lane-origin attacks, 100-point zombie bursts, milestone power charges, resistant burst projectiles, and 40-point power clear mode.
+- Add enlarged Barão/projectile presentation, attack taunts, and difficulty feedback in the HUD.
+- Add the v0.0.3 gameplay spec, implementation plan, architecture updates, and deterministic harness coverage.
+
+### Changed
+
+- Change the screen flow to Loading → Select hero → Choose difficulty → Game → Result.
+- Preserve the selected difficulty when replaying a match.
+
+### Verification status
+
+- Automated typecheck and Vitest coverage pass on `feature/v003`; physical-device review and APK generation are intentionally pending.
+
 - Fix power-charge mirroring, zero-charge match starts and soft vertical tracking for power shots.
 - Align the combat harness with production for bubble thresholds, hitbox padding, invulnerability, phase-four double spawns and pool saturation.
 - Port bubble reflections, zombie laugh pill, typed power-shot visuals, combat HUD markers and the hero victory modal from the v0.0.2 handoff.

@@ -1,8 +1,8 @@
 # Testing Guide
 
-The validation protocol for Food Fight v0.0.2. Pure combat rules and race conditions are covered by automated Vitest tests; frame timing and visual fidelity still require a physical device because the question that matters most (render performance on real hardware) cannot be answered any other way.
+The validation protocol for Food Fight v0.0.3. Pure combat rules and race conditions are covered by automated Vitest tests; frame timing and visual fidelity still require a physical device because the question that matters most (render performance on real hardware) cannot be answered any other way.
 
-**Status: automated v0.0.2 checks pass; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.2 draws a larger typed pool, treat that result as a **baseline, not a prediction**.
+**Status: automated v0.0.3 checks pass; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.3 draws enlarged projectiles, a larger Barão, and milestone bursts, treat that result as a **baseline, not a prediction**.
 
 ---
 
@@ -30,14 +30,17 @@ Record the device model, OS version, build type, display refresh rate and the `G
 2. Orientation locks to landscape without a flash of portrait.
 3. Select screen shows all three heroes — Alface, Feijão, Arroz.
 4. Pick each hero in turn; the correct character appears in-game.
-5. From Game Over, use both exits: **play again** and **switch hero**.
+5. Press **CONTINUAR →** and verify the difficulty screen shows all four cards.
+6. Choose each difficulty in turn; the selected label appears in the game HUD.
+7. From Game Over, use both exits: **play again** and **switch hero**.
 
 | Check         | Expected                                          |
 | ------------- | ------------------------------------------------- |
 | Fonts         | No fallback-font flash before the loader clears   |
 | Orientation   | Landscape, locked, no rotation possible           |
 | Hero identity | HUD name and on-canvas character match the pick   |
-| Play again    | Restarts at 3 lives, score 0, starting difficulty |
+| Difficulty    | Four cards are visible, selectable, and labelled correctly |
+| Play again    | Restarts at 3 lives, score 0, same selected difficulty |
 | Switch hero   | Returns to select; `best` survives                |
 
 `GameScreen` stays mounted across `'game'` and `'over'`, so **replay is the interesting path** — it exercises `engine.reset()` without a remount. Candy left on screen or difficulty that stays ramped means the reset was incomplete.
@@ -87,9 +90,14 @@ Target: under 100 ms perceived. Two ways to check:
 
 Remember the 100 ms debounce in `SwipeHandler`: two flicks inside that window collapse into one by design, and that is not a bug.
 
-### 3.3 Candies and difficulty ramp
+### 3.3 Difficulty, Barão movement and candies
 
-- Spawn from the right edge and travel left at constant speed
+- Verify Muito Fácil starts slowly, Fácil is faster, Difícil spawns more often, and Impossível can double-spawn.
+- The selected difficulty remains fixed during a match; the time ramp still accelerates within that preset.
+- The Barão is visibly larger, has a purple aura, and moves through the lanes.
+- Normal attacks appear to leave the Barão's current lane rather than a random lane.
+- At 100, 200, and later score thresholds, the Barão performs the belly attack and launches three staggered zombie projectiles.
+- Spawn from the Barão side and travel left at the selected speed
 - Disappear at the left edge; never accumulate off-screen
 - All three types appear — lollipop, gumdrop, donut
 - All candies spin in lockstep (one shared phase — this is intended, not a bug)
@@ -108,11 +116,14 @@ Watch for a spawn _gap_ — if all 10 enemy slots are busy, that tick is skipped
 - Dodging a candy adds 10 to the score
 - Best score updates only when the run beats it
 
-### 3.5 Powers, bubbles and terminal results
+### 3.5 Powers, milestones, bubbles and terminal results
 
 - The HUD power button fires on press-in, not on release, and a double tap with one charge creates only one shot
 - A shot moves right, reaches the Barão and removes one HP; five accepted hits show the win result
 - A shot never spends a charge when all three shot slots are occupied
+- Every 100 points grants one power charge, capped at three, and triggers one Barão burst.
+- A power shot clears normal projectiles in front of the hero for the next 40 score points.
+- Zombie projectiles launched by the Barão's milestone burst resist power clear mode.
 - Food bubbles appear one at a time after each 300-point threshold; collecting one adds a charge but never exceeds three
 - A full-charge pickup still shows feedback and does not increase the charge count
 - A late enemy hit cannot replace a frozen win with Game Over
@@ -124,6 +135,12 @@ Test edge cases specifically: clip the leading and trailing edge of a candy. The
 - Modal shows final score and best
 - The scene behind it is **frozen** — no scroll, no candy movement
 - FPS sampling continues (visible under `__DEV__`)
+
+### 3.7 Barão feedback
+
+- The Barão taunts when a milestone burst begins.
+- The attack animation lasts approximately one second and does not move the game loop to React state.
+- A successful power shot changes the Barão to `bravo` and shows the existing reaction line.
 
 ---
 
@@ -193,11 +210,11 @@ npm test
 
 The automated suite includes `src/engine/combatMath.test.ts`,
 `src/engine/combatSimulation.test.ts` and `src/store/gameStore.test.ts`. These
-cover phase boundaries, seeded distribution, clamped villain motion, soft shot
-tracking, UI-thread charge authorization, zero-charge starts, food pickup caps
-and padding, automatic bubble thresholds, invulnerability, zombie hitboxes,
-phase-four sugar rain, pool saturation, power rotation, reset/replay and
-terminal result races.
+cover difficulty presets, score milestones, seeded distribution, clamped villain
+motion, soft shot tracking, UI-thread charge authorization, zero-charge starts,
+food pickup caps and padding, automatic bubble thresholds, invulnerability,
+zombie hitboxes, resistant bursts, power clearing, phase-four sugar rain, pool
+saturation, power rotation, reset/replay and terminal result races.
 
 Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint. GitHub Actions runs typecheck, lint and tests on every PR.
 
@@ -210,7 +227,7 @@ Copy this into a new dated file under `docs/` and fill it in:
 ```markdown
 # Test Run — YYYY-MM-DD
 
-**Version:** v0.0.2
+**Version:** v0.0.3
 **Device:** model, SoC, RAM
 **OS:** version
 **Build:** release / dev
@@ -240,7 +257,7 @@ Then add a `CHANGELOG.md` entry if the run changes the project's conclusions.
 
 ---
 
-## Outstanding for v0.0.2
+## Outstanding for v0.0.3
 
 Carried from the branch's known debts — none of these have been verified on hardware:
 
@@ -248,6 +265,9 @@ Carried from the branch's known debts — none of these have been verified on ha
 - 1.4 s invulnerability flicker timing
 - 130 ms lane-change swipe
 - Background scroll confined to the game screen
-- Frame rate under the full v0.0.2 scene, including the four-variant enemy pool
+- Frame rate under the full v0.0.3 scene, including the four-variant enemy pool, enlarged Barão, and milestone bursts
 - Barão `bravo` expression timing and visual fidelity on a physical device
+- Difficulty card layout and all four difficulty presets on a short landscape device
+- Barão lane-origin normal attacks and staggered resistant zombie bursts
+- 40-point power clear mode versus resistant burst projectiles
 - p95 comparison against the v0.0.1 baseline using the platform profiler
