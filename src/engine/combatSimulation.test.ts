@@ -130,6 +130,19 @@ describe('combat simulation coverage', () => {
     expect(result.snapshot.activeEnemies).toBe(1);
   });
 
+  it('queues a food bubble when power clearing crosses a 300-point threshold', () => {
+    const result = runCombatScenario({
+      seed: 14,
+      score: 290,
+      charges: 1,
+      enemies: [{ x: 300, lane: 0, kind: PROJECTILE_KIND.lolli }],
+      frames: [{ dtMs: 16, fire: true }],
+    });
+
+    expect(result.events.some((event) => event.type === 'powerCleared')).toBe(true);
+    expect(result.events.some((event) => event.type === 'bubbleSpawned')).toBe(true);
+  });
+
   it('spawns normal projectiles from the Barão current lane', () => {
     const result = runCombatScenario({
       seed: 13,

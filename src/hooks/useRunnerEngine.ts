@@ -479,6 +479,10 @@ export const useRunnerEngine = (
         obstacleActive[index].value = 0;
         scoreMirror.value += GAME_CONSTANTS.SCORE_PER_DODGE;
         scheduleOnRN(applyScore, GAME_CONSTANTS.SCORE_PER_DODGE);
+        while (scoreMirror.value >= bubbleThreshold.value) {
+          bubblePending.value += 1;
+          bubbleThreshold.value += GAME_CONSTANTS.BUBBLE_EVERY;
+        }
         continue;
       }
       if (

@@ -227,6 +227,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         enemy.active = false;
         score += GAME_CONSTANTS.SCORE_PER_DODGE;
         events.push({ type: 'powerCleared', score });
+        while (score >= bubbleThreshold) {
+          bubblePending += 1;
+          bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
+        }
       } else if (
         elapsedMs >= invulnerableUntilMs &&
         enemy.lane === lane &&
