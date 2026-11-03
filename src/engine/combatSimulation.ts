@@ -66,6 +66,7 @@ export type CombatEvent =
   | { readonly type: 'villainBurst'; readonly count: number; readonly lane: number }
   | { readonly type: 'powerCleared'; readonly score: number }
   | { readonly type: 'confettiSpawned'; readonly x: number; readonly y: number }
+  | { readonly type: 'villainDefeatStarted' }
   | { readonly type: 'spawnSkipped' };
 
 export interface CombatSnapshot {
@@ -155,6 +156,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let burstLane = 1;
   let burstNextAtMs = 0;
   let burstDelayIndex = 0;
+  let defeatActive = false;
+  let defeatStartedAtMs = 0;
+  let defeatBurstIndex = 0;
+  let defeatVillainCenterY = SIMULATION_HEIGHT / 2;
 
   for (let frameIndex = 0; frameIndex < scenario.frames.length; frameIndex += 1) {
     if (screen !== 'game') break;
@@ -162,6 +167,47 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     const frame = scenario.frames[frameIndex];
     const dtMs = Math.max(0, Math.min(GAME_CONSTANTS.MAX_FRAME_DELTA_MS, frame.dtMs));
     const lane = clampLane(frame.lane ?? 1);
+
+    if (defeatActive) {
+      elapsedMs += dtMs;
+      while (
+        defeatBurstIndex < GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_COUNT &&
+        elapsedMs >=
+          defeatStartedAtMs +
+            GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_START_MS +
+            defeatBurstIndex * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_INTERVAL_MS
+      ) {
+        defeatBurstIndex += 1;
+        rngState = nextRngState(rngState);
+        const offsetX = (rngUnit(rngState) - 0.5) * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_SPREAD_X;
+        rngState = nextRngState(rngState);
+        const offsetY = (rngUnit(rngState) - 0.5) * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_SPREAD_Y;
+        let effectSlot = -1;
+        for (let index = 0; index < effectUntil.length; index += 1) {
+          if (effectUntil[index] <= elapsedMs) {
+            effectSlot = index;
+            break;
+          }
+        }
+        if (effectSlot >= 0) {
+          effectUntil[effectSlot] = elapsedMs + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+          events.push({
+            type: 'confettiSpawned',
+            x: SIMULATION_WIDTH - GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_X_OFFSET + offsetX,
+            y: defeatVillainCenterY + offsetY,
+          });
+        } else {
+          events.push({ type: 'spawnSkipped' });
+        }
+      }
+      if (elapsedMs >= defeatStartedAtMs + GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS) {
+        defeatActive = false;
+        screen = 'win';
+        events.push({ type: 'win' });
+        break;
+      }
+      continue;
+    }
 
     if (frame.fire && charges > 0) {
       let shotSlot = -1;
@@ -322,14 +368,19 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         villainHp = Math.max(0, villainHp - 1);
         events.push({ type: 'villainHit', villainHp });
         if (villainHp === 0) {
-          screen = 'win';
-          events.push({ type: 'win' });
+          defeatActive = true;
+          defeatStartedAtMs = elapsedMs;
+          defeatBurstIndex = 0;
+          defeatVillainCenterY =
+            villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+            GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2;
+          events.push({ type: 'villainDefeatStarted' });
           break;
         }
       }
     }
 
-    if (screen !== 'game') break;
+    if (screen !== 'game' || defeatActive) continue;
 
     for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
       const enemy = enemies[enemyIndex];

@@ -37,8 +37,8 @@ describe('combat simulation fire authorization', () => {
 });
 
 describe('combat simulation result races', () => {
-  it('freezes on the villain hit before a late enemy hit can change win to over', () => {
-    const result = runCombatScenario({
+  it('freezes on the villain hit, stages defeat confetti, and delays win without late heroHit or score', () => {
+    const beforeCompletion = runCombatScenario({
       seed: 2,
       villainHp: 1,
       charges: 1,
@@ -47,8 +47,34 @@ describe('combat simulation result races', () => {
       frames: [{ dtMs: 16, fire: true }, ...Array.from({ length: 80 }, () => ({ dtMs: 16 }))],
     });
 
-    expect(result.snapshot.screen).toBe('win');
-    expect(result.events.some((event) => event.type === 'over')).toBe(false);
+    expect(beforeCompletion.events.some((event) => event.type === 'villainDefeatStarted')).toBe(
+      true
+    );
+    expect(beforeCompletion.snapshot.screen).toBe('game');
+    expect(beforeCompletion.events.some((event) => event.type === 'win')).toBe(false);
+    expect(beforeCompletion.events.some((event) => event.type === 'heroHit')).toBe(false);
+    expect(beforeCompletion.events.some((event) => event.type === 'score')).toBe(false);
+
+    const completed = runCombatScenario({
+      seed: 2,
+      villainHp: 1,
+      charges: 1,
+      lives: 1,
+      enemies: [{ x: 650, lane: 1, kind: PROJECTILE_KIND.lolli }],
+      frames: [{ dtMs: 16, fire: true }, ...Array.from({ length: 240 }, () => ({ dtMs: 16 }))],
+    });
+
+    const defeatIndex = completed.events.findIndex(
+      (event) => event.type === 'villainDefeatStarted'
+    );
+    const winIndex = completed.events.findIndex((event) => event.type === 'win');
+
+    expect(defeatIndex).toBeGreaterThanOrEqual(0);
+    expect(winIndex).toBeGreaterThan(defeatIndex);
+    expect(completed.snapshot.screen).toBe('win');
+    expect(completed.events.some((event) => event.type === 'over')).toBe(false);
+    expect(completed.events.some((event) => event.type === 'heroHit')).toBe(false);
+    expect(completed.events.some((event) => event.type === 'score')).toBe(false);
   });
 
   it('removes an enemy hit without awarding dodge score', () => {

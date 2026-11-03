@@ -329,6 +329,7 @@ export const GameScreen = () => {
   const who = useGameStore((s) => s.state.who);
   const villainMood = useGameStore((s) => s.state.villainMood);
   const villainAttacking = useGameStore((s) => s.state.villainAttacking);
+  const villainDying = useGameStore((s) => s.state.villainDying);
   const villainTaunt = useGameStore((s) => s.state.villainTaunt);
   const villainTalkDurationMs = useGameStore((s) => s.state.villainTalkDurationMs);
   const actions = useGameStore((s) => s.actions);
@@ -344,10 +345,13 @@ export const GameScreen = () => {
   }, [screen]);
 
   useEffect(() => {
-    if (screen !== 'game' || villainMood !== 'bravo') return;
-    const timeout = setTimeout(() => actions.clearVillainMood(), 1200);
+    if (screen !== 'game' || villainDying || villainMood !== 'bravo') return;
+    const timeout = setTimeout(
+      () => actions.clearVillainMood(),
+      GAME_CONSTANTS.VILLAIN_BRAVO_DURATION_MS
+    );
     return () => clearTimeout(timeout);
-  }, [actions, screen, villainMood]);
+  }, [actions, screen, villainDying, villainMood]);
 
   useEffect(() => {
     if (!villainAttacking) return;
@@ -356,10 +360,13 @@ export const GameScreen = () => {
   }, [actions, villainAttacking]);
 
   useEffect(() => {
-    if (screen !== 'game') return;
-    const timeout = setTimeout(() => actions.showVillainTaunt(), 800);
+    if (screen !== 'game' || villainDying) return;
+    const timeout = setTimeout(
+      () => actions.showVillainTaunt(),
+      GAME_CONSTANTS.VILLAIN_TALK_DELAY_MS
+    );
     return () => clearTimeout(timeout);
-  }, [actions, screen]);
+  }, [actions, screen, villainDying]);
 
   useEffect(() => {
     if (!villainTaunt || villainTalkDurationMs <= 0) return;

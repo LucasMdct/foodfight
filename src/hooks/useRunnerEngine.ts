@@ -167,6 +167,9 @@ export const useRunnerEngine = (
   const burstLane = useMemo(() => makeMutable(1), []);
   const burstNextAt = useMemo(() => makeMutable(0), []);
   const burstDelayIndex = useMemo(() => makeMutable(0), []);
+  const defeatActive = useMemo(() => makeMutable(0), []);
+  const defeatStartedAt = useMemo(() => makeMutable(0), []);
+  const defeatBurstIndex = useMemo(() => makeMutable(0), []);
   const matchGeneration = useMemo(() => makeMutable(0), []);
   const activeMatchGeneration = useRef(0);
   const fpsAccum = useMemo(() => makeMutable(0), []);
@@ -179,6 +182,14 @@ export const useRunnerEngine = (
   const applyVillainHit = useCallback((generation: number) => {
     if (generation !== activeMatchGeneration.current) return;
     useGameStore.getState().actions.applyVillainHit();
+  }, []);
+  const applyVillainDefeatStart = useCallback((generation: number) => {
+    if (generation !== activeMatchGeneration.current) return;
+    useGameStore.getState().actions.beginVillainDefeat();
+  }, []);
+  const applyVillainDefeatComplete = useCallback((generation: number) => {
+    if (generation !== activeMatchGeneration.current) return;
+    useGameStore.getState().actions.completeVillainDefeat();
   }, []);
   const applyPowerFired = useCallback((acceptedPowerIndex: number, generation: number) => {
     if (generation !== activeMatchGeneration.current) return;
@@ -202,9 +213,10 @@ export const useRunnerEngine = (
   }, []);
 
   const storeScreen = useGameStore((s) => s.state.screen);
+  const storeVillainDying = useGameStore((s) => s.state.villainDying);
   useEffect(() => {
-    frozen.value = storeScreen === 'game' ? 0 : 1;
-  }, [frozen, storeScreen]);
+    frozen.value = storeScreen === 'game' && !storeVillainDying ? 0 : 1;
+  }, [frozen, storeScreen, storeVillainDying]);
 
   useEffect(() => {
     difficultyIndex.value = difficultyIndexAt(difficulty);
@@ -342,6 +354,9 @@ export const useRunnerEngine = (
     burstLane.value = 1;
     burstNextAt.value = 0;
     burstDelayIndex.value = 0;
+    defeatActive.value = 0;
+    defeatStartedAt.value = 0;
+    defeatBurstIndex.value = 0;
     bubbleActive.value = 0;
     bubbleLane.value = 1;
     villainY.value = villainYAt(0, screenHeight, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT);
@@ -391,6 +406,9 @@ export const useRunnerEngine = (
     burstFxUntil,
     burstNextAt,
     burstPending,
+    defeatActive,
+    defeatBurstIndex,
+    defeatStartedAt,
     villainHpMirror,
     villainY,
   ]);
@@ -429,6 +447,49 @@ export const useRunnerEngine = (
         } else {
           burstFxRotation[index].value += dtMs * 0.004;
         }
+      }
+    }
+
+    if (defeatActive.value === 1) {
+      const villainCenterY = villainY.value + GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2;
+      while (
+        defeatBurstIndex.value < GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_COUNT &&
+        now >=
+          defeatStartedAt.value +
+            GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_START_MS +
+            defeatBurstIndex.value * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_INTERVAL_MS
+      ) {
+        const burstStep = defeatBurstIndex.value;
+        defeatBurstIndex.value = burstStep + 1;
+        rngState.value = nextRngState(rngState.value);
+        const offsetX =
+          (rngUnit(rngState.value) - 0.5) * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_SPREAD_X;
+        rngState.value = nextRngState(rngState.value);
+        const offsetY =
+          (rngUnit(rngState.value) - 0.5) * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_SPREAD_Y;
+        let effectSlot = -1;
+        for (
+          let effectIndex = 0;
+          effectIndex < GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE;
+          effectIndex += 1
+        ) {
+          if (burstFxActive[effectIndex].value === 0 || now >= burstFxUntil[effectIndex].value) {
+            effectSlot = effectIndex;
+            break;
+          }
+        }
+        if (effectSlot >= 0) {
+          burstFxX[effectSlot].value =
+            screenWidth - GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_X_OFFSET + offsetX;
+          burstFxY[effectSlot].value = villainCenterY + offsetY;
+          burstFxRotation[effectSlot].value = burstStep * 0.8 + now * 0.001;
+          burstFxUntil[effectSlot].value = now + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+          burstFxActive[effectSlot].value = 1;
+        }
+      }
+      if (now >= defeatStartedAt.value + GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS) {
+        defeatActive.value = 0;
+        scheduleOnRN(applyVillainDefeatComplete, matchGeneration.value);
       }
     }
 
@@ -547,11 +608,15 @@ export const useRunnerEngine = (
       if (shotX[index].value >= screenWidth - 100) {
         shotActive[index].value = 0;
         villainHpMirror.value = Math.max(0, villainHpMirror.value - 1);
-        scheduleOnRN(applyVillainHit, matchGeneration.value);
         if (villainHpMirror.value === 0) {
           frozen.value = 1;
+          defeatActive.value = 1;
+          defeatStartedAt.value = now;
+          defeatBurstIndex.value = 0;
+          scheduleOnRN(applyVillainDefeatStart, matchGeneration.value);
           break;
         }
+        scheduleOnRN(applyVillainHit, matchGeneration.value);
       }
     }
     if (frozen.value === 1) return;
