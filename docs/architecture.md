@@ -127,7 +127,7 @@ useFrameCallback(frame):
   6. if frozen → return                      ← freezes everything below
   7. tablecloth scroll: 88px loop every 900ms
   8. selected difficulty: derive speed, interval, and double-spawn chance from elapsed time
-  9. spawn: use the current Barão lane, advance the seeded PRNG, and activate typed slots
+  9. spawn: use the current Barão lane for the primary projectile, use the approved adjacent-lane formula for an optional secondary, advance the seeded PRNG, and activate typed slots
  10. milestone: every 100 score points queue one charge and three resistant zombies
  11. move active power shots with soft villain-Y tracking and resolve villain hits first
  12. for each active enemy:
@@ -156,6 +156,8 @@ interval = max(400, preset.interval - now * 0.003)
 
 The four presets are Muito Fácil (215 px/s / 1450 ms), Fácil (300 / 1050), Difícil (430 / 760), and Impossível (560 / 540). Each also supplies its double-spawn chance and acceleration. `engine.reset()` restores the selected preset and its counters.
 
+The first spawn starts after the handoff warmup accumulator (`INITIAL_SPAWN_ACCUMULATOR_MS`, 400 ms), not after a full preset interval. This keeps the opening readable while preserving the selected cadence afterward.
+
 **Milestones and power mode.** When the UI-thread score mirror crosses 100 points, the loop increments the capped charge mirror, schedules one discrete charge bridge and queues three resistant zombies. The burst lane is captured from the current Barão lane and slots are activated one at a time with a 140 ms spacing. An accepted power shot sets `powerUntilScore` to `score + 40`; normal enemies ahead of the hero are cleared for score, while resistant burst enemies continue.
 
 **The collision test only checks X (step 10).** Y overlap is implied: hero and candy are both vertically centred in the same lane, and lane membership is already checked with an integer comparison. Testing Y would be redundant work in the hot loop. The hitbox is the hero inset by `HERO_HITBOX_PADDING` (18 px) on the X axis, taken from the design's collision math.
@@ -167,6 +169,8 @@ The four presets are Muito Fácil (215 px/s / 1450 ms), Fácil (300 / 1050), Dif
 ### Bridges to React
 
 `scheduleOnRN` is used only for discrete events, and the fire bridge is emitted only after the UI thread has accepted a slot and decremented its local charge mirror:
+
+- Every bridge carries the current match generation. A delayed callback from a previous replay is ignored by the JS-side generation guard.
 
 | Call                     | Frequency                                             |
 | ------------------------ | ----------------------------------------------------- |

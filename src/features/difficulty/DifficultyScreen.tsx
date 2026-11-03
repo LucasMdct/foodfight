@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useGameStore } from '../../store/gameStore';
 import { difficultyConfigAt } from '../../engine/combatMath';
 import type { Difficulty, Who } from '../../types/game';
+import type { Theme } from '../../theme';
 import { Foodie } from '../../render/foodie/Foodie';
 import { useTheme, useUiScale } from '../../theme';
 import { makeStyles } from './DifficultyScreen.styles';
@@ -18,37 +19,37 @@ const HERO_NAMES: Record<Who, string> = {
 const OPTIONS: readonly {
   key: Difficulty;
   stars: number;
-  color: string;
-  titleColor: string;
+  color: keyof Theme['colors'];
+  titleColor: keyof Theme['colors'];
   description: string;
   dark?: boolean;
 }[] = [
   {
     key: 'mfacil',
     stars: 1,
-    color: '#7BC950',
-    titleColor: '#3E7D2E',
+    color: 'positive',
+    titleColor: 'winText',
     description: 'Doces devagarinho.\nPerfeito pra começar!',
   },
   {
     key: 'facil',
     stars: 2,
-    color: '#FFB627',
-    titleColor: '#C98A0A',
+    color: 'score',
+    titleColor: 'difficultyEasyText',
     description: 'Um desafio gostoso,\nno ritmo certo.',
   },
   {
     key: 'dificil',
     stars: 3,
-    color: '#FF6B6B',
-    titleColor: '#E04F4F',
+    color: 'brand',
+    titleColor: 'brandShadow',
     description: 'Chuva de doces!\nReflexos afiados.',
   },
   {
     key: 'impossivel',
     stars: 4,
-    color: '#9B5DE5',
-    titleColor: '#D8BFFF',
+    color: 'villain',
+    titleColor: 'difficultyImpossibleText',
     description: 'O Barão sem piedade.\nVocê foi avisado…',
     dark: true,
   },
@@ -86,26 +87,24 @@ export const DifficultyScreen = () => {
         <View style={styles.cardsRow}>
           {OPTIONS.map((option) => {
             const config = difficultyConfigAt(option.key);
+            const color = theme.colors[option.color];
+            const titleColor = theme.colors[option.titleColor];
             return (
               <Pressable
                 key={option.key}
                 onPress={() => actions.start(option.key)}
                 style={[
                   styles.card,
-                  { borderBottomColor: option.color },
+                  { borderBottomColor: color },
                   option.dark && styles.impossibleCard,
                 ]}
                 accessibilityRole="button"
                 accessibilityLabel={`Escolher dificuldade ${config.label}`}
               >
                 <View style={styles.starRow}>
-                  <Text style={[styles.stars, { color: option.color }]}>
-                    {'★'.repeat(option.stars)}
-                  </Text>
+                  <Text style={[styles.stars, { color }]}>{'★'.repeat(option.stars)}</Text>
                 </View>
-                <Text style={[styles.cardTitle, { color: option.titleColor }]}>
-                  {config.label}
-                </Text>
+                <Text style={[styles.cardTitle, { color: titleColor }]}>{config.label}</Text>
                 <Text style={[styles.cardDescription, option.dark && styles.impossibleDescription]}>
                   {option.description}
                 </Text>

@@ -80,7 +80,7 @@ export const makeStyles = (theme: Theme, scale: number) => {
       color: theme.colors.textMuted,
       textAlign: 'center',
     },
-    impossibleDescription: { color: '#B49CD9' },
+    impossibleDescription: { color: theme.colors.difficultyImpossibleBody },
     backButton: {
       paddingHorizontal: r(24),
       paddingVertical: r(9),

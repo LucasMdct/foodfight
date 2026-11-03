@@ -40,6 +40,14 @@ describe('v0.0.3 difficulty presets', () => {
     expect(difficultyConfigAt('invalid' as never)).toEqual(difficultyConfigAt('facil'));
   });
 
+  it('increases deterministic projectile speed across difficulty presets', () => {
+    const easy = difficultyConfigAt('mfacil');
+    const impossible = difficultyConfigAt('impossivel');
+
+    expect(easy.speed).toBeLessThan(impossible.speed);
+    expect(easy.acceleration).toBeLessThan(impossible.acceleration);
+  });
+
   it('counts score milestones at each 100-point boundary', () => {
     expect(milestoneCountAt(99)).toBe(0);
     expect(milestoneCountAt(100)).toBe(1);

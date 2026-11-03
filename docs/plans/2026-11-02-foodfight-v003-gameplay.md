@@ -164,7 +164,7 @@ it('does not clear resistant burst projectiles during power mode', () => { /* vi
 it('uses the villain lane for normal and burst projectile spawns', () => { /* lane event matches villain lane */ });
 ```
 
-Also retain the existing double-fire, bubble, freeze, hitbox, pool saturation, and result-race scenarios unchanged.
+Also retain the existing double-fire, bubble, freeze, hitbox, pool saturation, and result-race scenarios unchanged. A double spawn keeps the primary projectile in the Barão lane and places the optional secondary projectile through the approved adjacent-lane formula.
 
 - [ ] **Step 2: Run the harness suite and verify red**
 

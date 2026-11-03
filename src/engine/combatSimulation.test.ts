@@ -99,6 +99,26 @@ describe('combat simulation coverage', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('honours the 400ms handoff warmup before the first spawn', () => {
+    const beforeWarmup = runCombatScenario({
+      seed: 15,
+      difficulty: 'impossivel',
+      frames: Array.from({ length: 8 }, () => ({ dtMs: 16 })),
+    });
+    const result = runCombatScenario({
+      seed: 15,
+      difficulty: 'impossivel',
+      frames: Array.from({ length: 9 }, () => ({ dtMs: 16 })),
+    });
+
+    expect(beforeWarmup.events.filter((event) => event.type === 'projectileSpawned')).toHaveLength(
+      0
+    );
+    expect(
+      result.events.filter((event) => event.type === 'projectileSpawned').length
+    ).toBeGreaterThan(0);
+  });
+
   it('emits one three-zombie burst and one capped charge at a 100-point milestone', () => {
     const result = runCombatScenario({
       seed: 11,
@@ -143,6 +163,18 @@ describe('combat simulation coverage', () => {
     expect(result.events.some((event) => event.type === 'bubbleSpawned')).toBe(true);
   });
 
+  it('does not power-clear a projectile that is already behind the hero', () => {
+    const result = runCombatScenario({
+      seed: 16,
+      charges: 1,
+      enemies: [{ x: 50, lane: 1, kind: PROJECTILE_KIND.lolli }],
+      frames: [{ dtMs: 16, fire: true }],
+    });
+
+    expect(result.events.filter((event) => event.type === 'powerCleared')).toHaveLength(0);
+    expect(result.events.filter((event) => event.type === 'heroHit')).toHaveLength(1);
+  });
+
   it('spawns normal projectiles from the Barão current lane', () => {
     const result = runCombatScenario({
       seed: 13,
@@ -151,7 +183,7 @@ describe('combat simulation coverage', () => {
     });
     const spawn = result.events.find((event) => event.type === 'projectileSpawned');
     const expectedLane = Math.floor(
-      (villainYAt(544, 520, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+      (villainYAt(144, 520, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
         GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) /
         (520 / GAME_CONSTANTS.LANE_COUNT)
     );

@@ -48,7 +48,7 @@ The speed formula is `preset.speed + min(280, elapsedMs * preset.acceleration)`.
 
 ## Combat rules
 
-- Normal projectile lane: the integer lane containing the current Barão centre.
+- Normal projectile lane: the primary spawn uses the integer lane containing the current Barão centre; an optional second projectile uses the approved adjacent-lane formula from the design handoff.
 - Milestone: each crossed 100-point threshold grants one charge, capped at `POWER_MAX_CHARGES`, and queues exactly three resistant zombies in the captured Barão lane.
 - Burst timing: one zombie slot is activated every 140 ms from the fixed enemy pool. Pool saturation may skip a request; it may not allocate a dynamic collection.
 - Power mode: an accepted shot sets `powerUntilScore = currentScore + 40`. Normal projectiles ahead of the hero are removed and award `SCORE_PER_DODGE`; resistant burst projectiles are not removed by this mode.

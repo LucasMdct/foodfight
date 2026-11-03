@@ -126,7 +126,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let screen: CombatSimulationScreen = 'game';
   let elapsedMs = 0;
   let powerIndex = 0;
-  let spawnAccumulatorMs = 0;
+  let spawnAccumulatorMs = GAME_CONSTANTS.INITIAL_SPAWN_ACCUMULATOR_MS;
   let powerUntilScore = -1;
   let milestonesHandled = Math.floor(score / GAME_CONSTANTS.MILESTONE_SCORE_STEP);
   const difficulty = difficultyConfigAt(scenario.difficulty ?? 'facil');
@@ -148,6 +148,9 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let bubbleThreshold =
     (Math.floor(score / GAME_CONSTANTS.BUBBLE_EVERY) + 1) * GAME_CONSTANTS.BUBBLE_EVERY;
   let invulnerableUntilMs = 0;
+  let burstPending = 0;
+  let burstLane = 1;
+  let burstNextAtMs = 0;
 
   for (let frameIndex = 0; frameIndex < scenario.frames.length; frameIndex += 1) {
     if (screen !== 'game') break;
@@ -181,6 +184,26 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
 
     elapsedMs += dtMs;
     const speed = difficulty.speed + Math.min(280, elapsedMs * difficulty.acceleration);
+
+    if (burstPending > 0 && elapsedMs >= burstNextAtMs) {
+      let burstSlot = -1;
+      for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
+        if (!enemies[enemyIndex].active) {
+          burstSlot = enemyIndex;
+          break;
+        }
+      }
+      burstPending -= 1;
+      burstNextAtMs = elapsedMs + 140;
+      if (burstSlot >= 0) {
+        const burst = enemies[burstSlot];
+        burst.active = true;
+        burst.x = VILLAIN_X;
+        burst.lane = burstLane;
+        burst.kind = PROJECTILE_KIND.zumbi;
+        burst.resistant = true;
+      }
+    }
 
     for (let shotIndex = 0; shotIndex < shots.length; shotIndex += 1) {
       const shot = shots[shotIndex];
@@ -223,7 +246,12 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
           bubblePending += 1;
           bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
         }
-      } else if (score < powerUntilScore && !enemy.resistant && enemy.x < SIMULATION_WIDTH * 0.62) {
+      } else if (
+        score < powerUntilScore &&
+        !enemy.resistant &&
+        enemy.x > HERO_RIGHT &&
+        enemy.x < SIMULATION_WIDTH * 0.62
+      ) {
         enemy.active = false;
         score += GAME_CONSTANTS.SCORE_PER_DODGE;
         events.push({ type: 'powerCleared', score });
@@ -262,25 +290,15 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
             LANE_HEIGHT
         )
       );
-      let burstCount = 0;
-      for (let burstIndex = 0; burstIndex < GAME_CONSTANTS.VILLAIN_BURST_COUNT; burstIndex += 1) {
-        let slot = -1;
-        for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
-          if (!enemies[enemyIndex].active) {
-            slot = enemyIndex;
-            break;
-          }
-        }
-        if (slot < 0) break;
-        const burst = enemies[slot];
-        burst.active = true;
-        burst.x = VILLAIN_X + burstIndex * 24;
-        burst.lane = villainLane;
-        burst.kind = PROJECTILE_KIND.zumbi;
-        burst.resistant = true;
-        burstCount += 1;
-      }
-      events.push({ type: 'villainBurst', count: burstCount, lane: villainLane });
+      const wasEmpty = burstPending === 0;
+      burstPending += GAME_CONSTANTS.VILLAIN_BURST_COUNT;
+      burstLane = villainLane;
+      if (wasEmpty) burstNextAtMs = elapsedMs;
+      events.push({
+        type: 'villainBurst',
+        count: GAME_CONSTANTS.VILLAIN_BURST_COUNT,
+        lane: villainLane,
+      });
     }
 
     if (!bubbleActive && bubblePending > 0) {
