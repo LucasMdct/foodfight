@@ -7,6 +7,7 @@ export const theme = {
     score: '#FFB627',
     scoreShadow: '#E09A10',
     villain: '#9B5DE5',
+    villainDark: '#3D2C4E',
     villainBorder: '#E5D4F7',
     candyPink: '#FF7BAC',
     candyTeal: '#4ECDC4',

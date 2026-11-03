@@ -11,13 +11,14 @@ import {
 } from '@expo-google-fonts/fredoka';
 import { ThemeProvider } from './src/theme';
 import { useGameStore } from './src/store/gameStore';
-import { GameScreen, LoadingScreen, SelectScreen } from './src/features';
+import { DifficultyScreen, GameScreen, LoadingScreen, SelectScreen } from './src/features';
 import { styles } from './src/app/appStyles';
 
 function Flow() {
   const screen = useGameStore((s) => s.state.screen);
   // 'game' and 'over' both render GameScreen (over draws its modal on top).
   if (screen === 'select') return <SelectScreen />;
+  if (screen === 'difficulty') return <DifficultyScreen />;
   return <GameScreen />;
 }
 

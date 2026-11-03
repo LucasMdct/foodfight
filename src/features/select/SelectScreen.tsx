@@ -109,12 +109,12 @@ export const SelectScreen = () => {
 
         <RNAnimated.View style={{ transform: [{ scale: pulse }] }}>
           <Pressable
-            onPress={() => actions.start()}
+            onPress={() => actions.toDifficulty()}
             style={styles.jogarBtn}
             accessibilityRole="button"
-            accessibilityLabel="Jogar"
+            accessibilityLabel="Continuar para escolha de dificuldade"
           >
-            <Text style={styles.jogarText}>JOGAR!</Text>
+            <Text style={styles.jogarText}>CONTINUAR →</Text>
           </Pressable>
         </RNAnimated.View>
 
