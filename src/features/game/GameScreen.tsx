@@ -5,7 +5,7 @@ import {
   Circle,
   Group,
   Oval,
-  Rect,
+  RoundedRect,
   useFont,
   type SkFont,
   vec,
@@ -147,6 +147,8 @@ const FoodBubbleSlot = ({
   );
 };
 
+const DEG = Math.PI / 180;
+
 const ConfettiBurstSlot = ({
   x,
   y,
@@ -158,19 +160,63 @@ const ConfettiBurstSlot = ({
   active: SharedValue<number>;
   rotation: SharedValue<number>;
 }) => {
-  const transform = useDerivedValue(() => [
+  const positionTransform = useDerivedValue(() => [
     { translateX: x.value },
     { translateY: y.value },
-    { rotate: rotation.value },
   ]);
+  const animationTransform = useDerivedValue(() => [{ rotate: rotation.value }]);
 
   return (
-    <Group transform={transform} opacity={active}>
-      <Circle cx={0} cy={-16} r={5} color={theme.colors.candyPink} />
-      <Circle cx={14} cy={-4} r={5} color={theme.colors.sprinkleYellow} />
-      <Rect x={-20} y={-5} width={8} height={16} color={theme.colors.candyTeal} />
-      <Rect x={-4} y={10} width={8} height={16} color={theme.colors.brand} />
-      <Rect x={12} y={8} width={8} height={16} color={theme.colors.villain} />
+    <Group transform={positionTransform} opacity={active}>
+      <Group transform={animationTransform}>
+        <Circle cx={0} cy={0} r={16} color={theme.colors.sprinkleYellow} opacity={0.9} />
+        <Circle cx={0} cy={-39} r={7} color={theme.colors.brand} />
+        <Circle cx={35} cy={-19} r={6} color={theme.colors.candyTeal} />
+        <Circle cx={39} cy={19} r={7} color={theme.colors.villain} />
+        <Circle cx={7} cy={43} r={6} color={theme.colors.positive} />
+        <Circle cx={-31} cy={33} r={7} color={theme.colors.candyPink} />
+        <Circle cx={-41} cy={-9} r={6} color={theme.colors.score} />
+        <RoundedRect
+          x={15}
+          y={-43}
+          width={10}
+          height={4}
+          r={2}
+          color={theme.colors.positive}
+          origin={vec(20, -41)}
+          transform={[{ rotate: 30 * DEG }]}
+        />
+        <RoundedRect
+          x={-37}
+          y={-35}
+          width={10}
+          height={4}
+          r={2}
+          color={theme.colors.villain}
+          origin={vec(-32, -33)}
+          transform={[{ rotate: -40 * DEG }]}
+        />
+        <RoundedRect
+          x={33}
+          y={-3}
+          width={10}
+          height={4}
+          r={2}
+          color={theme.colors.brand}
+          origin={vec(38, -1)}
+          transform={[{ rotate: 70 * DEG }]}
+        />
+        <RoundedRect
+          x={-21}
+          y={41}
+          width={10}
+          height={4}
+          r={2}
+          color={theme.colors.candyTeal}
+          origin={vec(-16, 43)}
+          transform={[{ rotate: -20 * DEG }]}
+        />
+      </Group>
     </Group>
   );
 };
@@ -183,6 +229,8 @@ const GameCanvas = React.memo(
     who,
     villainMood,
     villainAttacking,
+    villainTalking,
+    villainDying,
     laughFont,
   }: {
     engine: ReturnType<typeof useRunnerEngine>;
@@ -191,6 +239,8 @@ const GameCanvas = React.memo(
     who: Who;
     villainMood: 'feliz' | 'bravo';
     villainAttacking: boolean;
+    villainTalking: boolean;
+    villainDying: boolean;
     laughFont: SkFont | null;
   }) => {
     const villainAttackScale = useSharedValue(1);
@@ -207,7 +257,7 @@ const GameCanvas = React.memo(
     const villainShake = useSharedValue(0);
     useEffect(() => {
       villainShake.value =
-        villainMood === 'bravo'
+        villainMood === 'bravo' && !villainDying
           ? withSequence(
               withTiming(-8, { duration: 75 }),
               withTiming(8, { duration: 75 }),
@@ -217,7 +267,37 @@ const GameCanvas = React.memo(
               withTiming(0, { duration: 75 })
             )
           : withTiming(0, { duration: 100 });
-    }, [villainMood, villainShake]);
+    }, [villainDying, villainMood, villainShake]);
+
+    const villainDefeatScale = useSharedValue(1);
+    const villainDefeatRotate = useSharedValue(0);
+    const villainDefeatOpacity = useSharedValue(1);
+    useEffect(() => {
+      if (!villainDying) {
+        villainDefeatScale.value = 1;
+        villainDefeatRotate.value = 0;
+        villainDefeatOpacity.value = 1;
+        return;
+      }
+      villainDefeatScale.value = withSequence(
+        withTiming(1.12, { duration: 550 }),
+        withTiming(1.24, { duration: 440 }),
+        withTiming(1.38, { duration: 374 }),
+        withTiming(1.5, { duration: 352 }),
+        withTiming(0.02, { duration: 484 })
+      );
+      villainDefeatRotate.value = withSequence(
+        withTiming(-10 * DEG, { duration: 550 }),
+        withTiming(10 * DEG, { duration: 440 }),
+        withTiming(-14 * DEG, { duration: 374 }),
+        withTiming(14 * DEG, { duration: 352 }),
+        withTiming(720 * DEG, { duration: 484 })
+      );
+      villainDefeatOpacity.value = withSequence(
+        withTiming(1, { duration: 1716 }),
+        withTiming(0, { duration: 484 })
+      );
+    }, [villainDefeatOpacity, villainDefeatRotate, villainDefeatScale, villainDying]);
 
     const villainTransform = useDerivedValue(() => [
       { translateX: width - GAME_CONSTANTS.VILLAIN_RENDER_WIDTH },
@@ -225,7 +305,8 @@ const GameCanvas = React.memo(
     ]);
     const villainPresentationTransform = useDerivedValue(() => [
       { translateX: villainShake.value },
-      { scale: villainAttackScale.value },
+      { rotate: villainDefeatRotate.value },
+      { scale: villainAttackScale.value * villainDefeatScale.value },
     ]);
     const heroTransform = useDerivedValue(() => [
       { translateX: engine.heroX },
@@ -237,7 +318,7 @@ const GameCanvas = React.memo(
         <Tablecloth width={width} height={height} scrollX={engine.scrollX} />
         <LaneDividers width={width} height={height} />
 
-        <Group transform={villainTransform}>
+        <Group transform={villainTransform} opacity={villainDefeatOpacity}>
           <Group
             origin={vec(
               GAME_CONSTANTS.VILLAIN_RENDER_WIDTH / 2,
@@ -248,15 +329,17 @@ const GameCanvas = React.memo(
             <Circle
               cx={GAME_CONSTANTS.VILLAIN_RENDER_WIDTH / 2}
               cy={GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2}
-              r={102}
+              r={118}
               color={theme.colors.villain}
-              opacity={0.12}
+              opacity={0.14}
             />
             <Foodie
               who="vilao"
               size={GAME_CONSTANTS.VILLAIN_RENDER_WIDTH}
+              height={GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT}
               animated={false}
               mood={villainMood}
+              talking={villainTalking}
             />
           </Group>
         </Group>
@@ -329,6 +412,7 @@ export const GameScreen = () => {
   const who = useGameStore((s) => s.state.who);
   const villainMood = useGameStore((s) => s.state.villainMood);
   const villainAttacking = useGameStore((s) => s.state.villainAttacking);
+  const villainTalking = useGameStore((s) => s.state.villainTalking);
   const villainDying = useGameStore((s) => s.state.villainDying);
   const villainTaunt = useGameStore((s) => s.state.villainTaunt);
   const villainTalkDurationMs = useGameStore((s) => s.state.villainTalkDurationMs);
@@ -395,6 +479,8 @@ export const GameScreen = () => {
             who={who}
             villainMood={villainMood}
             villainAttacking={villainAttacking}
+            villainTalking={villainTalking}
+            villainDying={villainDying}
             laughFont={laughFont}
           />
         </View>
