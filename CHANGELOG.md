@@ -18,6 +18,7 @@ This project has **two version tracks**, because it changed identity partway thr
 ### Fixed
 
 - Fixed the select-screen footer to read the current app version from `app.json` instead of displaying the stale `v0.0.1` label.
+- Fixed the white flash between the loading burst and the select screen by keeping the themed app surface visible during the transition.
 
 ---
 
