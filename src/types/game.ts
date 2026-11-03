@@ -7,6 +7,7 @@ export type GameToast =
   | { readonly type: 'power-fired'; readonly name: string }
   | null;
 export type VillainMood = 'feliz' | 'bravo';
+export type VillainTalkKind = 'taunt' | 'ouch' | null;
 
 /**
  * Discrete game state kept in React/Zustand. Per-frame values (hero position,
@@ -29,6 +30,8 @@ export interface GameState {
   villainMood: VillainMood;
   villainAttacking: boolean;
   villainTaunt: string;
+  villainTalkKind: VillainTalkKind;
+  villainTalkDurationMs: number;
 }
 
 export interface GameActions {
@@ -44,7 +47,9 @@ export interface GameActions {
   clearToast: (toastId: number) => void;
   clearVillainMood: () => void;
   triggerVillainBurst: () => void;
+  showVillainTaunt: () => void;
   clearVillainBurst: () => void;
+  clearVillainTaunt: () => void;
   toSelect: () => void;
   updateFps: (fps: number) => void;
   reset: () => void;
@@ -68,4 +73,6 @@ export const INITIAL_GAME_STATE: GameState = {
   villainMood: 'feliz',
   villainAttacking: false,
   villainTaunt: '',
+  villainTalkKind: null,
+  villainTalkDurationMs: 0,
 };

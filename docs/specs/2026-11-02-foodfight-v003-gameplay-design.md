@@ -19,7 +19,7 @@ The feature includes:
 - Projectile spawns originating from the Barão's current lane.
 - A three-projectile zombie burst at every 100-point score milestone.
 - One power charge granted at every 100-point milestone, capped by the existing charge limit.
-- Power mode that clears normal projectiles for the next 40 score points and awards +10 per cleared projectile; villain burst projectiles resist it.
+- Power mode that clears normal projectiles for the next 40 score points, awards +10 per cleared projectile, and shows a recycled confetti effect; villain burst projectiles resist it.
 - Villain taunts while attacking and an angry reaction after a power hit.
 - Projectiles rendered approximately 30% larger than the v0.0.2 baseline and zombie projectiles rendered at 96px.
 - Deterministic tests for difficulty, milestone behavior, power clearing, and spawn lanes.
@@ -43,12 +43,12 @@ The existing result modal remains layered over the frozen game scene. Replay use
 
 Difficulty is discrete match state. The selected key is stored in Zustand because the selection screen and HUD render its label. The hot loop reads a matching UI-thread mirror when the match resets; it does not read Zustand on every frame.
 
-| Key | Label | Base speed | Spawn interval | Double spawn | Acceleration |
-|---|---|---:|---:|---:|---:|
-| `mfacil` | Muito Fácil | 215 px/s | 1450 ms | 0% | 0.002 |
-| `facil` | Fácil | 300 px/s | 1050 ms | 10% | 0.004 |
-| `dificil` | Difícil | 430 px/s | 760 ms | 30% | 0.006 |
-| `impossivel` | Impossível | 560 px/s | 540 ms | 55% | 0.009 |
+| Key          | Label       | Base speed | Spawn interval | Double spawn | Acceleration |
+| ------------ | ----------- | ---------: | -------------: | -----------: | -----------: |
+| `mfacil`     | Muito Fácil |   215 px/s |        1450 ms |           0% |        0.002 |
+| `facil`      | Fácil       |   300 px/s |        1050 ms |          10% |        0.004 |
+| `dificil`    | Difícil     |   430 px/s |         760 ms |          30% |        0.006 |
+| `impossivel` | Impossível  |   560 px/s |         540 ms |          55% |        0.009 |
 
 The speed ramp is derived from elapsed game time and the selected preset. Spawn interval has a floor of 400 ms. Difficulty does not change during a match.
 
@@ -57,9 +57,10 @@ The speed ramp is derived from elapsed game time and the selected preset. Spawn 
 - The Barão's visual target is 184×198 px with the supplied purple aura treatment.
 - Its vertical position follows the existing sine-like UI-thread motion, clamped to the playfield margins.
 - Normal projectiles use the current Barão lane at spawn time.
-- At each 100-point milestone, the engine schedules three zombie projectiles from the current Barão lane with staggered delays. The burst is represented by fixed pool slots and cannot allocate in the frame callback.
-- The Barão shows an attack animation and a taunt when the burst begins.
+- At each 100-point milestone, the engine schedules three zombie projectiles from the current Barão lane at 140 ms, 430 ms, and 720 ms. The burst is represented by fixed pool slots and cannot allocate in the frame callback.
+- The Barão shows an attack animation and a random taunt when the burst begins; the first match taunt appears after an 800 ms opening delay.
 - A successful power shot changes the mood to `bravo` for the existing short reaction window and shows an ouch line.
+- Ouch lines use the five supplied reactions for 2000 ms and shake the Barão for 450 ms.
 
 ### Score and power mode
 
@@ -79,21 +80,21 @@ The speed ramp is derived from elapsed game time and the selected preset. Spawn 
 
 ## File responsibilities
 
-| Area | Responsibility |
-|---|---|
-| `src/types/game.ts` | Difficulty union, game-state field, and action contracts. |
-| `src/constants/game.ts` | Named v0.0.3 difficulty and milestone constants. |
-| `src/store/gameStore.ts` | Selected difficulty, match reset/replay, and guarded discrete actions. |
-| `src/features/select/` | Hero selection plus navigation to difficulty selection. |
-| `src/features/difficulty/` | Four-card difficulty selection screen. |
-| `src/features/game/GameScreen.tsx` | Pass selected difficulty into the engine and render the updated pools/Barão. |
-| `src/hooks/useRunnerEngine.ts` | UI-thread difficulty mirror, Barão movement, milestone burst, power mode, and projectile sizing. |
-| `src/engine/combatMath.ts` | Pure worklet-safe difficulty and milestone formulas. |
-| `src/engine/combatSimulation.ts` | RN-free deterministic v0.0.3 harness scenarios. |
-| `src/hud/Hud.tsx` | Difficulty label, existing score/HP/charges, and power feedback. |
-| `docs/specs/2026-11-02-foodfight-v003-gameplay.md` | Canonical implementation contract. |
-| `docs/plans/2026-11-02-foodfight-v003-gameplay.md` | Repository plan for implementation. |
-| `docs/architecture.md` and `docs/testing.md` | Updated runtime and verification contracts. |
+| Area                                               | Responsibility                                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `src/types/game.ts`                                | Difficulty union, game-state field, and action contracts.                                        |
+| `src/types/constants.ts`                           | Named v0.0.3 difficulty, milestone, spawn, and effect constants.                                 |
+| `src/store/gameStore.ts`                           | Selected difficulty, match reset/replay, and guarded discrete actions.                           |
+| `src/features/select/`                             | Hero selection plus navigation to difficulty selection.                                          |
+| `src/features/difficulty/`                         | Four-card difficulty selection screen.                                                           |
+| `src/features/game/GameScreen.tsx`                 | Pass selected difficulty into the engine and render the updated pools/Barão.                     |
+| `src/hooks/useRunnerEngine.ts`                     | UI-thread difficulty mirror, Barão movement, milestone burst, power mode, and projectile sizing. |
+| `src/engine/combatMath.ts`                         | Pure worklet-safe difficulty and milestone formulas.                                             |
+| `src/engine/combatSimulation.ts`                   | RN-free deterministic v0.0.3 harness scenarios.                                                  |
+| `src/hud/Hud.tsx`                                  | Difficulty label, existing score/HP/charges, and power feedback.                                 |
+| `docs/specs/2026-11-02-foodfight-v003-gameplay.md` | Canonical implementation contract.                                                               |
+| `docs/plans/2026-11-02-foodfight-v003-gameplay.md` | Repository plan for implementation.                                                              |
+| `docs/architecture.md` and `docs/testing.md`       | Updated runtime and verification contracts.                                                      |
 
 ## Acceptance criteria
 

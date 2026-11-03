@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useGameStore } from './gameStore';
+import { useGameStore, VILLAIN_OUCHES, VILLAIN_TAUNTS } from './gameStore';
 
 describe('combat game store guards', () => {
   beforeEach(() => {
@@ -45,8 +45,21 @@ describe('combat game store guards', () => {
 
     expect(useGameStore.getState().state).toMatchObject({
       villainAttacking: true,
-      villainTaunt: 'Você NUNCA vai comer essa comida!',
+      villainTalkKind: 'taunt',
+      villainTalkDurationMs: 2600,
     });
+    expect(VILLAIN_TAUNTS).toContain(useGameStore.getState().state.villainTaunt);
+  });
+
+  it('shows a random ouch line and the reaction duration after a power hit', () => {
+    useGameStore.getState().actions.applyVillainHit();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      villainMood: 'bravo',
+      villainTalkKind: 'ouch',
+      villainTalkDurationMs: 2000,
+    });
+    expect(VILLAIN_OUCHES).toContain(useGameStore.getState().state.villainTaunt);
   });
 
   it('grants milestone power without using the food pickup toast', () => {

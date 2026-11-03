@@ -49,6 +49,10 @@ export interface RunnerEngine {
   bubbleY: SharedValue<number>;
   bubbleLane: SharedValue<number>;
   bubbleActive: SharedValue<number>;
+  burstFxX: SharedValue<number>[];
+  burstFxY: SharedValue<number>[];
+  burstFxActive: SharedValue<number>[];
+  burstFxRotation: SharedValue<number>[];
   villainY: SharedValue<number>;
   charges: SharedValue<number>;
   candySpin: SharedValue<number>;
@@ -86,7 +90,9 @@ export const useRunnerEngine = (
   const charges = useMemo(() => makeMutable(useGameStore.getState().state.charges), []);
   const powerIndex = useMemo(() => makeMutable(0), []);
   const rngState = useMemo(() => makeMutable(0xf00df1), []);
-  const difficultyIndex = useMemo(() => makeMutable(difficultyIndexAt(difficulty)), [difficulty]);
+  // This shared value must survive difficulty prop changes; the effect below mirrors updates.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const difficultyIndex = useMemo(() => makeMutable(difficultyIndexAt(difficulty)), []);
 
   const obstacleX = useMemo(
     () => Array.from({ length: GAME_CONSTANTS.ENEMY_POOL_SIZE }, () => makeMutable(-100)),
@@ -131,6 +137,26 @@ export const useRunnerEngine = (
   const bubbleY = useMemo(() => makeMutable(0), []);
   const bubbleLane = useMemo(() => makeMutable(0), []);
   const bubbleActive = useMemo(() => makeMutable(0), []);
+  const burstFxX = useMemo(
+    () => Array.from({ length: GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE }, () => makeMutable(0)),
+    []
+  );
+  const burstFxY = useMemo(
+    () => Array.from({ length: GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE }, () => makeMutable(0)),
+    []
+  );
+  const burstFxActive = useMemo(
+    () => Array.from({ length: GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE }, () => makeMutable(0)),
+    []
+  );
+  const burstFxRotation = useMemo(
+    () => Array.from({ length: GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE }, () => makeMutable(0)),
+    []
+  );
+  const burstFxUntil = useMemo(
+    () => Array.from({ length: GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE }, () => makeMutable(0)),
+    []
+  );
   const villainY = useMemo(() => makeMutable(0), []);
   const candySpin = useSpin(900);
   const spawnAccum = useMemo(() => makeMutable(GAME_CONSTANTS.INITIAL_SPAWN_ACCUMULATOR_MS), []);
@@ -141,6 +167,7 @@ export const useRunnerEngine = (
   const burstPending = useMemo(() => makeMutable(0), []);
   const burstLane = useMemo(() => makeMutable(1), []);
   const burstNextAt = useMemo(() => makeMutable(0), []);
+  const burstDelayIndex = useMemo(() => makeMutable(0), []);
   const matchGeneration = useMemo(() => makeMutable(0), []);
   const activeMatchGeneration = useRef(0);
   const fpsAccum = useMemo(() => makeMutable(0), []);
@@ -274,6 +301,7 @@ export const useRunnerEngine = (
     burstPending.value = 0;
     burstLane.value = 1;
     burstNextAt.value = 0;
+    burstDelayIndex.value = 0;
     bubbleActive.value = 0;
     bubbleLane.value = 1;
     villainY.value = villainYAt(0, screenHeight, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT);
@@ -284,6 +312,10 @@ export const useRunnerEngine = (
     }
     for (let index = 0; index < GAME_CONSTANTS.POWER_SHOT_POOL_SIZE; index += 1) {
       shotActive[index].value = 0;
+    }
+    for (let index = 0; index < GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE; index += 1) {
+      burstFxActive[index].value = 0;
+      burstFxUntil[index].value = 0;
     }
   }, [
     bubbleActive,
@@ -315,6 +347,9 @@ export const useRunnerEngine = (
     shotActive,
     spawnAccum,
     burstLane,
+    burstDelayIndex,
+    burstFxActive,
+    burstFxUntil,
     burstNextAt,
     burstPending,
     villainHpMirror,
@@ -348,6 +383,16 @@ export const useRunnerEngine = (
     elapsedTime.value += dtMs;
     const now = elapsedTime.value;
 
+    for (let index = 0; index < GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE; index += 1) {
+      if (burstFxActive[index].value === 1) {
+        if (now >= burstFxUntil[index].value) {
+          burstFxActive[index].value = 0;
+        } else {
+          burstFxRotation[index].value += dtMs * 0.004;
+        }
+      }
+    }
+
     fpsFrames.value += 1;
     fpsAccum.value += rawDtMs;
     if (fpsAccum.value >= 1000) {
@@ -378,20 +423,13 @@ export const useRunnerEngine = (
     spawnAccum.value += dtMs;
     if (spawnAccum.value >= interval) {
       spawnAccum.value -= interval;
-      let slot = -1;
-      for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
-        if (obstacleActive[index].value === 0) {
-          slot = index;
-          break;
-        }
-      }
       const phase = attackPhaseAt(scoreMirror.value);
       let spawnCount = 1;
       rngState.value = nextRngState(rngState.value);
       if (rngUnit(rngState.value) < difficultyConfig.doubleSpawnChance) spawnCount = 2;
       let primaryLane = villainLane;
       for (let spawnIndex = 0; spawnIndex < spawnCount; spawnIndex += 1) {
-        slot = -1;
+        let slot = -1;
         for (let index = 0; index < GAME_CONSTANTS.ENEMY_POOL_SIZE; index += 1) {
           if (obstacleActive[index].value === 0) {
             slot = index;
@@ -410,7 +448,7 @@ export const useRunnerEngine = (
         obstacleKind[slot].value = kind;
         obstacleLane[slot].value = lane;
         obstacleResistant[slot].value = 0;
-        obstacleX[slot].value = screenWidth - GAME_CONSTANTS.VILLAIN_RENDER_WIDTH;
+        obstacleX[slot].value = screenWidth - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
         obstacleY[slot].value = laneTopY(
           lane,
           laneHeight,
@@ -431,12 +469,21 @@ export const useRunnerEngine = (
         }
       }
       burstPending.value -= 1;
-      burstNextAt.value = now + 140;
+      const currentDelayIndex = burstDelayIndex.value;
+      const nextDelayIndex =
+        (currentDelayIndex + 1) % GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS.length;
+      burstDelayIndex.value = nextDelayIndex;
+      const delayDelta =
+        nextDelayIndex === 0
+          ? GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[0]
+          : GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[nextDelayIndex] -
+            GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[currentDelayIndex];
+      burstNextAt.value = now + delayDelta;
       if (slot >= 0) {
         obstacleKind[slot].value = PROJECTILE_KIND.zumbi;
         obstacleLane[slot].value = burstLane.value;
         obstacleResistant[slot].value = 1;
-        obstacleX[slot].value = screenWidth - GAME_CONSTANTS.VILLAIN_RENDER_WIDTH;
+        obstacleX[slot].value = screenWidth - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
         obstacleY[slot].value = laneTopY(
           burstLane.value,
           laneHeight,
@@ -495,6 +542,24 @@ export const useRunnerEngine = (
         x > heroRight &&
         x < screenWidth * 0.62
       ) {
+        let effectSlot = -1;
+        for (
+          let effectIndex = 0;
+          effectIndex < GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE;
+          effectIndex += 1
+        ) {
+          if (burstFxActive[effectIndex].value === 0 || now >= burstFxUntil[effectIndex].value) {
+            effectSlot = effectIndex;
+            break;
+          }
+        }
+        if (effectSlot >= 0) {
+          burstFxX[effectSlot].value = x + size / 2;
+          burstFxY[effectSlot].value = obstacleY[index].value + size / 2;
+          burstFxRotation[effectSlot].value = index * 0.8 + now * 0.001;
+          burstFxUntil[effectSlot].value = now + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+          burstFxActive[effectSlot].value = 1;
+        }
         obstacleActive[index].value = 0;
         scoreMirror.value += GAME_CONSTANTS.SCORE_PER_DODGE;
         scheduleOnRN(applyScore, GAME_CONSTANTS.SCORE_PER_DODGE, matchGeneration.value);
@@ -527,7 +592,8 @@ export const useRunnerEngine = (
       burstPending.value += GAME_CONSTANTS.VILLAIN_BURST_COUNT;
       burstLane.value = villainLane;
       if (burstPending.value === GAME_CONSTANTS.VILLAIN_BURST_COUNT) {
-        burstNextAt.value = now;
+        burstDelayIndex.value = 0;
+        burstNextAt.value = now + GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[0];
       }
       scheduleOnRN(applyPowerCharge, matchGeneration.value);
       scheduleOnRN(applyVillainBurst, matchGeneration.value);
@@ -588,6 +654,10 @@ export const useRunnerEngine = (
       bubbleY,
       bubbleLane,
       bubbleActive,
+      burstFxX,
+      burstFxY,
+      burstFxActive,
+      burstFxRotation,
       villainY,
       charges,
       candySpin,
@@ -601,6 +671,10 @@ export const useRunnerEngine = (
       bubbleLane,
       bubbleX,
       bubbleY,
+      burstFxActive,
+      burstFxRotation,
+      burstFxX,
+      burstFxY,
       candySpin,
       charges,
       firePower,

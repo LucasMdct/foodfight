@@ -34,14 +34,14 @@ Record the device model, OS version, build type, display refresh rate and the `G
 6. Choose each difficulty in turn; the selected label appears in the game HUD.
 7. From Game Over, use both exits: **play again** and **switch hero**.
 
-| Check         | Expected                                          |
-| ------------- | ------------------------------------------------- |
-| Fonts         | No fallback-font flash before the loader clears   |
-| Orientation   | Landscape, locked, no rotation possible           |
-| Hero identity | HUD name and on-canvas character match the pick   |
+| Check         | Expected                                                   |
+| ------------- | ---------------------------------------------------------- |
+| Fonts         | No fallback-font flash before the loader clears            |
+| Orientation   | Landscape, locked, no rotation possible                    |
+| Hero identity | HUD name and on-canvas character match the pick            |
 | Difficulty    | Four cards are visible, selectable, and labelled correctly |
-| Play again    | Restarts at 3 lives, score 0, same selected difficulty |
-| Switch hero   | Returns to select; `best` survives                |
+| Play again    | Restarts at 3 lives, score 0, same selected difficulty     |
+| Switch hero   | Returns to select; `best` survives                         |
 
 `GameScreen` stays mounted across `'game'` and `'over'`, so **replay is the interesting path** — it exercises `engine.reset()` without a remount. Candy left on screen or difficulty that stays ramped means the reset was incomplete.
 
@@ -139,6 +139,9 @@ Test edge cases specifically: clip the leading and trailing edge of a candy. The
 ### 3.7 Barão feedback
 
 - The Barão taunts when a milestone burst begins.
+- An opening taunt appears about 800 ms after match start, taunts last about 2600 ms, and the five ouch lines last about 2000 ms after a power hit.
+- A successful power hit changes the Barão to `bravo` and visibly shakes him for about 450 ms.
+- Power-cleared normal projectiles show confetti without creating visible object churn; the six-slot pool recycles after about 620 ms.
 - The attack animation lasts approximately one second and does not move the game loop to React state.
 - A successful power shot changes the Barão to `bravo` and shows the existing reaction line.
 

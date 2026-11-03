@@ -135,6 +135,21 @@ describe('combat simulation coverage', () => {
     ]);
   });
 
+  it('staggers burst slots at the handoff timestamps', () => {
+    const scenario = (frameCount: number) =>
+      runCombatScenario({
+        seed: 17,
+        score: 90,
+        enemies: [{ x: -200, lane: 0, kind: PROJECTILE_KIND.lolli }],
+        frames: Array.from({ length: frameCount }, () => ({ dtMs: 16 })),
+      });
+
+    expect(scenario(9).snapshot.activeEnemies).toBe(0);
+    expect(scenario(10).snapshot.activeEnemies).toBe(1);
+    expect(scenario(29).snapshot.activeEnemies).toBe(2);
+    expect(scenario(48).snapshot.activeEnemies).toBe(3);
+  });
+
   it('clears normal projectiles but preserves resistant burst projectiles in power mode', () => {
     const result = runCombatScenario({
       seed: 12,

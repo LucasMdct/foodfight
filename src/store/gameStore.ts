@@ -20,6 +20,26 @@ export const POWER_NAMES: Record<Who, readonly [string, string, string]> = {
   arroz: ['Grão Turbo', 'Chuva de Arroz', 'Broto Explosivo'],
 };
 
+export const VILLAIN_TAUNTS = [
+  'HAHAHA! Você NUNCA vai conseguir comer essa comida!',
+  'Desiste! Criança não gosta de alface mesmo!',
+  'Aposto meu chapéu que você não come nem UM feijão!',
+  'Só os fortes comem arroz… e você não é! HAHA!',
+  'Essa comida saudável NUNCA vai chegar no seu prato!',
+  'Vai, tenta! Duvido você aguentar comer legumes!',
+] as const;
+
+export const VILLAIN_OUCHES = [
+  'AI!! Isso foi… nutritivo demais!',
+  'GRRR! Pare de comer direito!',
+  'Meu monóculo! Que golpe saudável!',
+  'Impossível! Ninguém resiste aos meus doces!',
+  'AAAH! Vitaminas NÃO! Tudo menos isso!',
+] as const;
+
+const randomFrom = <T>(values: readonly T[]): T =>
+  values[Math.floor(Math.random() * values.length)];
+
 export const useGameStore = create<GameStore>((set) => ({
   state: INITIAL_GAME_STATE,
 
@@ -43,6 +63,8 @@ export const useGameStore = create<GameStore>((set) => ({
           villainMood: 'feliz',
           villainAttacking: false,
           villainTaunt: '',
+          villainTalkKind: null,
+          villainTalkDurationMs: 0,
         },
       })),
 
@@ -78,12 +100,24 @@ export const useGameStore = create<GameStore>((set) => ({
               ...s.state,
               villainHp,
               villainMood: 'bravo',
+              villainTaunt: randomFrom(VILLAIN_OUCHES),
+              villainTalkKind: 'ouch',
+              villainTalkDurationMs: 2000,
               screen: 'win',
               best: Math.max(s.state.best, s.state.score),
             },
           };
         }
-        return { state: { ...s.state, villainHp, villainMood: 'bravo' } };
+        return {
+          state: {
+            ...s.state,
+            villainHp,
+            villainMood: 'bravo',
+            villainTaunt: randomFrom(VILLAIN_OUCHES),
+            villainTalkKind: 'ouch',
+            villainTalkDurationMs: 2000,
+          },
+        };
       }),
 
     applyPowerFired: (powerIndex: number) =>
@@ -144,7 +178,23 @@ export const useGameStore = create<GameStore>((set) => ({
               state: {
                 ...s.state,
                 villainAttacking: true,
-                villainTaunt: 'Você NUNCA vai comer essa comida!',
+                villainTaunt: randomFrom(VILLAIN_TAUNTS),
+                villainTalkKind: 'taunt',
+                villainTalkDurationMs: 2600,
+              },
+            }
+          : s
+      ),
+
+    showVillainTaunt: () =>
+      set((s) =>
+        s.state.screen === 'game'
+          ? {
+              state: {
+                ...s.state,
+                villainTaunt: randomFrom(VILLAIN_TAUNTS),
+                villainTalkKind: 'taunt',
+                villainTalkDurationMs: 2600,
               },
             }
           : s
@@ -152,8 +202,20 @@ export const useGameStore = create<GameStore>((set) => ({
 
     clearVillainBurst: () =>
       set((s) =>
-        s.state.villainAttacking
-          ? { state: { ...s.state, villainAttacking: false, villainTaunt: '' } }
+        s.state.villainAttacking ? { state: { ...s.state, villainAttacking: false } } : s
+      ),
+
+    clearVillainTaunt: () =>
+      set((s) =>
+        s.state.villainTaunt
+          ? {
+              state: {
+                ...s.state,
+                villainTaunt: '',
+                villainTalkKind: null,
+                villainTalkDurationMs: 0,
+              },
+            }
           : s
       ),
 

@@ -2,7 +2,7 @@
 
 **Status:** Implemented on `feature/v003`; pending manual review
 **Date:** 2026-11-02
-**Design sources:** [`FoodFight v0.0.3.dc.html`](../design/project/FoodFight%20v0.0.3.dc.html), [`Versionamento.dc.html`](../design/project/Versionamento.dc.html), and the approved [design record](../superpowers/specs/2026-11-02-foodfight-v003-gameplay-design.md).
+**Design sources:** [`FoodFight v0.0.3.dc.html`](../design/project/FoodFight%20v0.0.3.dc.html), [`Versionamento.dc.html`](../design/project/Versionamento.dc.html), and the approved [design record](./2026-11-02-foodfight-v003-gameplay-design.md).
 
 ## Objective
 
@@ -15,6 +15,7 @@ Extend the v0.0.2 combat loop with a difficulty choice and the v0.0.3 “Jogabil
 - Apply preset speed, spawn interval, double-spawn chance, and acceleration to the UI-thread loop.
 - Make normal attacks originate from the Barão's current lane.
 - Render the Barão at the 184×198 handoff scale with a purple aura and attack feedback.
+- Render random taunts, ouch reactions, the 450 ms bravo shake, and power-clear confetti from fixed pools.
 - Cross each 100-point score threshold once, grant one capped power charge, and queue three resistant zombie projectiles.
 - Clear normal projectiles for the next 40 score points after an accepted power shot; resistant burst projectiles remain active.
 - Show Barão taunts while attacking and the existing `bravo` reaction after a successful power hit.
@@ -37,12 +38,12 @@ Loading → Select hero → Choose difficulty → Game → Win/Over
 type Difficulty = 'mfacil' | 'facil' | 'dificil' | 'impossivel';
 ```
 
-| Key | Label | Base speed | Spawn interval | Double spawn | Acceleration |
-|---|---|---:|---:|---:|---:|
-| `mfacil` | Muito Fácil | 215 px/s | 1450 ms | 0% | 0.002 |
-| `facil` | Fácil | 300 px/s | 1050 ms | 10% | 0.004 |
-| `dificil` | Difícil | 430 px/s | 760 ms | 30% | 0.006 |
-| `impossivel` | Impossível | 560 px/s | 540 ms | 55% | 0.009 |
+| Key          | Label       | Base speed | Spawn interval | Double spawn | Acceleration |
+| ------------ | ----------- | ---------: | -------------: | -----------: | -----------: |
+| `mfacil`     | Muito Fácil |   215 px/s |        1450 ms |           0% |        0.002 |
+| `facil`      | Fácil       |   300 px/s |        1050 ms |          10% |        0.004 |
+| `dificil`    | Difícil     |   430 px/s |         760 ms |          30% |        0.006 |
+| `impossivel` | Impossível  |   560 px/s |         540 ms |          55% |        0.009 |
 
 The speed formula is `preset.speed + min(280, elapsedMs * preset.acceleration)`. The spawn interval is `max(400, preset.interval - elapsedMs * 0.003)`.
 
@@ -50,8 +51,9 @@ The speed formula is `preset.speed + min(280, elapsedMs * preset.acceleration)`.
 
 - Normal projectile lane: the primary spawn uses the integer lane containing the current Barão centre; an optional second projectile uses the approved adjacent-lane formula from the design handoff.
 - Milestone: each crossed 100-point threshold grants one charge, capped at `POWER_MAX_CHARGES`, and queues exactly three resistant zombies in the captured Barão lane.
-- Burst timing: one zombie slot is activated every 140 ms from the fixed enemy pool. Pool saturation may skip a request; it may not allocate a dynamic collection.
+- Burst timing: the fixed pool schedules zombie slots at 140 ms, 430 ms, and 720 ms after the attack starts. Pool saturation may skip a request; it may not allocate a dynamic collection.
 - Power mode: an accepted shot sets `powerUntilScore = currentScore + 40`. Normal projectiles ahead of the hero are removed and award `SCORE_PER_DODGE`; resistant burst projectiles are not removed by this mode.
+- Power-clear effects: each removed normal projectile may claim one of six pre-mounted confetti slots for 620 ms; no effect object is allocated in the frame loop.
 - Projectile scale: normal visual/hitbox basis is `CANDY_SIZE * PROJECTILE_SIZE_MULTIPLIER`; zombie basis is `ZOMBIE_RENDER_SIZE`.
 - Results: the existing UI-thread freeze, five villain HP, three hero lives, bubble rules, double-fire guard, and result modal remain active.
 

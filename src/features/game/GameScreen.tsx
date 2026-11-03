@@ -1,7 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text as RNText, useWindowDimensions, View } from 'react-native';
-import { Canvas, Circle, Group, Oval, useFont, type SkFont, vec } from '@shopify/react-native-skia';
+import { StyleSheet, Text as RNText, useWindowDimensions, View } from 'react-native';
 import {
+  Canvas,
+  Circle,
+  Group,
+  Oval,
+  Rect,
+  useFont,
+  type SkFont,
+  vec,
+} from '@shopify/react-native-skia';
+import {
+  default as Animated,
+  useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
   withSequence,
@@ -25,6 +36,26 @@ import { GAME_CONSTANTS } from '../../types/constants';
 import { PROJECTILE_KIND } from '../../engine/combatMath';
 import type { Who } from '../../types/game';
 import theme from '../../theme/tokens';
+
+const GAME_SCREEN_STYLES = StyleSheet.create({
+  root: { flex: 1 },
+  canvasContainer: { flex: 1 },
+  canvas: { flex: 1 },
+  loopReadout: { position: 'absolute', top: 6, left: 6 },
+  loopText: { color: theme.colors.surface, fontSize: 11 },
+  tauntBubble: {
+    position: 'absolute',
+    right: GAME_CONSTANTS.VILLAIN_RENDER_WIDTH - theme.space.sm,
+    maxWidth: 220,
+    paddingVertical: theme.space.sm,
+    paddingHorizontal: 12,
+    borderWidth: 2,
+    borderColor: theme.colors.villainBorder,
+    borderRadius: theme.radii.md,
+    backgroundColor: theme.colors.surface,
+  },
+  tauntText: { color: theme.colors.villain, fontFamily: theme.font.semibold },
+});
 
 const useKindOpacity = (active: SharedValue<number>, kind: SharedValue<number>, expected: number) =>
   useDerivedValue(() => (active.value === 1 && kind.value === expected ? 1 : 0));
@@ -112,6 +143,34 @@ const FoodBubbleSlot = ({
   );
 };
 
+const ConfettiBurstSlot = ({
+  x,
+  y,
+  active,
+  rotation,
+}: {
+  x: SharedValue<number>;
+  y: SharedValue<number>;
+  active: SharedValue<number>;
+  rotation: SharedValue<number>;
+}) => {
+  const transform = useDerivedValue(() => [
+    { translateX: x.value },
+    { translateY: y.value },
+    { rotate: rotation.value },
+  ]);
+
+  return (
+    <Group transform={transform} opacity={active}>
+      <Circle cx={0} cy={-16} r={5} color={theme.colors.candyPink} />
+      <Circle cx={14} cy={-4} r={5} color={theme.colors.sprinkleYellow} />
+      <Rect x={-20} y={-5} width={8} height={16} color={theme.colors.candyTeal} />
+      <Rect x={-4} y={10} width={8} height={16} color={theme.colors.brand} />
+      <Rect x={12} y={8} width={8} height={16} color={theme.colors.villain} />
+    </Group>
+  );
+};
+
 const GameCanvas = React.memo(
   ({
     engine,
@@ -141,18 +200,36 @@ const GameCanvas = React.memo(
         : withTiming(1, { duration: 180 });
     }, [villainAttackScale, villainAttacking]);
 
+    const villainShake = useSharedValue(0);
+    useEffect(() => {
+      villainShake.value =
+        villainMood === 'bravo'
+          ? withSequence(
+              withTiming(-8, { duration: 75 }),
+              withTiming(8, { duration: 75 }),
+              withTiming(-8, { duration: 75 }),
+              withTiming(8, { duration: 75 }),
+              withTiming(-8, { duration: 75 }),
+              withTiming(0, { duration: 75 })
+            )
+          : withTiming(0, { duration: 100 });
+    }, [villainMood, villainShake]);
+
     const villainTransform = useDerivedValue(() => [
       { translateX: width - GAME_CONSTANTS.VILLAIN_RENDER_WIDTH },
       { translateY: engine.villainY.value },
     ]);
-    const villainAttackTransform = useDerivedValue(() => [{ scale: villainAttackScale.value }]);
+    const villainPresentationTransform = useDerivedValue(() => [
+      { translateX: villainShake.value },
+      { scale: villainAttackScale.value },
+    ]);
     const heroTransform = useDerivedValue(() => [
       { translateX: engine.heroX },
       { translateY: engine.heroY.value },
     ]);
 
     return (
-      <Canvas style={{ flex: 1 }}>
+      <Canvas style={GAME_SCREEN_STYLES.canvas}>
         <Tablecloth width={width} height={height} scrollX={engine.scrollX} />
         <LaneDividers width={width} height={height} />
 
@@ -162,7 +239,7 @@ const GameCanvas = React.memo(
               GAME_CONSTANTS.VILLAIN_RENDER_WIDTH / 2,
               GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2
             )}
-            transform={villainAttackTransform}
+            transform={villainPresentationTransform}
           >
             <Circle
               cx={GAME_CONSTANTS.VILLAIN_RENDER_WIDTH / 2}
@@ -189,6 +266,16 @@ const GameCanvas = React.memo(
             kind={engine.obstacleKind[index]}
             spin={engine.candySpin}
             laughFont={laughFont}
+          />
+        ))}
+
+        {Array.from({ length: GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE }, (_, index) => (
+          <ConfettiBurstSlot
+            key={`burst-fx-${index}`}
+            x={engine.burstFxX[index]}
+            y={engine.burstFxY[index]}
+            active={engine.burstFxActive[index]}
+            rotation={engine.burstFxRotation[index]}
           />
         ))}
 
@@ -223,8 +310,8 @@ const LoopReadout = () => {
   const fps = useGameStore((s) => s.state.fps);
   if (!__DEV__) return null;
   return (
-    <View style={{ position: 'absolute', top: 6, left: 6 }} pointerEvents="none">
-      <RNText style={{ color: theme.colors.surface, fontSize: 11 }}>LOOP {fps}</RNText>
+    <View style={GAME_SCREEN_STYLES.loopReadout} pointerEvents="none">
+      <RNText style={GAME_SCREEN_STYLES.loopText}>LOOP {fps}</RNText>
     </View>
   );
 };
@@ -239,6 +326,7 @@ export const GameScreen = () => {
   const villainMood = useGameStore((s) => s.state.villainMood);
   const villainAttacking = useGameStore((s) => s.state.villainAttacking);
   const villainTaunt = useGameStore((s) => s.state.villainTaunt);
+  const villainTalkDurationMs = useGameStore((s) => s.state.villainTalkDurationMs);
   const actions = useGameStore((s) => s.actions);
   const [hasMoved, setHasMoved] = useState(false);
 
@@ -263,6 +351,20 @@ export const GameScreen = () => {
     return () => clearTimeout(timeout);
   }, [actions, villainAttacking]);
 
+  useEffect(() => {
+    if (screen !== 'game') return;
+    const timeout = setTimeout(() => actions.showVillainTaunt(), 800);
+    return () => clearTimeout(timeout);
+  }, [actions, screen]);
+
+  useEffect(() => {
+    if (!villainTaunt || villainTalkDurationMs <= 0) return;
+    const timeout = setTimeout(() => actions.clearVillainTaunt(), villainTalkDurationMs);
+    return () => clearTimeout(timeout);
+  }, [actions, villainTalkDurationMs, villainTaunt]);
+
+  const tauntStyle = useAnimatedStyle(() => ({ top: engine.villainY.value - 6 }));
+
   const handleMoveLane = useCallback(
     (direction: -1 | 1) => {
       setHasMoved(true);
@@ -272,9 +374,9 @@ export const GameScreen = () => {
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={GAME_SCREEN_STYLES.root}>
       <SwipeHandler onMoveLane={handleMoveLane}>
-        <View style={{ flex: 1 }}>
+        <View style={GAME_SCREEN_STYLES.canvasContainer}>
           <GameCanvas
             engine={engine}
             width={width}
@@ -290,25 +392,9 @@ export const GameScreen = () => {
       <Hud onFire={engine.firePower} onExit={actions.toSelect} showHint={!hasMoved} />
 
       {villainTaunt ? (
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 86,
-            right: 142,
-            maxWidth: 220,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-            borderWidth: 2,
-            borderColor: theme.colors.villainBorder,
-            borderRadius: 16,
-            backgroundColor: theme.colors.surface,
-          }}
-        >
-          <RNText style={{ color: theme.colors.villain, fontFamily: theme.font.semibold }}>
-            {villainTaunt}
-          </RNText>
-        </View>
+        <Animated.View pointerEvents="none" style={[GAME_SCREEN_STYLES.tauntBubble, tauntStyle]}>
+          <RNText style={GAME_SCREEN_STYLES.tauntText}>{villainTaunt}</RNText>
+        </Animated.View>
       ) : null}
 
       {(screen === 'over' || screen === 'win') && <GameOverModal />}

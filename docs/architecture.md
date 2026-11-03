@@ -95,10 +95,11 @@ Created once with `makeMutable` and memoised so they survive re-renders:
 | `obstacleX[]`, `obstacleY[]`, `obstacleLane[]`, `obstacleKind[]`, `obstacleActive[]` | Ten-slot typed enemy state                        |
 | `shotX[]`, `shotY[]`, `shotActive[]`                                                 | Three-slot power-shot state                       |
 | `bubbleX`, `bubbleY`, `bubbleActive`                                                 | One visible food bubble at a time                 |
-| `villainY`, `villainHpMirror`, `charges`, `powerIndex`, `difficultyIndex`             | UI-thread villain, fire, and difficulty mirrors   |
+| `villainY`, `villainHpMirror`, `charges`, `powerIndex`, `difficultyIndex`            | UI-thread villain, fire, and difficulty mirrors   |
 | `livesMirror`, `scoreMirror`, `rngState`                                             | Local collision/result state and seeded PRNG      |
-| `spawnAccum`, `bubblePending`, `bubbleThreshold`, `nextMilestone`, `powerUntilScore`  | Score and spawn accumulators                     |
-| `obstacleResistant[]`, `burstPending`, `burstLane`, `burstNextAt`                    | Resistant Barão burst metadata                   |
+| `spawnAccum`, `bubblePending`, `bubbleThreshold`, `nextMilestone`, `powerUntilScore` | Score and spawn accumulators                      |
+| `obstacleResistant[]`, `burstPending`, `burstLane`, `burstNextAt`                    | Resistant Barão burst metadata                    |
+| `burstFxX[]`, `burstFxY[]`, `burstFxActive[]`, `burstFxRotation[]`                   | Six-slot power-clear confetti effect pool         |
 | `frozen`                                                                             | 1 freezes the simulation before a terminal bridge |
 
 ### The typed enemy and power pools
@@ -158,9 +159,9 @@ The four presets are Muito Fácil (215 px/s / 1450 ms), Fácil (300 / 1050), Dif
 
 The first spawn starts after the handoff warmup accumulator (`INITIAL_SPAWN_ACCUMULATOR_MS`, 400 ms), not after a full preset interval. This keeps the opening readable while preserving the selected cadence afterward.
 
-**Milestones and power mode.** When the UI-thread score mirror crosses 100 points, the loop increments the capped charge mirror, schedules one discrete charge bridge and queues three resistant zombies. The burst lane is captured from the current Barão lane and slots are activated one at a time with a 140 ms spacing. An accepted power shot sets `powerUntilScore` to `score + 40`; normal enemies ahead of the hero are cleared for score, while resistant burst enemies continue.
+**Milestones and power mode.** When the UI-thread score mirror crosses 100 points, the loop increments the capped charge mirror, schedules one discrete charge bridge and queues three resistant zombies. The burst lane is captured from the current Barão lane and slots are activated at the handoff timestamps 140, 430, and 720 ms. An accepted power shot sets `powerUntilScore` to `score + 40`; normal enemies ahead of the hero are cleared for score and claim a slot in the six-entry confetti effect pool, while resistant burst enemies continue.
 
-**The collision test only checks X (step 10).** Y overlap is implied: hero and candy are both vertically centred in the same lane, and lane membership is already checked with an integer comparison. Testing Y would be redundant work in the hot loop. The hitbox is the hero inset by `HERO_HITBOX_PADDING` (18 px) on the X axis, taken from the design's collision math.
+**The collision test only checks X (step 12).** Y overlap is implied: hero and candy are both vertically centred in the same lane, and lane membership is already checked with an integer comparison. Testing Y would be redundant work in the hot loop. The hitbox is the hero inset by `HERO_HITBOX_PADDING` (18 px) on the X axis, taken from the design's collision math.
 
 **Known debt — lane transition.** During the 130 ms `withTiming` slide, `heroLane` already holds the destination lane while the sprite is still moving. Collision therefore uses the destination lane before the hero visually arrives. At the late-game 600 px/s, that is ~78 px of candy travel. This is documented in [troubleshooting.md](./troubleshooting.md) and should be revisited after device QA; the current choice favours a cheap hot loop over transition-accurate collision.
 
@@ -211,9 +212,9 @@ GameState = {
 
 Hero position, enemy/shot positions, bubble position, scroll offset, flicker phase and the authoritative UI-thread charge mirror are deliberately **not** React state. Putting per-frame values in the store is the single easiest way to destroy the frame rate. The store keeps the discrete UI projection and guards every terminal action by `screen === 'game'`.
 
-`hitHero` decrements lives; reaching 0 sets `screen: 'over'` and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 sets `screen: 'win'` and captures the record. `applyPowerFired` refuses to overdraw charges, `collectFood` caps food pickups at three, and `grantPowerCharge` handles the 100-point milestone toast. `triggerVillainBurst` exposes only the discrete attack animation and taunt. `reset` restores initial state but preserves `who`, `difficulty`, and `best`.
+`hitHero` decrements lives; reaching 0 sets `screen: 'over'` and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 sets `screen: 'win'` and captures the record. `applyPowerFired` refuses to overdraw charges, `collectFood` caps food pickups at three, and `grantPowerCharge` handles the 100-point milestone toast. `triggerVillainBurst` exposes the discrete attack animation and random taunt, while `applyVillainHit` exposes the random ouch reaction. `reset` restores initial state but preserves `who`, `difficulty`, and `best`.
 
-**Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `Hud` and the development loop readout own the leaf subscriptions, while `GameScreen` subscribes only to scene selection and villain mood, so combat HUD updates do not re-render the Canvas subtree.
+**Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `Hud` and the development loop readout own the leaf subscriptions, while `GameScreen` subscribes to scene selection, villain mood, villain attack state, and villain talk text, so unrelated combat HUD updates do not re-render the Canvas subtree.
 
 ---
 
@@ -305,7 +306,7 @@ A third `Gesture.Tap()` maps the tap's Y to a lane direction: top half moves up,
 | `HERO_HITBOX_PADDING`                      | 18          | X-axis inset; higher is more forgiving                        |
 | `HERO_LANE_TRANSITION_DURATION`            | 130 ms      | Lane switch duration                                          |
 | `MAX_FRAME_DELTA_MS`                       | 50 ms       | Maximum delta the loop will integrate after a stall or resume |
-| `CANDY_SIZE`                               | 52          | Base candy geometry before the v0.0.3 visual scale             |
+| `CANDY_SIZE`                               | 52          | Base candy geometry before the v0.0.3 visual scale            |
 | `PROJECTILE_SIZE_MULTIPLIER`               | 1.3         | v0.0.3 normal projectile scale                                |
 | `CANDY_SPEED_RAMP_MAX` / `_RATE`           | 260 / 0.006 | Ceiling and slope of the speed ramp                           |
 | `SPAWN_INTERVAL`                           | 900 ms      | Starting spawn interval                                       |
@@ -313,11 +314,11 @@ A third `Gesture.Tap()` maps the tap's Y to a lane direction: top half moves up,
 | `INVULN_DURATION`                          | 1400 ms     | Invulnerability and flicker length                            |
 | `SCORE_PER_DODGE`                          | 10          | Points per dodged candy                                       |
 | `VILLAIN_HP`                               | 5           | Shots required to win                                         |
-| `VILLAIN_RENDER_WIDTH` / `_HEIGHT`         | 184 / 198   | v0.0.3 Barão visual bounds                                     |
-| `ZOMBIE_RENDER_SIZE`                        | 96          | v0.0.3 zombie visual and hitbox basis                          |
-| `VILLAIN_BURST_COUNT`                       | 3           | Resistant zombies per 100-point milestone                      |
-| `MILESTONE_SCORE_STEP`                      | 100         | Score interval for charge and burst                            |
-| `POWER_MODE_SCORE_DURATION`                | 40          | Score points for normal-projectile clear mode                  |
+| `VILLAIN_RENDER_WIDTH` / `_HEIGHT`         | 184 / 198   | v0.0.3 Barão visual bounds                                    |
+| `ZOMBIE_RENDER_SIZE`                       | 96          | v0.0.3 zombie visual and hitbox basis                         |
+| `VILLAIN_BURST_COUNT`                      | 3           | Resistant zombies per 100-point milestone                     |
+| `MILESTONE_SCORE_STEP`                     | 100         | Score interval for charge and burst                           |
+| `POWER_MODE_SCORE_DURATION`                | 40          | Score points for normal-projectile clear mode                 |
 | `POWER_MAX_CHARGES`                        | 3           | Charge cap                                                    |
 | `BUBBLE_EVERY`                             | 300         | Score threshold for a pending food bubble                     |
 | `POWER_SHOT_SPEED`                         | 620 px/s    | Horizontal shot speed                                         |

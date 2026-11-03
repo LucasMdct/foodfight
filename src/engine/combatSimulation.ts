@@ -151,6 +151,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let burstPending = 0;
   let burstLane = 1;
   let burstNextAtMs = 0;
+  let burstDelayIndex = 0;
 
   for (let frameIndex = 0; frameIndex < scenario.frames.length; frameIndex += 1) {
     if (screen !== 'game') break;
@@ -185,6 +186,61 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     elapsedMs += dtMs;
     const speed = difficulty.speed + Math.min(280, elapsedMs * difficulty.acceleration);
 
+    if (scenario.enemies === undefined || scenario.autoSpawn === true) {
+      spawnAccumulatorMs += dtMs;
+      const spawnInterval = Math.max(400, difficulty.interval - elapsedMs * 0.003);
+      if (spawnAccumulatorMs >= spawnInterval) {
+        spawnAccumulatorMs -= spawnInterval;
+        const phase = attackPhaseAt(score);
+        let spawnCount = 1;
+        rngState = nextRngState(rngState);
+        if (rngUnit(rngState) < difficulty.doubleSpawnChance) {
+          spawnCount = 2;
+        }
+        let primaryLane = 0;
+        for (let spawnIndex = 0; spawnIndex < spawnCount; spawnIndex += 1) {
+          let spawnSlot = -1;
+          for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
+            if (!enemies[enemyIndex].active) {
+              spawnSlot = enemyIndex;
+              break;
+            }
+          }
+          if (spawnSlot < 0) {
+            events.push({ type: 'spawnSkipped' });
+            break;
+          }
+          rngState = nextRngState(rngState);
+          const random01 = rngUnit(rngState);
+          const spawnedEnemy = enemies[spawnSlot];
+          spawnedEnemy.active = true;
+          spawnedEnemy.x = SIMULATION_WIDTH - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
+          spawnedEnemy.lane =
+            spawnIndex === 0
+              ? clampLane(
+                  Math.floor(
+                    (villainYAt(
+                      elapsedMs,
+                      SIMULATION_HEIGHT,
+                      GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT
+                    ) +
+                      GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) /
+                      LANE_HEIGHT
+                  )
+                )
+              : (primaryLane + 1 + Math.floor(random01 * 2)) % GAME_CONSTANTS.LANE_COUNT;
+          if (spawnIndex === 0) primaryLane = spawnedEnemy.lane;
+          spawnedEnemy.kind = projectileKindAt(phase, random01);
+          spawnedEnemy.resistant = false;
+          events.push({
+            type: 'projectileSpawned',
+            lane: spawnedEnemy.lane,
+            kind: spawnedEnemy.kind,
+          });
+        }
+      }
+    }
+
     if (burstPending > 0 && elapsedMs >= burstNextAtMs) {
       let burstSlot = -1;
       for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
@@ -193,15 +249,26 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
           break;
         }
       }
+      const currentDelayIndex = burstDelayIndex;
+      const nextDelayIndex =
+        (currentDelayIndex + 1) % GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS.length;
       burstPending -= 1;
-      burstNextAtMs = elapsedMs + 140;
+      burstDelayIndex = nextDelayIndex;
+      const delayDelta =
+        nextDelayIndex === 0
+          ? GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[0]
+          : GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[nextDelayIndex] -
+            GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[currentDelayIndex];
+      burstNextAtMs = elapsedMs + delayDelta;
       if (burstSlot >= 0) {
         const burst = enemies[burstSlot];
         burst.active = true;
-        burst.x = VILLAIN_X;
+        burst.x = SIMULATION_WIDTH - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
         burst.lane = burstLane;
         burst.kind = PROJECTILE_KIND.zumbi;
         burst.resistant = true;
+      } else {
+        events.push({ type: 'spawnSkipped' });
       }
     }
 
@@ -293,7 +360,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       const wasEmpty = burstPending === 0;
       burstPending += GAME_CONSTANTS.VILLAIN_BURST_COUNT;
       burstLane = villainLane;
-      if (wasEmpty) burstNextAtMs = elapsedMs;
+      if (wasEmpty) {
+        burstDelayIndex = 0;
+        burstNextAtMs = elapsedMs + GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[0];
+      }
       events.push({
         type: 'villainBurst',
         count: GAME_CONSTANTS.VILLAIN_BURST_COUNT,
@@ -326,61 +396,6 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         events.push({ type: 'foodCollected', charges });
       } else if (bubbleX + GAME_CONSTANTS.BUBBLE_SIZE < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
         bubbleActive = false;
-      }
-    }
-
-    if (scenario.enemies === undefined || scenario.autoSpawn === true) {
-      spawnAccumulatorMs += dtMs;
-      const spawnInterval = Math.max(400, difficulty.interval - elapsedMs * 0.003);
-      if (spawnAccumulatorMs >= spawnInterval) {
-        spawnAccumulatorMs -= spawnInterval;
-        const phase = attackPhaseAt(score);
-        let spawnCount = 1;
-        rngState = nextRngState(rngState);
-        if (rngUnit(rngState) < difficulty.doubleSpawnChance) {
-          spawnCount = 2;
-        }
-        let primaryLane = 0;
-        for (let spawnIndex = 0; spawnIndex < spawnCount; spawnIndex += 1) {
-          let spawnSlot = -1;
-          for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
-            if (!enemies[enemyIndex].active) {
-              spawnSlot = enemyIndex;
-              break;
-            }
-          }
-          if (spawnSlot < 0) {
-            events.push({ type: 'spawnSkipped' });
-            break;
-          }
-          rngState = nextRngState(rngState);
-          const random01 = rngUnit(rngState);
-          const spawnedEnemy = enemies[spawnSlot];
-          spawnedEnemy.active = true;
-          spawnedEnemy.x = SIMULATION_WIDTH + GAME_CONSTANTS.ENEMY_SPAWN_X_OFFSET;
-          spawnedEnemy.lane =
-            spawnIndex === 0
-              ? clampLane(
-                  Math.floor(
-                    (villainYAt(
-                      elapsedMs,
-                      SIMULATION_HEIGHT,
-                      GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT
-                    ) +
-                      GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) /
-                      LANE_HEIGHT
-                  )
-                )
-              : (primaryLane + 1 + Math.floor(random01 * 2)) % GAME_CONSTANTS.LANE_COUNT;
-          if (spawnIndex === 0) primaryLane = spawnedEnemy.lane;
-          spawnedEnemy.kind = projectileKindAt(phase, random01);
-          spawnedEnemy.resistant = false;
-          events.push({
-            type: 'projectileSpawned',
-            lane: spawnedEnemy.lane,
-            kind: spawnedEnemy.kind,
-          });
-        }
       }
     }
   }
