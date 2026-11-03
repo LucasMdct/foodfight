@@ -17,27 +17,32 @@ const VIEWBOX: Record<Who, [number, number]> = {
 };
 
 /**
- * Renders a Foodie character scaled to `size` (uniform scale by design width).
+ * Renders a Foodie character scaled to `size` (and optional `height` for exact handoff aspect).
  * Must be placed inside a Skia <Canvas>.
  */
 export const Foodie = ({
   who,
   size,
+  height,
   animated = true,
   mood,
+  talking = false,
 }: {
   who: Who;
   size: number;
+  height?: number;
   animated?: boolean;
   mood?: VillainMood;
+  talking?: boolean;
 }) => {
-  const [vw] = VIEWBOX[who];
-  const s = size / vw;
+  const [vw, vh] = VIEWBOX[who];
+  const sx = size / vw;
+  const sy = height ? height / vh : sx;
   const Body =
     who === 'alface' ? Alface : who === 'feijao' ? Feijao : who === 'arroz' ? Arroz : Vilao;
   return (
-    <Group transform={[{ scale: s }]}>
-      {who === 'vilao' ? <Vilao animated={animated} mood={mood} /> : <Body />}
+    <Group transform={[{ scaleX: sx }, { scaleY: sy }]}>
+      {who === 'vilao' ? <Vilao animated={animated} mood={mood} talking={talking} /> : <Body />}
     </Group>
   );
 };

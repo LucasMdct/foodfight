@@ -46,9 +46,12 @@ describe('combat game store guards', () => {
     expect(useGameStore.getState().state).toMatchObject({
       villainAttacking: true,
       villainTalkKind: 'taunt',
-      villainTalkDurationMs: 2600,
+      villainTalkDurationMs: 2800,
     });
     expect(VILLAIN_TAUNTS).toContain(useGameStore.getState().state.villainTaunt);
+    expect(useGameStore.getState().state.villainTalk).toBe(
+      useGameStore.getState().state.villainTaunt
+    );
   });
 
   it('shows a random ouch line and the reaction duration after a power hit', () => {
@@ -57,17 +60,28 @@ describe('combat game store guards', () => {
     expect(useGameStore.getState().state).toMatchObject({
       villainMood: 'bravo',
       villainTalkKind: 'ouch',
-      villainTalkDurationMs: 2000,
+      villainTalkDurationMs: 2200,
     });
     expect(VILLAIN_OUCHES).toContain(useGameStore.getState().state.villainTaunt);
+    expect(useGameStore.getState().state.villainTalk).toBe(
+      useGameStore.getState().state.villainTaunt
+    );
   });
 
-  it('grants milestone power without using the food pickup toast', () => {
-    useGameStore.getState().actions.grantPowerCharge();
+  it('exposes no automatic milestone charge action', () => {
+    expect(useGameStore.getState().actions).not.toHaveProperty('grantPowerCharge');
+  });
+
+  it('keeps charges and pickup feedback unchanged when score crosses 100', () => {
+    const { start, incrementScore } = useGameStore.getState().actions;
+    start();
+    incrementScore(90);
+    incrementScore(10);
 
     expect(useGameStore.getState().state).toMatchObject({
-      charges: 2,
-      toast: 'milestone-power',
+      score: 100,
+      charges: 0,
+      toast: null,
     });
   });
 
@@ -90,16 +104,58 @@ describe('combat game store guards', () => {
     });
   });
 
+  it('stages villain defeat before transitioning to win on completion', () => {
+    const actions = useGameStore.getState().actions;
+
+    for (let index = 0; index < 4; index += 1) actions.applyVillainHit();
+    expect(useGameStore.getState().state.villainHp).toBe(1);
+
+    actions.beginVillainDefeat();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      screen: 'game',
+      villainHp: 0,
+      villainDying: true,
+      villainMood: 'bravo',
+      villainTalkKind: 'defeat',
+      villainTalkDurationMs: 2500,
+    });
+
+    actions.hitHero();
+    actions.incrementScore(50);
+    actions.collectFood();
+    actions.applyPowerFired(0);
+    actions.applyVillainHit();
+    actions.beginVillainDefeat();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      screen: 'game',
+      lives: 3,
+      score: 0,
+      charges: 1,
+      villainHp: 0,
+      villainDying: true,
+    });
+
+    actions.completeVillainDefeat();
+
+    expect(useGameStore.getState().state.screen).toBe('win');
+  });
+
   it('freezes the result after the villain reaches zero HP', () => {
-    const { applyVillainHit, hitHero } = useGameStore.getState().actions;
+    const { applyVillainHit, completeVillainDefeat, hitHero } = useGameStore.getState().actions;
 
     applyVillainHit();
     expect(useGameStore.getState().state.villainMood).toBe('bravo');
     for (let index = 1; index < 5; index += 1) applyVillainHit();
     hitHero();
 
-    expect(useGameStore.getState().state.screen).toBe('win');
+    expect(useGameStore.getState().state.screen).toBe('game');
+    expect(useGameStore.getState().state.villainDying).toBe(true);
     expect(useGameStore.getState().state.lives).toBe(3);
+
+    completeVillainDefeat();
+    expect(useGameStore.getState().state.screen).toBe('win');
   });
 
   it('caps food charges while changing the toast event', () => {

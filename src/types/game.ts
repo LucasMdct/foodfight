@@ -2,12 +2,9 @@ export type Who = 'alface' | 'feijao' | 'arroz';
 export type Difficulty = 'mfacil' | 'facil' | 'dificil' | 'impossivel';
 export type Screen = 'select' | 'difficulty' | 'game' | 'over' | 'win';
 export type GameToast =
-  | 'food-collected'
-  | 'milestone-power'
-  | { readonly type: 'power-fired'; readonly name: string }
-  | null;
+  'food-collected' | { readonly type: 'power-fired'; readonly name: string } | null;
 export type VillainMood = 'feliz' | 'bravo';
-export type VillainTalkKind = 'taunt' | 'ouch' | null;
+export type VillainTalkKind = 'taunt' | 'ouch' | 'defeat' | null;
 
 /**
  * Discrete game state kept in React/Zustand. Per-frame values (hero position,
@@ -29,6 +26,9 @@ export interface GameState {
   toastId: number;
   villainMood: VillainMood;
   villainAttacking: boolean;
+  villainDying: boolean;
+  villainTalking: boolean;
+  villainTalk: string;
   villainTaunt: string;
   villainTalkKind: VillainTalkKind;
   villainTalkDurationMs: number;
@@ -41,13 +41,16 @@ export interface GameActions {
   hitHero: () => void;
   incrementScore: (points: number) => void;
   applyVillainHit: () => void;
+  beginVillainDefeat: () => void;
+  completeVillainDefeat: () => void;
   applyPowerFired: (powerIndex: number) => void;
-  grantPowerCharge: () => void;
   collectFood: () => void;
   clearToast: (toastId: number) => void;
   clearVillainMood: () => void;
   triggerVillainBurst: () => void;
   showVillainTaunt: () => void;
+  showVillainOuch: () => void;
+  setVillainTalking: (talking: boolean) => void;
   clearVillainBurst: () => void;
   clearVillainTaunt: () => void;
   toSelect: () => void;
@@ -72,6 +75,9 @@ export const INITIAL_GAME_STATE: GameState = {
   toastId: 0,
   villainMood: 'feliz',
   villainAttacking: false,
+  villainDying: false,
+  villainTalking: false,
+  villainTalk: '',
   villainTaunt: '',
   villainTalkKind: null,
   villainTalkDurationMs: 0,
