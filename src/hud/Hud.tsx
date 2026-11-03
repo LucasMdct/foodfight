@@ -8,6 +8,7 @@ import { Heart } from './Heart';
 import { makeStyles } from './Hud.styles';
 import { START_LIVES } from '../types/game';
 import { GAME_CONSTANTS } from '../types/constants';
+import { difficultyConfigAt } from '../engine/combatMath';
 
 interface HudProps {
   onFire: () => void;
@@ -29,6 +30,7 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
   const score = useGameStore((s) => s.state.score);
   const charges = useGameStore((s) => s.state.charges);
   const villainHp = useGameStore((s) => s.state.villainHp);
+  const difficulty = useGameStore((s) => s.state.difficulty);
   const toast = useGameStore((s) => s.state.toast);
   const toastId = useGameStore((s) => s.state.toastId);
   const clearToast = useGameStore((s) => s.actions.clearToast);
@@ -97,6 +99,7 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
             </View>
           </View>
           <Text style={styles.attackName}>Ataque: {attackName}</Text>
+          <Text style={styles.difficultyLabel}>{difficultyConfigAt(difficulty).label}</Text>
           <View style={styles.scoreSeal}>
             <Text style={styles.scoreText}>{score}</Text>
           </View>
@@ -146,9 +149,11 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
             <Text style={styles.toastText}>
               {toast === 'food-collected'
                 ? 'Comida de verdade! +1 PODER'
-                : toast.type === 'power-fired'
+                : typeof toast !== 'string' && toast.type === 'power-fired'
                   ? toast.name
-                  : ''}
+                  : toast === 'milestone-power'
+                    ? '⭐ PODER +1!'
+                    : ''}
             </Text>
           </View>
         </View>
