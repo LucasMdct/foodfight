@@ -1,5 +1,7 @@
 import {
   attackPhaseAt,
+  difficultyConfigAt,
+  milestoneCountAt,
   nextRngState,
   powerChargeAfterPickup,
   projectileKindAt,
@@ -10,8 +12,9 @@ import {
   trackShotY,
   villainYAt,
 } from './combatMath';
-import { candySpeedAt, rectsOverlapX, spawnIntervalAt } from './math';
+import { rectsOverlapX } from './math';
 import { GAME_CONSTANTS } from '../types/constants';
+import type { Difficulty } from '../types/game';
 
 const SIMULATION_WIDTH = 900;
 const HERO_X = SIMULATION_WIDTH * GAME_CONSTANTS.HERO_X_RATIO;
@@ -33,6 +36,7 @@ export interface CombatEnemySeed {
   readonly x: number;
   readonly lane: number;
   readonly kind: ProjectileKind;
+  readonly resistant?: boolean;
 }
 
 export interface CombatScenario {
@@ -41,6 +45,7 @@ export interface CombatScenario {
   readonly villainHp?: number;
   readonly charges?: number;
   readonly lives?: number;
+  readonly difficulty?: Difficulty;
   readonly enemies?: readonly CombatEnemySeed[];
   readonly autoSpawn?: boolean;
   readonly bubble?: { readonly x: number; readonly lane: number };
@@ -56,6 +61,10 @@ export type CombatEvent =
   | { readonly type: 'win' }
   | { readonly type: 'over' }
   | { readonly type: 'bubbleSpawned' }
+  | { readonly type: 'projectileSpawned'; readonly lane: number; readonly kind: ProjectileKind }
+  | { readonly type: 'villainBurst'; readonly count: number; readonly lane: number }
+  | { readonly type: 'powerChargeGranted'; readonly charges: number }
+  | { readonly type: 'powerCleared'; readonly score: number }
   | { readonly type: 'spawnSkipped' };
 
 export interface CombatSnapshot {
@@ -78,6 +87,7 @@ interface EnemySlot {
   x: number;
   lane: number;
   kind: ProjectileKind;
+  resistant: boolean;
 }
 
 interface ShotSlot {
@@ -98,6 +108,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     y: 0,
     lane: 0,
     kind: PROJECTILE_KIND.lolli,
+    resistant: false,
   }));
   const shots: ShotSlot[] = Array.from({ length: GAME_CONSTANTS.POWER_SHOT_POOL_SIZE }, () => ({
     active: false,
@@ -116,6 +127,9 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let elapsedMs = 0;
   let powerIndex = 0;
   let spawnAccumulatorMs = 0;
+  let powerUntilScore = -1;
+  let milestonesHandled = Math.floor(score / GAME_CONSTANTS.MILESTONE_SCORE_STEP);
+  const difficulty = difficultyConfigAt(scenario.difficulty ?? 'facil');
 
   for (let index = 0; index < (scenario.enemies?.length ?? 0); index += 1) {
     const seed = scenario.enemies?.[index];
@@ -124,6 +138,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     enemies[index].x = seed.x;
     enemies[index].lane = clampLane(seed.lane);
     enemies[index].kind = seed.kind;
+    enemies[index].resistant = seed.resistant === true;
   }
 
   let bubbleActive = scenario.bubble !== undefined;
@@ -151,6 +166,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       }
       if (shotSlot >= 0) {
         charges -= 1;
+        powerUntilScore = score + GAME_CONSTANTS.POWER_MODE_SCORE_DURATION;
         shots[shotSlot].active = true;
         shots[shotSlot].x = HERO_X + GAME_CONSTANTS.HERO_WIDTH;
         shots[shotSlot].y = lane * LANE_HEIGHT + (LANE_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2;
@@ -164,12 +180,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     }
 
     elapsedMs += dtMs;
-    const speed = candySpeedAt(
-      elapsedMs,
-      GAME_CONSTANTS.CANDY_BASE_SPEED,
-      GAME_CONSTANTS.CANDY_SPEED_RAMP_MAX,
-      GAME_CONSTANTS.CANDY_SPEED_RAMP_RATE
-    );
+    const speed = difficulty.speed + Math.min(280, elapsedMs * difficulty.acceleration);
 
     for (let shotIndex = 0; shotIndex < shots.length; shotIndex += 1) {
       const shot = shots[shotIndex];
@@ -212,6 +223,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
           bubblePending += 1;
           bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
         }
+      } else if (score < powerUntilScore && !enemy.resistant && enemy.x < SIMULATION_WIDTH * 0.62) {
+        enemy.active = false;
+        score += GAME_CONSTANTS.SCORE_PER_DODGE;
+        events.push({ type: 'powerCleared', score });
       } else if (
         elapsedMs >= invulnerableUntilMs &&
         enemy.lane === lane &&
@@ -230,6 +245,38 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     }
 
     if (screen !== 'game') break;
+
+    const milestoneCount = milestoneCountAt(score);
+    while (milestonesHandled < milestoneCount) {
+      milestonesHandled += 1;
+      charges = powerChargeAfterPickup(charges);
+      events.push({ type: 'powerChargeGranted', charges });
+      const villainLane = clampLane(
+        Math.floor(
+          (villainYAt(elapsedMs, SIMULATION_HEIGHT) + GAME_CONSTANTS.VILLAIN_HEIGHT / 2) /
+            LANE_HEIGHT
+        )
+      );
+      let burstCount = 0;
+      for (let burstIndex = 0; burstIndex < GAME_CONSTANTS.VILLAIN_BURST_COUNT; burstIndex += 1) {
+        let slot = -1;
+        for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
+          if (!enemies[enemyIndex].active) {
+            slot = enemyIndex;
+            break;
+          }
+        }
+        if (slot < 0) break;
+        const burst = enemies[slot];
+        burst.active = true;
+        burst.x = VILLAIN_X + burstIndex * 24;
+        burst.lane = villainLane;
+        burst.kind = PROJECTILE_KIND.zumbi;
+        burst.resistant = true;
+        burstCount += 1;
+      }
+      events.push({ type: 'villainBurst', count: burstCount, lane: villainLane });
+    }
 
     if (!bubbleActive && bubblePending > 0) {
       bubblePending -= 1;
@@ -261,18 +308,13 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
 
     if (scenario.enemies === undefined || scenario.autoSpawn === true) {
       spawnAccumulatorMs += dtMs;
-      const spawnInterval = spawnIntervalAt(
-        elapsedMs,
-        GAME_CONSTANTS.SPAWN_INTERVAL,
-        GAME_CONSTANTS.SPAWN_INTERVAL_MIN,
-        GAME_CONSTANTS.SPAWN_INTERVAL_RAMP_RATE
-      );
+      const spawnInterval = Math.max(400, difficulty.interval - elapsedMs * 0.003);
       if (spawnAccumulatorMs >= spawnInterval) {
         spawnAccumulatorMs -= spawnInterval;
         const phase = attackPhaseAt(score);
         let spawnCount = 1;
         rngState = nextRngState(rngState);
-        if (phase === GAME_CONSTANTS.ATTACK_PHASE_MAX && rngUnit(rngState) < 0.5) {
+        if (rngUnit(rngState) < difficulty.doubleSpawnChance) {
           spawnCount = 2;
         }
         let primaryLane = 0;
@@ -295,10 +337,21 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
           spawnedEnemy.x = SIMULATION_WIDTH + GAME_CONSTANTS.ENEMY_SPAWN_X_OFFSET;
           spawnedEnemy.lane =
             spawnIndex === 0
-              ? Math.floor(random01 * GAME_CONSTANTS.LANE_COUNT)
+              ? clampLane(
+                  Math.floor(
+                    (villainYAt(elapsedMs, SIMULATION_HEIGHT) + GAME_CONSTANTS.VILLAIN_HEIGHT / 2) /
+                      LANE_HEIGHT
+                  )
+                )
               : (primaryLane + 1 + Math.floor(random01 * 2)) % GAME_CONSTANTS.LANE_COUNT;
           if (spawnIndex === 0) primaryLane = spawnedEnemy.lane;
           spawnedEnemy.kind = projectileKindAt(phase, random01);
+          spawnedEnemy.resistant = false;
+          events.push({
+            type: 'projectileSpawned',
+            lane: spawnedEnemy.lane,
+            kind: spawnedEnemy.kind,
+          });
         }
       }
     }
