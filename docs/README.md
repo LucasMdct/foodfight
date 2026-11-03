@@ -35,6 +35,7 @@ Written before implementation, one per feature.
 |---|---|
 | [2026-07-05-foodfight-v001-design.md](./specs/2026-07-05-foodfight-v001-design.md) | **v0.0.1 game design** — heroes, villain, screens, theme |
 | [2026-11-02-foodfight-v002-combat.md](./specs/2026-11-02-foodfight-v002-combat.md) | **v0.0.2 combat loop** — attacks, powers, food bubble, victory/defeat, pools and harness |
+| [2026-11-03-foodfight-v004-design.md](./specs/2026-11-03-foodfight-v004-design.md) | **v0.0.4 gameplay** — full-screen power, typed villain dialogue, laughing zombies, and staged defeat |
 | [poc-runner-skia.md](./specs/poc-runner-skia.md) | The original POC specification and acceptance criteria |
 | [2026-07-04-play-again-button.md](./specs/2026-07-04-play-again-button.md) | Game Over modal and replay flow |
 | [2026-07-04-orientation.md](./specs/2026-07-04-orientation.md) | Orientation selection *(superseded — v0.0.1 locks landscape)* |
