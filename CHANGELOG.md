@@ -17,19 +17,25 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ### Added
 
+- Add the v0.0.4 gameplay spec, implementation plan, design handoff, typewriter dialogue controller, and deterministic parity tests.
+- Add typewriter Barão dialogue at 65 ms per character with an animated talking mouth while text is being revealed.
+- Add animated zombie laughter with an opening/closing mouth and looping `HA HA HA!` pill.
+- Add the staged 2,500 ms Barão defeat sequence with inflate/shake/spin animation and nine confetti bursts before the victory modal.
 - Add the v0.0.3 difficulty flow with Muito Fácil, Fácil, Difícil, and Impossível presets.
-- Add Barão 2.0 gameplay with lane-origin attacks, 100-point zombie bursts, milestone power charges, resistant burst projectiles, and 40-point power clear mode.
+- Add Barão 2.0 gameplay with lane-origin attacks and 100-point zombie bursts.
 - Add enlarged Barão/projectile presentation, attack taunts, and difficulty feedback in the HUD.
 - Add the v0.0.3 gameplay spec, implementation plan, architecture updates, and deterministic harness coverage.
 
 ### Changed
 
+- Redesign the `PODER!` control as a 126 px circular button in the lower-right corner with a rotating gold ring when charged.
+- Enlarge the gameplay Barão to the v0.0.4 handoff dimensions of 224 × 242 px and align shot hit (`W - 230`) and explosion (`W - 150`) boundaries.
 - Grant v0.0.4 power charges only from collected food bubbles, queued at every 100 points and served one at a time with 84 px bounds and a −90 px despawn boundary.
 - Clear every visible sweet and zombie immediately on accepted power fire, award 10 points once per enemy, and request centered confetti while the shot continues toward the Barão.
 - Change the screen flow to Loading → Select hero → Choose difficulty → Game → Result.
 - Preserve the selected difficulty when replaying a match.
 - Lock difficulty speed, spawn interval, and double-spawn chance to each preset for v0.0.4; remove the elapsed-time ramp.
-- Set v0.0.4 enemy and effect pool sizes, spawn/despawn boundaries, bubble threshold, Barão bounds, and timing constants from the design handoff.
+- Set v0.0.4 enemy (12) and effect (8) pool sizes, spawn/despawn boundaries, bubble threshold, Barão bounds, and timing constants from the design handoff.
 
 ### Fixed
 

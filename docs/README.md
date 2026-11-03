@@ -2,18 +2,18 @@
 
 Everything written about Food Fight, indexed. Start here.
 
-The project has two eras: the **POC** that tested React Native Skia, and the **game** (v0.0.1 onward) that replaced it. v0.0.4 implementation is in progress on top of v0.0.3; the POC's frame-rate verdict is unresolved; see [results.md](./results.md). Docs describe the game unless they say otherwise.
+The project has two eras: the **POC** that tested React Native Skia, and the **game** (v0.0.1 onward) that replaced it. v0.0.4 is implemented on top of the validated v0.0.3 baseline; the POC's frame-rate verdict is unresolved; see [results.md](./results.md). Docs describe the game unless they say otherwise.
 
 ---
 
 ## Core documents
 
-| Document                                   | What it covers                                                            | Read time |
-| ------------------------------------------ | ------------------------------------------------------------------------- | --------- |
-| [architecture.md](./architecture.md)       | How the current game is built, including v0.0.4 Task 3 power semantics   | 20 min    |
-| [testing.md](./testing.md)                 | Validation through v0.0.4 Task 3 — device QA pending                         | 12 min    |
-| [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix                                                     | reference |
-| [results.md](./results.md)                 | POC measurements and the unresolved frame-rate verdict                    | 8 min     |
+| Document                                   | What it covers                                                                                     | Read time |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------- | --------- |
+| [architecture.md](./architecture.md)       | How the current v0.0.4 game is built: fixed pools, full-screen power, typewriter, and staged defeat | 20 min    |
+| [testing.md](./testing.md)                 | Validation protocol for v0.0.4 — automated suite complete, physical-device QA pending               | 12 min    |
+| [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix                                                                              | reference |
+| [results.md](./results.md)                 | POC measurements and the unresolved frame-rate verdict                                             | 8 min     |
 
 Project entry point and quick start live in the [root README](../README.md). Version history is in the [changelog](../CHANGELOG.md).
 
@@ -70,7 +70,7 @@ Step-by-step implementation plans derived from the specs above.
 
 **Changing how something looks** → [`design/`](./design/) first, then port.
 
-**Testing on a device** → [testing.md](./testing.md). The released v0.0.1 baseline, v0.0.2 combat scene, and v0.0.3 enlarged Barão scene still need physical-device measurement; that is the largest open item on the project.
+**Testing on a device** → [testing.md](./testing.md). The released v0.0.1 baseline, v0.0.2 combat scene, v0.0.3 enlarged Barão scene, and v0.0.4 full-screen clear/defeat scene still need physical-device measurement; that is the largest open item on the project.
 
 **Something is broken** → [troubleshooting.md](./troubleshooting.md)
 
