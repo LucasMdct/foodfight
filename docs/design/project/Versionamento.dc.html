@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F6EFE3;font-family:'Fredoka',system-ui,sans-serif;color:#3E2F1C}
+a{color:#7BC950}a:hover{color:#59A335}
+</style>
+</helmet>
+
+<div style="max-width:820px;margin:0 auto;padding:56px 32px 80px;display:flex;flex-direction:column;gap:36px">
+
+  <header style="display:flex;flex-direction:column;gap:10px;border-bottom:3px solid #E7D8BD;padding-bottom:26px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:13px;font-weight:700;letter-spacing:2px;color:#FFFFFF;background:#5A4327;border-radius:999px;padding:5px 14px">VERSIONAMENTO</span>
+      <span style="font-size:13px;font-weight:700;letter-spacing:1px;color:#3E7D2E;background:#EAF6E1;border-radius:999px;padding:5px 14px">atual: v0.0.7</span>
+    </div>
+    <h1 style="margin:0;font-size:48px;font-weight:700;line-height:1;color:#FF6B6B;text-shadow:0 3px 0 #E04F4F">FOOD FIGHT — Changelog</h1>
+    <p style="margin:0;font-size:15px;font-weight:500;color:#8A6A45">Histórico de tudo que foi modificado e implementado, da POC até hoje. Cada versão tem seu jogo e guia de estilo próprios.</p>
+  </header>
+
+  <!-- v0.0.7 -->
+  <section style="background:#FFFFFF;border-radius:24px;border:2px solid #C9E7B4;padding:26px 30px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 26px rgba(90,60,20,0.08)">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:24px;font-weight:700;color:#3E7D2E">v0.0.7</span>
+      <span style="font-size:12px;font-weight:700;color:#FFFFFF;background:#7BC950;border-radius:999px;padding:3px 12px">ATUAL</span>
+      <span style="font-size:13px;color:#B08F63">Julho 2026 · "A Ilha ganha voz (e golpes)"</span>
+    </div>
+    <div style="font-size:14.5px;color:#8A6A45;display:flex;flex-direction:column;gap:7px;line-height:1.5">
+      <div>— <strong style="color:#5A4327">Cenários ilustrados nas cutscenes</strong>: cada nível tem seu cenário animado — Nível 1: campos de arroz cobertos de açúcar com casinhas em chamas e brigadeiros zumbis marchando; Nível 2: horta engolida por bolhas de chiclete; Nível 3: praia congelando com neve e icebergues.</div>
+      <div>— <strong style="color:#5A4327">Personagens com pé no chão</strong>: herói e vilão ganharam sombra e animação de respiração (nada de flutuar); quem está falando gesticula e mexe a boca, sincronizado com a digitação da fala.</div>
+      <div>— <strong style="color:#5A4327">Golpe único da Rainha Chiclete 🫧</strong>: aviso "CHICLETE VINDO!" e a trilha fica grudada por 3s — quem estiver nela não sai, e ninguém entra.</div>
+      <div>— <strong style="color:#5A4327">Golpe único do General Sorvete ❄️</strong>: aviso "NEVASCA!" e o herói congela num bloco de gelo por 1s, tremendo de frio, enquanto os doces continuam vindo.</div>
+      <div>— <strong style="color:#5A4327">Barão Brigadeiro</strong> mantém a chuva de brigadeiros zumbis — agora cada vilão luta do seu jeito.</div>
+      <div>— <strong style="color:#5A4327">Final da ilha — "A ILHA FOI SALVA!" 🎉</strong>: ao vencer o nível 3, o jogo paga a promessa — sol girando, chuva de confete, os 3 vilões fugindo de barquinho ("Voltaremos!! 😭"), heróis dançando, Prato da Vitória completo e mensagem final sobre comida de verdade. Botões "Jogar mais difícil!" e "Voltar ao mapa" fecham o ciclo.</div>
+      <div>— <strong style="color:#5A4327">Auditoria de Áudios 🔎</strong>: novo doc com player de todas as 45 falas gravadas (história, taunts, dores e derrotas por vilão + cutscenes do herói) pra conferir voz × texto arquivo por arquivo.</div>
+    </div>
+  </section>
+
+  <!-- v0.0.6 -->
+  <section style="background:#FFFFFF;border-radius:24px;border:2px solid #F0DFC0;padding:26px 30px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:24px;font-weight:700;color:#5A4327">v0.0.6</span>
+      <span style="font-size:13px;color:#B08F63">Julho 2026 · "A Ilha dos Sabores"</span>
+    </div>
+    <div style="font-size:14.5px;color:#8A6A45;display:flex;flex-direction:column;gap:7px;line-height:1.5">
+      <div>— <strong style="color:#5A4327">Modo História — Ilha dos Sabores</strong>: mapa de ilha com 3 zonas devastadas pelos vilões; cada nível tem cutscene de diálogo (com bipes de voz) antes da batalha.</div>
+      <div>— <strong style="color:#5A4327">2 vilões novos</strong>: Rainha Chiclete (Horta Encantada) e General Sorvete (Praia do Prato), além do Barão nos Campos de Arroz — vidas crescentes (5/6/7).</div>
+      <div>— <strong style="color:#5A4327">Skins + Inventário 🎒</strong>: derrotou o vilão, ganha o acessório dele — Cartola do Barão, Coroa da Rainha, Óculos do General. Equipe pelo Inventário na tela inicial; aparece no herói em todo lugar.</div>
+      <div>— <strong style="color:#5A4327">Som e música</strong> via sintetizador: música de fundo, pops de confete, risada do vilão, bipes de fala, fanfarra e botão 🔊/🔇.</div>
+      <div>— <strong style="color:#5A4327">Contagem 3-2-1</strong> antes de cada batalha e <strong style="color:#5A4327">botão de pausa ⏸</strong> com overlay.</div>
+      <div>— <strong style="color:#5A4327">Recordes salvos</strong> por dificuldade (persistem ao fechar) exibidos nos cards de dificuldade.</div>
+      <div>— <strong style="color:#5A4327">Prato da Vitória</strong>: cada zona salva adiciona um alimento ao prato (Arroz, Alface, Feijão), mostrado no mapa.</div>
+      <div>— <strong style="color:#5A4327">Poderes com mecânica própria</strong>: Alface = bumerangue que volta limpando o caminho; Feijão = rajada dupla (2 golpes no vilão); Arroz = escudo de energia por 4s.</div>
+      <div>— <strong style="color:#5A4327">Spawn justo</strong>: nunca as 3 trilhas bloqueadas ao mesmo tempo — sempre há uma rota de fuga.</div>
+      <div>— <strong style="color:#5A4327">Flash de dano</strong>: borda vermelha pisca ao ser atingido + som de impacto.</div>
+      <div>— <strong style="color:#5A4327">Correção de obstáculos</strong>: os doces, tiros e explosões não apareciam no campo (slots do jogo não estavam expostos ao render); corrigido.</div>
+      <div>— <strong style="color:#5A4327">Atalho no mapa</strong>: botão "🍚 Personagem &amp; Inventário" na Ilha dos Sabores; o CONTINUAR volta direto pro mapa mantendo a dificuldade (só o fluxo normal pede dificuldade de novo).</div>
+      <div>— <strong style="color:#5A4327">Vozes reais dos vilões 🎙️</strong>: falas das cutscenes geradas no ElevenLabs (Barão Brigadeiro, Rainha Chiclete e General Sorvete — 2 falas cada, em audio/); bipe de digitação silenciado durante a voz e pré-carregamento pra tocar sem atraso. Mapa de falas + prompts em "Vozes dos Vilões.md".</div>
+      <div>— <strong style="color:#5A4327">Vozes de batalha específicas por vilão 🎙️</strong>: cada vilão ganhou suas próprias provocações (6) e falas de dor (4), com texto e áudio temáticos — chiclete pra Rainha, gelo pro General, açúcar pro Barão. Total: 30 áudios novos.</div>
+      <div>— <strong style="color:#5A4327">Grito de derrota único por vilão</strong>: fala final engraçada com voz ao morrer ("Quero minha MAMÃEEE!", "BIRRA REAL… buáááá!", "AT-AT-ATCHIM!").</div>
+      <div>— <strong style="color:#5A4327">Voz do herói nas cutscenes</strong>: as 6 falas de história do herói agora têm voz (Alface); Feijão e Arroz usam a voz do Alface temporariamente. Bipe de digitação desligado — toda a cutscene é falada.</div>
+    </div>
+  </section>
+
+  <!-- v0.0.5 -->
+  <section style="background:#FFFFFF;border-radius:24px;border:2px solid #F0DFC0;padding:26px 30px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:24px;font-weight:700;color:#5A4327">v0.0.5</span>
+      <span style="font-size:13px;color:#B08F63">Julho 2026 · "Confete pra valer &amp; passinho"</span>
+    </div>
+    <div style="font-size:14.5px;color:#8A6A45;display:flex;flex-direction:column;gap:7px;line-height:1.5">
+      <div>— <strong style="color:#5A4327">Confete corrigido de verdade</strong>: a animação de explosão brigava com o posicionamento do elemento (o confete "teleportava" pro canto). Agora posição e explosão são separadas — cada obstáculo em tela explode em confete no próprio lugar quando o PODER! é disparado, e também quando o golpe acerta o vilão.</div>
+      <div>— <strong style="color:#5A4327">Derrota do Barão refeita</strong>: ele cresce até 2x se contorcendo, some num "pop" e a tela inteira vira chuva de 16 explosões de confete antes da vitória.</div>
+      <div>— <strong style="color:#5A4327">Passinho do Jamal</strong>: na tela VOCÊ VENCEU! o herói dança o passinho (ginga lateral com molejo) numa pista de dança iluminada.</div>
+      <div>— Pool de explosões ampliado (8 → 14 simultâneas).</div>
+    </div>
+  </section>
+
+  <!-- v0.0.4 -->
+  <section style="background:#FFFFFF;border-radius:24px;border:2px solid #F0DFC0;padding:26px 30px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:24px;font-weight:700;color:#5A4327">v0.0.4</span>
+      <span style="font-size:13px;color:#B08F63">Julho 2026 · "O Barão fala (e explode)"</span>
+    </div>
+    <div style="font-size:14.5px;color:#8A6A45;display:flex;flex-direction:column;gap:7px;line-height:1.5">
+      <div>— <strong style="color:#5A4327">Poder só pela bolha</strong>: removido o poder automático a cada 100 pts; agora a carga vem apenas capturando a bolha de comida (que passou a vir a cada 100 pts).</div>
+      <div>— <strong style="color:#5A4327">Poder = limpa-tela</strong>: ao disparar, TODOS os doces visíveis (inclusive zumbis) explodem em confete dentro de cada obstáculo (+10 cada). Removida a regra de duração de 40 pts.</div>
+      <div>— <strong style="color:#5A4327">Confete corrigido</strong>: explosão centralizada dentro do obstáculo (não mais em cima do HUD).</div>
+      <div>— <strong style="color:#5A4327">Botão PODER! redesenhado</strong>: circular gigante (126px) no canto inferior direito, com anel dourado girante quando carregado — fora do caminho do jogo.</div>
+      <div>— <strong style="color:#5A4327">Vilão fala devagar</strong>: efeito máquina de escrever (65ms/letra) e a <strong style="color:#5A4327">boca dele se mexe</strong> enquanto fala (prop talking no Foodie).</div>
+      <div>— <strong style="color:#5A4327">Zumbis rindo de verdade</strong>: boca abrindo/fechando animada e balão escrevendo "HA HA HA!" em loop.</div>
+      <div>— <strong style="color:#5A4327">Vilão ainda maior</strong> (224px).</div>
+      <div>— <strong style="color:#5A4327">Dificuldade fixa</strong>: não aumenta mais com o score, só pela tela de seleção.</div>
+      <div>— <strong style="color:#5A4327">Animação de derrota</strong>: o Barão treme, infla, gira e EXPLODE em chuva de confetes dentro do jogo antes da tela de vitória.</div>
+    </div>
+  </section>
+
+  <!-- v0.0.3 -->
+  <section style="background:#FFFFFF;border-radius:24px;border:2px solid #F0DFC0;padding:26px 30px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:24px;font-weight:700;color:#5A4327">v0.0.3</span>
+      <span style="font-size:13px;color:#B08F63">Julho 2026 · "Jogabilidade &amp; Barão 2.0"</span>
+    </div>
+    <div style="font-size:14.5px;color:#8A6A45;display:flex;flex-direction:column;gap:7px;line-height:1.5">
+      <div>— <strong style="color:#5A4327">Vilão maior e mais intimidador</strong> (184px, aura roxa), com <strong style="color:#5A4327">animação de ataque da barriga</strong>: se contorce tirando brigadeiros zumbis de dentro da forminha e arremessa com as próprias mãos.</div>
+      <div>— <strong style="color:#5A4327">Ataques saem da posição do vilão</strong>: onde ele estiver (cima/meio/baixo), dali vem o doce — o movimento dele agora importa.</div>
+      <div>— <strong style="color:#5A4327">Novo esquema de score</strong>: a cada 100 pts o Barão faz a rajada da barriga E o herói ganha +1 carga de PODER.</div>
+      <div>— <strong style="color:#5A4327">Menu de dificuldade</strong> animado após a seleção: Muito Fácil / Fácil / Difícil / Impossível.</div>
+      <div>— <strong style="color:#5A4327">Controle por clique</strong>: clicar na metade de cima sobe, embaixo desce (deslize e setas continuam). Botão PODER! grandão centralizado embaixo, fácil pra mão de criança.</div>
+      <div>— <strong style="color:#5A4327">Explosão de confetes</strong>: ao usar o poder, obstáculos normais pela frente explodem em confete pelos próximos 40 pts (+10 cada). Os golpes de rajada do Barão resistem.</div>
+      <div>— <strong style="color:#5A4327">Falas do vilão</strong>: provoca com psicologia reversa ao atacar ("Você NUNCA vai comer essa comida!") e se indigna tremendo quando é atingido.</div>
+      <div>— Comidas/projéteis ~30% maiores; zumbis gigantes de 96px.</div>
+    </div>
+  </section>
+
+  <!-- v0.0.2 -->
+  <section style="background:#FFFFFF;border-radius:24px;border:2px solid #F0DFC0;padding:26px 30px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:24px;font-weight:700;color:#5A4327">v0.0.2</span>
+      <span style="font-size:13px;color:#B08F63">Julho 2026 · "Combate!"</span>
+    </div>
+    <div style="font-size:14.5px;color:#8A6A45;display:flex;flex-direction:column;gap:7px;line-height:1.5">
+      <div>— Vilão passou a <strong style="color:#5A4327">se movimentar</strong> verticalmente pelo mapa (onda senoidal) e ganhou <strong style="color:#5A4327">5 vidas</strong> no HUD.</div>
+      <div>— <strong style="color:#5A4327">5 tipos de ataque</strong> evoluindo a cada 100 pts: Pirulito Espiral, Bala Veloz, Rosquinha Voadora, Brigadeiro Zumbi e Chuva de Açúcar.</div>
+      <div>— <strong style="color:#5A4327">Bolha de comida natural</strong> (prato de arroz &amp; feijão em bolha de sabão) a cada 300 pts = +1 carga de poder.</div>
+      <div>— <strong style="color:#5A4327">Poderes especiais</strong>: 3 por herói (estrutura de 9 poderes), disparo com ESPAÇO/botão, projétil perseguidor com toast dourado do nome.</div>
+      <div>— Expressões do vilão: <strong style="color:#5A4327">sorrindo enquanto ataca, bravo ao ser atingido</strong> (prop mood no componente Foodie).</div>
+      <div>— Telas de <strong style="color:#5A4327">vitória</strong> ("VOCÊ VENCEU!") e derrota reformulada.</div>
+    </div>
+  </section>
+
+  <!-- v0.0.1 -->
+  <section style="background:#FFFFFF;border-radius:24px;border:2px solid #F0DFC0;padding:26px 30px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:24px;font-weight:700;color:#5A4327">v0.0.1</span>
+      <span style="font-size:13px;color:#B08F63">Julho 2026 · "Estilo base"</span>
+    </div>
+    <div style="font-size:14.5px;color:#8A6A45;display:flex;flex-direction:column;gap:7px;line-height:1.5">
+      <div>— Primeiro estilo visual sobre a POC: paleta (creme + saturados), fonte <strong style="color:#5A4327">Fredoka</strong>, UI de pílulas/cartões com sombra sólida.</div>
+      <div>— <strong style="color:#5A4327">3 heróis fofinhos</strong> — Alface, Feijão e Arroz — com perninhas, mãozinhas e walk cycle animado.</div>
+      <div>— <strong style="color:#5A4327">Vilão Barão Brigadeiro</strong> (cartola, monóculo, pirulito-cetro) atirando doces girantes.</div>
+      <div>— <strong style="color:#5A4327">Mapa mesa da cozinha</strong>: toalha xadrez em rolagem infinita, 3 trilhas tracejadas (herdadas do canvas da POC).</div>
+      <div>— Tela de <strong style="color:#5A4327">seleção de personagem</strong>, 3 vidas (corações), score +10 por desvio, tela de derrota.</div>
+      <div>— Componente reutilizável <strong style="color:#5A4327">Foodie</strong> com os 4 personagens em SVG.</div>
+    </div>
+  </section>
+
+  <!-- POC -->
+  <section style="background:#FFF9EE;border-radius:24px;border:2px dashed #E7D8BD;padding:22px 30px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:20px;font-weight:700;color:#B08F63">POC (v0.0.0)</span>
+      <span style="font-size:13px;color:#C4A87E">foodfight-poc no GitHub</span>
+    </div>
+    <div style="font-size:14px;color:#9B8464;line-height:1.5">Canvas com bloco azul (jogador) desviando de blocos vermelhos em 3 posições — a fundação técnica do runner de 3 trilhas que todo o design acima veste.</div>
+  </section>
+</div>
+
+</x-dc>
+</body>
+</html>

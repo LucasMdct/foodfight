@@ -2,8 +2,8 @@
 
 A mobile endless runner built with **Expo SDK 56**, **React Native Skia** and **Reanimated**.
 
-**Version:** 0.0.2 ([changelog](./CHANGELOG.md))
-**Status:** v0.0.2 implemented — release candidate available, hardware QA pending
+**Version:** 0.0.3 ([changelog](./CHANGELOG.md))
+**Status:** v0.0.3 implemented on `feature/v003` — manual review pending, no APK built yet
 
 Pick a Foodie, dodge the candy the Barão Brigadeiro throws across three lanes of a rolling kitchen table, and keep your three lives.
 
@@ -35,7 +35,7 @@ The architecture is still the strongest part: the loop runs entirely on the UI t
 
 ### Phase 2 — Game v0.0.1 · **released, QA pending**
 
-From v0.0.1 the project stops being a POC and becomes the game, implementing the `FoodFight v0.0.1` design in full.
+From v0.0.1 the project stops being a POC and becomes the game, implementing the `FoodFight v0.0.1` design in full. The released baseline is v0.0.2; v0.0.3 adds the difficulty and Barão 2.0 feature.
 
 **Delivered:** character selection with three heroes, the Barão Brigadeiro villain, Skia-rendered characters with an animated walk cycle, spinning candy projectiles, scrolling tablecloth and lane dividers, a three-lives model, HUD, Game Over with best-score tracking, a centralized theme with Fredoka typography, and Husky quality gates.
 
@@ -57,7 +57,8 @@ From v0.0.1 the project stops being a POC and becomes the game, implementing the
 | **Input** | Swipe or tap up/down to change lane |
 | **Scoring** | Points for dodging; best score persists across runs in a session (not across cold starts) |
 | **Loss** | Losing all 3 lives ends the run |
-| **Screens** | Loading → Select → Game → Game Over (play again or switch hero) |
+| **Screens** | Loading → Select → Difficulty → Game → Win/Game Over |
+| **Difficulty** | Muito Fácil, Fácil, Difícil, Impossível |
 | **Orientation** | Landscape, locked |
 
 ---
@@ -89,6 +90,7 @@ src/
 ├── features/
 │   ├── loading/              Loading feature + local styles
 │   ├── select/               Character selection feature + local styles
+│   ├── difficulty/           Difficulty selection feature + local styles
 │   ├── game/                 Skia scene, HUD and gameplay feature
 │   └── game-over/            Score, best, replay / switch hero
 ├── render/
@@ -104,7 +106,7 @@ src/
 │   └── useRunnerEngine.ts    Game loop (UI-thread worklet)
 ├── components/
 │   └── SwipeHandler.tsx      Fling and tap gestures → lane changes
-├── store/gameStore.ts        Zustand: screen flow, lives, score, best
+├── store/gameStore.ts        Zustand: screen flow, difficulty, lives, score, best
 └── types/                    Game types and tunable constants
 ```
 

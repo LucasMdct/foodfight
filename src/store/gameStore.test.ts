@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useGameStore } from './gameStore';
+import { useGameStore, VILLAIN_OUCHES, VILLAIN_TAUNTS } from './gameStore';
 
 describe('combat game store guards', () => {
   beforeEach(() => {
@@ -15,6 +15,60 @@ describe('combat game store guards', () => {
     useGameStore.getState().actions.reset();
     useGameStore.getState().actions.start();
     expect(useGameStore.getState().state.charges).toBe(0);
+  });
+
+  it('stores the selected difficulty before starting a match', () => {
+    const { toDifficulty, start } = useGameStore.getState().actions;
+
+    toDifficulty();
+    expect(useGameStore.getState().state.screen).toBe('difficulty');
+
+    start('dificil');
+
+    expect(useGameStore.getState().state).toMatchObject({
+      screen: 'game',
+      difficulty: 'dificil',
+    });
+  });
+
+  it('preserves the selected difficulty when replaying', () => {
+    const { start, reset } = useGameStore.getState().actions;
+
+    start('impossivel');
+    reset();
+
+    expect(useGameStore.getState().state.difficulty).toBe('impossivel');
+  });
+
+  it('records the Barão burst feedback as discrete state', () => {
+    useGameStore.getState().actions.triggerVillainBurst();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      villainAttacking: true,
+      villainTalkKind: 'taunt',
+      villainTalkDurationMs: 2600,
+    });
+    expect(VILLAIN_TAUNTS).toContain(useGameStore.getState().state.villainTaunt);
+  });
+
+  it('shows a random ouch line and the reaction duration after a power hit', () => {
+    useGameStore.getState().actions.applyVillainHit();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      villainMood: 'bravo',
+      villainTalkKind: 'ouch',
+      villainTalkDurationMs: 2000,
+    });
+    expect(VILLAIN_OUCHES).toContain(useGameStore.getState().state.villainTaunt);
+  });
+
+  it('grants milestone power without using the food pickup toast', () => {
+    useGameStore.getState().actions.grantPowerCharge();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      charges: 2,
+      toast: 'milestone-power',
+    });
   });
 
   it('does not spend more than one charge when the accepted fire callback races', () => {

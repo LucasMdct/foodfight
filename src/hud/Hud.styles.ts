@@ -81,6 +81,11 @@ export const makeStyles = (theme: Theme) =>
       fontSize: 11,
       color: theme.colors.textMuted,
     },
+    difficultyLabel: {
+      fontFamily: theme.font.semibold,
+      fontSize: 12,
+      color: theme.colors.villain,
+    },
     scoreSeal: {
       backgroundColor: theme.colors.score,
       borderRadius: theme.radii.pill,
@@ -111,12 +116,12 @@ export const makeStyles = (theme: Theme) =>
       color: theme.colors.textBody,
     },
     powerBtn: {
-      width: 88,
-      height: 88,
+      minWidth: 210,
+      height: 74,
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: theme.colors.brand,
-      borderRadius: 44,
+      borderRadius: theme.radii.pill,
       shadowColor: theme.colors.brandShadow,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 1,
@@ -125,7 +130,8 @@ export const makeStyles = (theme: Theme) =>
     },
     powerText: {
       fontFamily: theme.font.bold,
-      fontSize: 15,
+      fontSize: 26,
+      letterSpacing: 1,
       color: theme.colors.surface,
     },
     powerBtnDisabled: {
@@ -134,7 +140,8 @@ export const makeStyles = (theme: Theme) =>
     },
     powerControl: {
       position: 'absolute',
-      right: theme.space.md,
+      left: 0,
+      right: 0,
       bottom: theme.space.md,
       alignItems: 'center',
       gap: theme.space.xs,
