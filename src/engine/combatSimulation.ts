@@ -1,5 +1,7 @@
 import {
   attackPhaseAt,
+  difficultyConfigAt,
+  milestoneCountAt,
   nextRngState,
   powerChargeAfterPickup,
   projectileKindAt,
@@ -10,8 +12,9 @@ import {
   trackShotY,
   villainYAt,
 } from './combatMath';
-import { candySpeedAt, rectsOverlapX, spawnIntervalAt } from './math';
+import { rectsOverlapX } from './math';
 import { GAME_CONSTANTS } from '../types/constants';
+import type { Difficulty } from '../types/game';
 
 const SIMULATION_WIDTH = 900;
 const HERO_X = SIMULATION_WIDTH * GAME_CONSTANTS.HERO_X_RATIO;
@@ -33,6 +36,7 @@ export interface CombatEnemySeed {
   readonly x: number;
   readonly lane: number;
   readonly kind: ProjectileKind;
+  readonly resistant?: boolean;
 }
 
 export interface CombatScenario {
@@ -41,6 +45,7 @@ export interface CombatScenario {
   readonly villainHp?: number;
   readonly charges?: number;
   readonly lives?: number;
+  readonly difficulty?: Difficulty;
   readonly enemies?: readonly CombatEnemySeed[];
   readonly autoSpawn?: boolean;
   readonly bubble?: { readonly x: number; readonly lane: number };
@@ -56,6 +61,10 @@ export type CombatEvent =
   | { readonly type: 'win' }
   | { readonly type: 'over' }
   | { readonly type: 'bubbleSpawned' }
+  | { readonly type: 'projectileSpawned'; readonly lane: number; readonly kind: ProjectileKind }
+  | { readonly type: 'villainBurst'; readonly count: number; readonly lane: number }
+  | { readonly type: 'powerChargeGranted'; readonly charges: number }
+  | { readonly type: 'powerCleared'; readonly score: number }
   | { readonly type: 'spawnSkipped' };
 
 export interface CombatSnapshot {
@@ -78,6 +87,7 @@ interface EnemySlot {
   x: number;
   lane: number;
   kind: ProjectileKind;
+  resistant: boolean;
 }
 
 interface ShotSlot {
@@ -98,6 +108,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     y: 0,
     lane: 0,
     kind: PROJECTILE_KIND.lolli,
+    resistant: false,
   }));
   const shots: ShotSlot[] = Array.from({ length: GAME_CONSTANTS.POWER_SHOT_POOL_SIZE }, () => ({
     active: false,
@@ -115,7 +126,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let screen: CombatSimulationScreen = 'game';
   let elapsedMs = 0;
   let powerIndex = 0;
-  let spawnAccumulatorMs = 0;
+  let spawnAccumulatorMs = GAME_CONSTANTS.INITIAL_SPAWN_ACCUMULATOR_MS;
+  let powerUntilScore = -1;
+  let milestonesHandled = Math.floor(score / GAME_CONSTANTS.MILESTONE_SCORE_STEP);
+  const difficulty = difficultyConfigAt(scenario.difficulty ?? 'facil');
 
   for (let index = 0; index < (scenario.enemies?.length ?? 0); index += 1) {
     const seed = scenario.enemies?.[index];
@@ -124,6 +138,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     enemies[index].x = seed.x;
     enemies[index].lane = clampLane(seed.lane);
     enemies[index].kind = seed.kind;
+    enemies[index].resistant = seed.resistant === true;
   }
 
   let bubbleActive = scenario.bubble !== undefined;
@@ -133,6 +148,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let bubbleThreshold =
     (Math.floor(score / GAME_CONSTANTS.BUBBLE_EVERY) + 1) * GAME_CONSTANTS.BUBBLE_EVERY;
   let invulnerableUntilMs = 0;
+  let burstPending = 0;
+  let burstLane = 1;
+  let burstNextAtMs = 0;
+  let burstDelayIndex = 0;
 
   for (let frameIndex = 0; frameIndex < scenario.frames.length; frameIndex += 1) {
     if (screen !== 'game') break;
@@ -151,6 +170,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       }
       if (shotSlot >= 0) {
         charges -= 1;
+        powerUntilScore = score + GAME_CONSTANTS.POWER_MODE_SCORE_DURATION;
         shots[shotSlot].active = true;
         shots[shotSlot].x = HERO_X + GAME_CONSTANTS.HERO_WIDTH;
         shots[shotSlot].y = lane * LANE_HEIGHT + (LANE_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2;
@@ -164,12 +184,93 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     }
 
     elapsedMs += dtMs;
-    const speed = candySpeedAt(
-      elapsedMs,
-      GAME_CONSTANTS.CANDY_BASE_SPEED,
-      GAME_CONSTANTS.CANDY_SPEED_RAMP_MAX,
-      GAME_CONSTANTS.CANDY_SPEED_RAMP_RATE
-    );
+    const speed = difficulty.speed + Math.min(280, elapsedMs * difficulty.acceleration);
+
+    if (scenario.enemies === undefined || scenario.autoSpawn === true) {
+      spawnAccumulatorMs += dtMs;
+      const spawnInterval = Math.max(400, difficulty.interval - elapsedMs * 0.003);
+      if (spawnAccumulatorMs >= spawnInterval) {
+        spawnAccumulatorMs -= spawnInterval;
+        const phase = attackPhaseAt(score);
+        let spawnCount = 1;
+        rngState = nextRngState(rngState);
+        if (rngUnit(rngState) < difficulty.doubleSpawnChance) {
+          spawnCount = 2;
+        }
+        let primaryLane = 0;
+        for (let spawnIndex = 0; spawnIndex < spawnCount; spawnIndex += 1) {
+          let spawnSlot = -1;
+          for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
+            if (!enemies[enemyIndex].active) {
+              spawnSlot = enemyIndex;
+              break;
+            }
+          }
+          if (spawnSlot < 0) {
+            events.push({ type: 'spawnSkipped' });
+            break;
+          }
+          rngState = nextRngState(rngState);
+          const random01 = rngUnit(rngState);
+          const spawnedEnemy = enemies[spawnSlot];
+          spawnedEnemy.active = true;
+          spawnedEnemy.x = SIMULATION_WIDTH - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
+          spawnedEnemy.lane =
+            spawnIndex === 0
+              ? clampLane(
+                  Math.floor(
+                    (villainYAt(
+                      elapsedMs,
+                      SIMULATION_HEIGHT,
+                      GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT
+                    ) +
+                      GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) /
+                      LANE_HEIGHT
+                  )
+                )
+              : (primaryLane + 1 + Math.floor(random01 * 2)) % GAME_CONSTANTS.LANE_COUNT;
+          if (spawnIndex === 0) primaryLane = spawnedEnemy.lane;
+          spawnedEnemy.kind = projectileKindAt(phase, random01);
+          spawnedEnemy.resistant = false;
+          events.push({
+            type: 'projectileSpawned',
+            lane: spawnedEnemy.lane,
+            kind: spawnedEnemy.kind,
+          });
+        }
+      }
+    }
+
+    if (burstPending > 0 && elapsedMs >= burstNextAtMs) {
+      let burstSlot = -1;
+      for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
+        if (!enemies[enemyIndex].active) {
+          burstSlot = enemyIndex;
+          break;
+        }
+      }
+      const currentDelayIndex = burstDelayIndex;
+      const nextDelayIndex =
+        (currentDelayIndex + 1) % GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS.length;
+      burstPending -= 1;
+      burstDelayIndex = nextDelayIndex;
+      const delayDelta =
+        nextDelayIndex === 0
+          ? GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[0]
+          : GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[nextDelayIndex] -
+            GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[currentDelayIndex];
+      burstNextAtMs = elapsedMs + delayDelta;
+      if (burstSlot >= 0) {
+        const burst = enemies[burstSlot];
+        burst.active = true;
+        burst.x = SIMULATION_WIDTH - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
+        burst.lane = burstLane;
+        burst.kind = PROJECTILE_KIND.zumbi;
+        burst.resistant = true;
+      } else {
+        events.push({ type: 'spawnSkipped' });
+      }
+    }
 
     for (let shotIndex = 0; shotIndex < shots.length; shotIndex += 1) {
       const shot = shots[shotIndex];
@@ -177,8 +278,8 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       shot.x += (GAME_CONSTANTS.POWER_SHOT_SPEED * dtMs) / 1000;
       shot.y = trackShotY(
         shot.y,
-        villainYAt(elapsedMs, SIMULATION_HEIGHT) +
-          (GAME_CONSTANTS.VILLAIN_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2,
+        villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+          (GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2,
         dtMs,
         220
       );
@@ -202,12 +303,25 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       enemy.x -= (speed * projectileSpeedMultiplier(enemy.kind) * dtMs) / 1000;
       const enemySize =
         enemy.kind === PROJECTILE_KIND.zumbi
-          ? GAME_CONSTANTS.ZOMBIE_SIZE
-          : GAME_CONSTANTS.CANDY_SIZE;
+          ? GAME_CONSTANTS.ZOMBIE_RENDER_SIZE
+          : GAME_CONSTANTS.CANDY_SIZE * GAME_CONSTANTS.PROJECTILE_SIZE_MULTIPLIER;
       if (enemy.x + enemySize < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
         enemy.active = false;
         score += GAME_CONSTANTS.SCORE_PER_DODGE;
         events.push({ type: 'score', score });
+        while (score >= bubbleThreshold) {
+          bubblePending += 1;
+          bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
+        }
+      } else if (
+        score < powerUntilScore &&
+        !enemy.resistant &&
+        enemy.x > HERO_RIGHT &&
+        enemy.x < SIMULATION_WIDTH * 0.62
+      ) {
+        enemy.active = false;
+        score += GAME_CONSTANTS.SCORE_PER_DODGE;
+        events.push({ type: 'powerCleared', score });
         while (score >= bubbleThreshold) {
           bubblePending += 1;
           bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
@@ -230,6 +344,32 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     }
 
     if (screen !== 'game') break;
+
+    const milestoneCount = milestoneCountAt(score);
+    while (milestonesHandled < milestoneCount) {
+      milestonesHandled += 1;
+      charges = powerChargeAfterPickup(charges);
+      events.push({ type: 'powerChargeGranted', charges });
+      const villainLane = clampLane(
+        Math.floor(
+          (villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+            GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2) /
+            LANE_HEIGHT
+        )
+      );
+      const wasEmpty = burstPending === 0;
+      burstPending += GAME_CONSTANTS.VILLAIN_BURST_COUNT;
+      burstLane = villainLane;
+      if (wasEmpty) {
+        burstDelayIndex = 0;
+        burstNextAtMs = elapsedMs + GAME_CONSTANTS.VILLAIN_BURST_DELAYS_MS[0];
+      }
+      events.push({
+        type: 'villainBurst',
+        count: GAME_CONSTANTS.VILLAIN_BURST_COUNT,
+        lane: villainLane,
+      });
+    }
 
     if (!bubbleActive && bubblePending > 0) {
       bubblePending -= 1;
@@ -256,50 +396,6 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         events.push({ type: 'foodCollected', charges });
       } else if (bubbleX + GAME_CONSTANTS.BUBBLE_SIZE < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
         bubbleActive = false;
-      }
-    }
-
-    if (scenario.enemies === undefined || scenario.autoSpawn === true) {
-      spawnAccumulatorMs += dtMs;
-      const spawnInterval = spawnIntervalAt(
-        elapsedMs,
-        GAME_CONSTANTS.SPAWN_INTERVAL,
-        GAME_CONSTANTS.SPAWN_INTERVAL_MIN,
-        GAME_CONSTANTS.SPAWN_INTERVAL_RAMP_RATE
-      );
-      if (spawnAccumulatorMs >= spawnInterval) {
-        spawnAccumulatorMs -= spawnInterval;
-        const phase = attackPhaseAt(score);
-        let spawnCount = 1;
-        rngState = nextRngState(rngState);
-        if (phase === GAME_CONSTANTS.ATTACK_PHASE_MAX && rngUnit(rngState) < 0.5) {
-          spawnCount = 2;
-        }
-        let primaryLane = 0;
-        for (let spawnIndex = 0; spawnIndex < spawnCount; spawnIndex += 1) {
-          let spawnSlot = -1;
-          for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
-            if (!enemies[enemyIndex].active) {
-              spawnSlot = enemyIndex;
-              break;
-            }
-          }
-          if (spawnSlot < 0) {
-            events.push({ type: 'spawnSkipped' });
-            break;
-          }
-          rngState = nextRngState(rngState);
-          const random01 = rngUnit(rngState);
-          const spawnedEnemy = enemies[spawnSlot];
-          spawnedEnemy.active = true;
-          spawnedEnemy.x = SIMULATION_WIDTH + GAME_CONSTANTS.ENEMY_SPAWN_X_OFFSET;
-          spawnedEnemy.lane =
-            spawnIndex === 0
-              ? Math.floor(random01 * GAME_CONSTANTS.LANE_COUNT)
-              : (primaryLane + 1 + Math.floor(random01 * 2)) % GAME_CONSTANTS.LANE_COUNT;
-          if (spawnIndex === 0) primaryLane = spawnedEnemy.lane;
-          spawnedEnemy.kind = projectileKindAt(phase, random01);
-        }
       }
     }
   }

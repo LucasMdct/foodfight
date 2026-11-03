@@ -2,7 +2,7 @@
 
 How Food Fight is built, and why it is built this way.
 
-**Scope:** this describes the code as it exists on `feature/v002`. It covers the v0.0.1 game plus the v0.0.2 combat loop. The POC that preceded it is documented in [results.md](./results.md).
+**Scope:** this describes the code as it exists on `feature/v003`. It covers the v0.0.1 game, the v0.0.2 combat loop, and the v0.0.3 difficulty/Barão 2.0 feature. The POC that preceded it is documented in [results.md](./results.md).
 
 ---
 
@@ -27,13 +27,15 @@ App.tsx  ─ font loading, landscape lock, loading gate
    └─ Flow
         ├─ features/loading      until fonts are ready
         ├─ features/select       screen === 'select'
+        ├─ features/difficulty  screen === 'difficulty'
         └─ features/game         screen === 'game' | 'over' | 'win'
              │
-             ├─ useRunnerEngine(width, height)   ← all gameplay lives here
+             ├─ useRunnerEngine(width, height, difficulty)   ← all gameplay lives here
              │     └─ useFrameCallback worklet (UI thread)
              │           ├─ loop-rate sampling
              │           ├─ tablecloth scroll
-             │           ├─ difficulty ramp
+             │           ├─ selected difficulty ramp
+             │           ├─ Barão lane-origin spawns and 100-point bursts
              │           ├─ typed enemy spawn + recycling
              │           ├─ power-shot and food-bubble pools
              │           ├─ villain HP and AABB collision
@@ -58,10 +60,11 @@ App.tsx  ─ font loading, landscape lock, loading gate
 
 ```
 LoadingScreen ──fonts loaded + intro done──▶ SelectScreen
-SelectScreen  ──pick(who) + start()───────▶ GameScreen (screen: 'game')
+SelectScreen  ──pick(who) + toDifficulty()▶ DifficultyScreen
+DifficultyScreen ──start(difficulty)──────▶ GameScreen (screen: 'game')
 GameScreen    ──villain HP reaches 0─────▶ ResultModal (screen: 'win')
 GameScreen    ──lives reach 0────────────▶ ResultModal (screen: 'over')
-                                            ├─ play again → screen: 'game'
+                                             ├─ play again → screen: 'game' (same difficulty)
                                             └─ switch hero → screen: 'select'
 ```
 
@@ -92,9 +95,11 @@ Created once with `makeMutable` and memoised so they survive re-renders:
 | `obstacleX[]`, `obstacleY[]`, `obstacleLane[]`, `obstacleKind[]`, `obstacleActive[]` | Ten-slot typed enemy state                        |
 | `shotX[]`, `shotY[]`, `shotActive[]`                                                 | Three-slot power-shot state                       |
 | `bubbleX`, `bubbleY`, `bubbleActive`                                                 | One visible food bubble at a time                 |
-| `villainY`, `villainHpMirror`, `charges`, `powerIndex`                               | UI-thread villain motion and fire mirrors         |
+| `villainY`, `villainHpMirror`, `charges`, `powerIndex`, `difficultyIndex`            | UI-thread villain, fire, and difficulty mirrors   |
 | `livesMirror`, `scoreMirror`, `rngState`                                             | Local collision/result state and seeded PRNG      |
-| `spawnAccum`, `bubblePending`, `bubbleThreshold`, `fpsAccum`, `fpsFrames`            | Accumulators                                      |
+| `spawnAccum`, `bubblePending`, `bubbleThreshold`, `nextMilestone`, `powerUntilScore` | Score and spawn accumulators                      |
+| `obstacleResistant[]`, `burstPending`, `burstLane`, `burstNextAt`                    | Resistant Barão burst metadata                    |
+| `burstFxX[]`, `burstFxY[]`, `burstFxActive[]`, `burstFxRotation[]`                   | Six-slot power-clear confetti effect pool         |
 | `frozen`                                                                             | 1 freezes the simulation before a terminal bridge |
 
 ### The typed enemy and power pools
@@ -109,7 +114,7 @@ Created once with `makeMutable` and memoised so they survive re-renders:
 
 **Consequence:** zero allocation per frame, and therefore no GC pressure from the loop. This is what kept memory flat through the POC's stress testing.
 
-**Trade-off:** if all 10 enemy slots or all 3 shot slots are busy, that spawn/fire request is skipped. The v0.0.2 performance gate permits the approved typed sub-pool fallback if the four-variant opacity tree exceeds the p95 budget.
+**Trade-off:** if all 10 enemy slots or all 3 shot slots are busy, that spawn/fire request is skipped. The v0.0.2 performance gate permits the approved typed sub-pool fallback if the four-variant opacity tree exceeds the p95 budget. v0.0.3 adds only preallocated resistant flags and burst counters; it does not add a dynamic projectile collection.
 
 ### The frame loop
 
@@ -122,15 +127,17 @@ useFrameCallback(frame):
   5. loop rate: count updates, emit one sample per second via scheduleOnRN
   6. if frozen → return                      ← freezes everything below
   7. tablecloth scroll: 88px loop every 900ms
-  8. difficulty ramp: derive current speed and spawn interval from elapsed time
-  9. spawn: on interval, advance the seeded PRNG and activate one typed slot (or a seeded double in phase 4)
-  10. move active power shots with soft villain-Y tracking and resolve villain hits first
- 11. for each active enemy:
+  8. selected difficulty: derive speed, interval, and double-spawn chance from elapsed time
+  9. spawn: use the current Barão lane for the primary projectile, use the approved adjacent-lane formula for an optional secondary, advance the seeded PRNG, and activate typed slots
+ 10. milestone: every 100 score points queue one charge and three resistant zombies
+ 11. move active power shots with soft villain-Y tracking and resolve villain hits first
+ 12. for each active enemy:
        move left by speed * dt
+       if power mode and non-resistant? deactivate and +10 score
        off-screen? → deactivate, +10 score
        same lane as hero and not invulnerable? → AABB test on X
- 12. serve pending bubble thresholds one at a time
- 13. flicker: derive heroOpacity from time remaining on invulnUntil
+ 13. serve pending bubble thresholds one at a time
+ 14. flicker: derive heroOpacity from time remaining on invulnUntil
 ```
 
 Details worth knowing before touching this:
@@ -141,16 +148,20 @@ Details worth knowing before touching this:
 
 **The terminal gate (step 6) freezes the scene, not just gameplay.** Scroll, spawn, movement and collision sit below it, so the result modal draws over a still tablecloth. Loop-rate sampling sits above it and keeps running. The flag is set locally before `scheduleOnRN` sends the terminal hit, preventing result races.
 
-**The difficulty ramp (step 8)** is derived from `elapsedTime` every frame rather than stored:
+**The selected difficulty (step 8)** is mirrored as a numeric shared value and resolved to a static preset every frame. Its ramp is derived from `elapsedTime` rather than stored:
 
 ```
-speed    = CANDY_BASE_SPEED + min(CANDY_SPEED_RAMP_MAX, now * CANDY_SPEED_RAMP_RATE)
-interval = max(SPAWN_INTERVAL_MIN, SPAWN_INTERVAL - now * SPAWN_INTERVAL_RAMP_RATE)
+speed    = preset.speed + min(280, now * preset.acceleration)
+interval = max(400, preset.interval - now * 0.003)
 ```
 
-Candies accelerate from 340 px/s toward a 600 px/s ceiling, and the spawn interval tightens from 900 ms toward a 420 ms floor. Because both are pure functions of the clock, `engine.reset()` resetting `elapsedTime` is enough to restore starting difficulty — there is no separate difficulty state to forget.
+The four presets are Muito Fácil (215 px/s / 1450 ms), Fácil (300 / 1050), Difícil (430 / 760), and Impossível (560 / 540). Each also supplies its double-spawn chance and acceleration. `engine.reset()` restores the selected preset and its counters.
 
-**The collision test only checks X (step 10).** Y overlap is implied: hero and candy are both vertically centred in the same lane, and lane membership is already checked with an integer comparison. Testing Y would be redundant work in the hot loop. The hitbox is the hero inset by `HERO_HITBOX_PADDING` (18 px) on the X axis, taken from the design's collision math.
+The first spawn starts after the handoff warmup accumulator (`INITIAL_SPAWN_ACCUMULATOR_MS`, 400 ms), not after a full preset interval. This keeps the opening readable while preserving the selected cadence afterward.
+
+**Milestones and power mode.** When the UI-thread score mirror crosses 100 points, the loop increments the capped charge mirror, schedules one discrete charge bridge and queues three resistant zombies. The burst lane is captured from the current Barão lane and slots are activated at the handoff timestamps 140, 430, and 720 ms. An accepted power shot sets `powerUntilScore` to `score + 40`; normal enemies ahead of the hero are cleared for score and claim a slot in the six-entry confetti effect pool, while resistant burst enemies continue.
+
+**The collision test only checks X (step 12).** Y overlap is implied: hero and candy are both vertically centred in the same lane, and lane membership is already checked with an integer comparison. Testing Y would be redundant work in the hot loop. The hitbox is the hero inset by `HERO_HITBOX_PADDING` (18 px) on the X axis, taken from the design's collision math.
 
 **Known debt — lane transition.** During the 130 ms `withTiming` slide, `heroLane` already holds the destination lane while the sprite is still moving. Collision therefore uses the destination lane before the hero visually arrives. At the late-game 600 px/s, that is ~78 px of candy travel. This is documented in [troubleshooting.md](./troubleshooting.md) and should be revisited after device QA; the current choice favours a cheap hot loop over transition-accurate collision.
 
@@ -160,6 +171,8 @@ Candies accelerate from 340 px/s toward a 600 px/s ceiling, and the spawn interv
 
 `scheduleOnRN` is used only for discrete events, and the fire bridge is emitted only after the UI thread has accepted a slot and decremented its local charge mirror:
 
+- Every bridge carries the current match generation. A delayed callback from a previous replay is ignored by the JS-side generation guard.
+
 | Call                     | Frequency                                             |
 | ------------------------ | ----------------------------------------------------- |
 | `applyFps`               | once per second (loop-update rate, not presented FPS) |
@@ -167,6 +180,8 @@ Candies accelerate from 340 px/s toward a 600 px/s ceiling, and the spawn interv
 | `applyVillainHit`        | once per accepted shot reaching the villain           |
 | `applyPowerFired(index)` | once per accepted UI-thread fire                      |
 | `applyFoodCollected`     | once per bubble pickup                                |
+| `applyPowerCharge`       | once per crossed 100-point milestone                  |
+| `applyVillainBurst`      | once per crossed 100-point milestone                  |
 | `applyScore`             | once per enemy dodged                                 |
 
 ---
@@ -179,6 +194,7 @@ Zustand holds only what the UI renders:
 GameState = {
   screen,
   who,
+  difficulty,
   lives,
   score,
   best,
@@ -188,14 +204,17 @@ GameState = {
   powerIndex,
   toast,
   toastId,
+  villainMood,
+  villainAttacking,
+  villainTaunt,
 };
 ```
 
 Hero position, enemy/shot positions, bubble position, scroll offset, flicker phase and the authoritative UI-thread charge mirror are deliberately **not** React state. Putting per-frame values in the store is the single easiest way to destroy the frame rate. The store keeps the discrete UI projection and guards every terminal action by `screen === 'game'`.
 
-`hitHero` decrements lives; reaching 0 sets `screen: 'over'` and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 sets `screen: 'win'` and captures the record. `applyPowerFired` refuses to overdraw charges, and `collectFood` caps them at three while incrementing the toast event. `reset` restores initial state but preserves `who` and `best`.
+`hitHero` decrements lives; reaching 0 sets `screen: 'over'` and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 sets `screen: 'win'` and captures the record. `applyPowerFired` refuses to overdraw charges, `collectFood` caps food pickups at three, and `grantPowerCharge` handles the 100-point milestone toast. `triggerVillainBurst` exposes the discrete attack animation and random taunt, while `applyVillainHit` exposes the random ouch reaction. `reset` restores initial state but preserves `who`, `difficulty`, and `best`.
 
-**Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `Hud` and the development loop readout own the leaf subscriptions, while `GameScreen` subscribes only to scene selection and villain mood, so combat HUD updates do not re-render the Canvas subtree.
+**Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `Hud` and the development loop readout own the leaf subscriptions, while `GameScreen` subscribes to scene selection, villain mood, villain attack state, and villain talk text, so unrelated combat HUD updates do not re-render the Canvas subtree.
 
 ---
 
@@ -205,7 +224,7 @@ The Skia tree is static in shape. It mounts, back to front:
 
 1. `Tablecloth` — scrolling kitchen table, driven by `scrollX`
 2. `LaneDividers` — dashed lane separators
-3. `Foodie who="vilao"` — the villain, vertically positioned by the 1.7 s UI-thread cycle
+3. `Foodie who="vilao"` — the 184px Barão with aura/attack scale, vertically positioned by the 1.7 s UI-thread cycle
 4. 10 `CandySlot` groups — each has four opacity-switched typed variants
 5. 3 `PowerShotSlot` groups and one `FoodBubble` group — fixed pools
 6. Hero group — shadow oval plus `Foodie who={who}`, opacity from `heroOpacity`
@@ -220,6 +239,7 @@ Each screen-level feature owns its implementation and local styles:
 src/features/
 ├── loading/       LoadingScreen.tsx + LoadingScreen.styles.ts
 ├── select/        SelectScreen.tsx + SelectScreen.styles.ts
+├── difficulty/    DifficultyScreen.tsx + DifficultyScreen.styles.ts
 ├── game/          GameScreen.tsx
 └── game-over/     GameOverModal.tsx + GameOverModal.styles.ts
 ```
@@ -286,14 +306,19 @@ A third `Gesture.Tap()` maps the tap's Y to a lane direction: top half moves up,
 | `HERO_HITBOX_PADDING`                      | 18          | X-axis inset; higher is more forgiving                        |
 | `HERO_LANE_TRANSITION_DURATION`            | 130 ms      | Lane switch duration                                          |
 | `MAX_FRAME_DELTA_MS`                       | 50 ms       | Maximum delta the loop will integrate after a stall or resume |
-| `CANDY_SIZE`                               | 52          | Candy size and hitbox                                         |
-| `CANDY_BASE_SPEED`                         | 340 px/s    | Starting speed                                                |
+| `CANDY_SIZE`                               | 52          | Base candy geometry before the v0.0.3 visual scale            |
+| `PROJECTILE_SIZE_MULTIPLIER`               | 1.3         | v0.0.3 normal projectile scale                                |
 | `CANDY_SPEED_RAMP_MAX` / `_RATE`           | 260 / 0.006 | Ceiling and slope of the speed ramp                           |
 | `SPAWN_INTERVAL`                           | 900 ms      | Starting spawn interval                                       |
 | `SPAWN_INTERVAL_MIN` / `_RAMP_RATE`        | 420 / 0.004 | Floor and slope of the interval ramp                          |
 | `INVULN_DURATION`                          | 1400 ms     | Invulnerability and flicker length                            |
 | `SCORE_PER_DODGE`                          | 10          | Points per dodged candy                                       |
 | `VILLAIN_HP`                               | 5           | Shots required to win                                         |
+| `VILLAIN_RENDER_WIDTH` / `_HEIGHT`         | 184 / 198   | v0.0.3 Barão visual bounds                                    |
+| `ZOMBIE_RENDER_SIZE`                       | 96          | v0.0.3 zombie visual and hitbox basis                         |
+| `VILLAIN_BURST_COUNT`                      | 3           | Resistant zombies per 100-point milestone                     |
+| `MILESTONE_SCORE_STEP`                     | 100         | Score interval for charge and burst                           |
+| `POWER_MODE_SCORE_DURATION`                | 40          | Score points for normal-projectile clear mode                 |
 | `POWER_MAX_CHARGES`                        | 3           | Charge cap                                                    |
 | `BUBBLE_EVERY`                             | 300         | Score threshold for a pending food bubble                     |
 | `POWER_SHOT_SPEED`                         | 620 px/s    | Horizontal shot speed                                         |
@@ -329,7 +354,7 @@ A third `Gesture.Tap()` maps the tap's Y to a lane direction: top half moves up,
 
 ## Where the frame rate goes
 
-The POC's frame-rate criterion is unresolved: the last recorded run measured 30–50 fps on mid-range ARM with a much simpler scene, and that figure has not been re-measured. v0.0.2 adds ten four-variant enemy slots, shots and bubbles, so the POC's result does not transfer automatically. **The v0.0.2 device measurement is still outstanding.** The acceptance gate is average ≥55 fps and minimum ≥50 fps when the v0.0.1 baseline meets those bars; otherwise the relative gate is p95 frame time no more than 10% above baseline, recorded with `dumpsys gfxinfo` or Metal System Trace.
+The POC's frame-rate criterion is unresolved: the last recorded run measured 30–50 fps on mid-range ARM with a much simpler scene, and that figure has not been re-measured. v0.0.3 adds enlarged projectiles, a larger Barão, aura/attack animation, and milestone bursts, so the POC's result does not transfer automatically. **The v0.0.3 device measurement is still outstanding.** The acceptance gate is average ≥55 fps and minimum ≥50 fps when the v0.0.1 baseline meets those bars; otherwise the relative gate is p95 frame time no more than 10% above baseline, recorded with `dumpsys gfxinfo` or Metal System Trace.
 
 The loop itself is O(10) over the fixed enemy pool with no allocation and is not the bottleneck. Cost is in the Skia render path.
 

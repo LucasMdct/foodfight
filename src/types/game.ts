@@ -1,8 +1,13 @@
 export type Who = 'alface' | 'feijao' | 'arroz';
-export type Screen = 'select' | 'game' | 'over' | 'win';
+export type Difficulty = 'mfacil' | 'facil' | 'dificil' | 'impossivel';
+export type Screen = 'select' | 'difficulty' | 'game' | 'over' | 'win';
 export type GameToast =
-  'food-collected' | { readonly type: 'power-fired'; readonly name: string } | null;
+  | 'food-collected'
+  | 'milestone-power'
+  | { readonly type: 'power-fired'; readonly name: string }
+  | null;
 export type VillainMood = 'feliz' | 'bravo';
+export type VillainTalkKind = 'taunt' | 'ouch' | null;
 
 /**
  * Discrete game state kept in React/Zustand. Per-frame values (hero position,
@@ -12,6 +17,7 @@ export type VillainMood = 'feliz' | 'bravo';
 export interface GameState {
   screen: Screen;
   who: Who;
+  difficulty: Difficulty;
   lives: number;
   score: number;
   best: number;
@@ -22,18 +28,28 @@ export interface GameState {
   toast: GameToast;
   toastId: number;
   villainMood: VillainMood;
+  villainAttacking: boolean;
+  villainTaunt: string;
+  villainTalkKind: VillainTalkKind;
+  villainTalkDurationMs: number;
 }
 
 export interface GameActions {
   pick: (who: Who) => void;
-  start: () => void;
+  toDifficulty: () => void;
+  start: (difficulty?: Difficulty) => void;
   hitHero: () => void;
   incrementScore: (points: number) => void;
   applyVillainHit: () => void;
   applyPowerFired: (powerIndex: number) => void;
+  grantPowerCharge: () => void;
   collectFood: () => void;
   clearToast: (toastId: number) => void;
   clearVillainMood: () => void;
+  triggerVillainBurst: () => void;
+  showVillainTaunt: () => void;
+  clearVillainBurst: () => void;
+  clearVillainTaunt: () => void;
   toSelect: () => void;
   updateFps: (fps: number) => void;
   reset: () => void;
@@ -44,6 +60,7 @@ export const START_LIVES = 3;
 export const INITIAL_GAME_STATE: GameState = {
   screen: 'select',
   who: 'alface',
+  difficulty: 'facil',
   lives: START_LIVES,
   score: 0,
   best: 0,
@@ -54,4 +71,8 @@ export const INITIAL_GAME_STATE: GameState = {
   toast: null,
   toastId: 0,
   villainMood: 'feliz',
+  villainAttacking: false,
+  villainTaunt: '',
+  villainTalkKind: null,
+  villainTalkDurationMs: 0,
 };

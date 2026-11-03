@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   PROJECTILE_KIND,
   attackPhaseAt,
+  difficultyAtIndex,
+  difficultyConfigAt,
+  difficultyIndexAt,
+  milestoneCountAt,
   nextRngState,
   powerChargeAfterPickup,
   projectileKindAt,
@@ -11,6 +15,53 @@ import {
   trackShotY,
   villainYAt,
 } from './combatMath';
+
+describe('v0.0.3 difficulty presets', () => {
+  it('exposes the four handoff presets', () => {
+    expect(difficultyConfigAt('mfacil')).toMatchObject({
+      label: 'Muito Fácil',
+      speed: 215,
+      interval: 1450,
+      doubleSpawnChance: 0,
+      acceleration: 0.002,
+    });
+    expect(difficultyConfigAt('facil').label).toBe('Fácil');
+    expect(difficultyConfigAt('dificil').label).toBe('Difícil');
+    expect(difficultyConfigAt('impossivel')).toMatchObject({
+      label: 'Impossível',
+      speed: 560,
+      interval: 540,
+      doubleSpawnChance: 0.55,
+      acceleration: 0.009,
+    });
+  });
+
+  it('falls back to the regular preset for an invalid runtime key', () => {
+    expect(difficultyConfigAt('invalid' as never)).toEqual(difficultyConfigAt('facil'));
+  });
+
+  it('increases deterministic projectile speed across difficulty presets', () => {
+    const easy = difficultyConfigAt('mfacil');
+    const impossible = difficultyConfigAt('impossivel');
+
+    expect(easy.speed).toBeLessThan(impossible.speed);
+    expect(easy.acceleration).toBeLessThan(impossible.acceleration);
+  });
+
+  it('counts score milestones at each 100-point boundary', () => {
+    expect(milestoneCountAt(99)).toBe(0);
+    expect(milestoneCountAt(100)).toBe(1);
+    expect(milestoneCountAt(199)).toBe(1);
+    expect(milestoneCountAt(200)).toBe(2);
+  });
+
+  it('maps difficulty keys to a UI-thread-safe numeric mirror', () => {
+    expect(difficultyIndexAt('mfacil')).toBe(0);
+    expect(difficultyIndexAt('impossivel')).toBe(3);
+    expect(difficultyAtIndex(2)).toBe('dificil');
+    expect(difficultyAtIndex(99)).toBe('facil');
+  });
+});
 
 describe('attack phases', () => {
   it.each([
