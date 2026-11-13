@@ -216,7 +216,7 @@ These cover fixed difficulty presets, score milestones, seeded distribution, cla
 motion, soft shot tracking, UI-thread charge authorization, zero-charge starts,
 food pickup caps and padding, 100-point bubble thresholds, invulnerability,
 zombie hitboxes, milestone bursts, full-screen power clearing, centered confetti,
-typewriter dialogue cadence and cancellation, staged Barão defeat and delayed victory,
+typewriter dialogue cadence and cancellation, store-bound `dialogueRequestId` restarts for repeated lines during typing and hold, staged Barão defeat and delayed victory,
 phase-four sugar rain, pool saturation, power rotation, reset/replay and terminal result races.
 
 Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint. GitHub Actions runs typecheck, lint and tests on every PR.

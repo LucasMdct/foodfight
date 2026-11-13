@@ -202,6 +202,7 @@ GameState = {
   powerIndex,
   toast,
   toastId,
+  dialogueRequestId,
   villainMood,
   villainAttacking,
   villainDying,
@@ -215,9 +216,9 @@ GameState = {
 
 Hero position, enemy/shot positions, bubble position, scroll offset, flicker phase and the authoritative UI-thread charge mirror are deliberately **not** React state. Putting per-frame values in the store is the single easiest way to destroy the frame rate. The store keeps the discrete UI projection and guards every gameplay mutation by `screen === 'game' && !villainDying`.
 
-`hitHero` decrements lives; reaching 0 sets `screen: 'over'` and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 (or calling `beginVillainDefeat`) enters the staged defeat state (`villainDying: true`, `villainMood: 'bravo'`, `screen: 'game'`). `completeVillainDefeat` transitions from that staged state to `screen: 'win'` and captures `best`. `applyPowerFired` refuses to overdraw charges and `collectFood` caps food pickups at three. `triggerVillainBurst`, `showVillainTaunt`, and `applyVillainHit` set the target dialogue line, hold duration (`2800 ms` taunt, `2200 ms` ouch, `2500 ms` defeat), and `villainTalking: true`; `createVillainDialogueController` in `src/features/game/villainDialogue.ts` reveals one character every `65 ms` on the JS side and clears `villainTalking` when typing finishes. `reset` restores initial state but preserves `who`, `difficulty`, and `best`.
+`hitHero` decrements lives; reaching 0 sets `screen: 'over'`, stops `villainTalking`, and folds `score` into `best`. `applyVillainHit` decrements HP; reaching 0 (or calling `beginVillainDefeat`) enters the staged defeat state (`villainDying: true`, `villainMood: 'bravo'`, `screen: 'game'`). `completeVillainDefeat` transitions from that staged state to `screen: 'win'` and captures `best`. `applyPowerFired` refuses to overdraw charges and `collectFood` caps food pickups at three. `triggerVillainBurst`, `showVillainTaunt`, `showVillainOuch`, `applyVillainHit`, and `beginVillainDefeat` increment `dialogueRequestId` alongside the target dialogue line, hold duration (`2800 ms` taunt, `2200 ms` ouch, `2500 ms` defeat), and `villainTalking: true`; `bindVillainDialogue` in `src/features/game/villainDialogue.ts` subscribes to `dialogueRequestId` so even repeated identical text restarts typing cleanly without re-triggering when `setVillainTalking(false, requestId)` completes, revealing one character every `65 ms` on the JS side and guarding clear/completion callbacks by `requestId`. `reset` restores initial state but preserves `who`, `difficulty`, and `best`.
 
-**Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `Hud` and the development loop readout own the leaf subscriptions, while `GameScreen` subscribes to scene selection, villain mood, villain attack/talking/dying state, and villain talk text, so unrelated combat HUD updates do not re-render the Canvas subtree.
+**Zustand over Context:** Context re-renders every consumer on every change. Zustand's selector subscriptions mean only the components reading a given field re-render. `Hud` and the development loop readout own the leaf subscriptions, while `GameScreen` subscribes to scene selection, villain mood, and villain attack/talking/dying state, and binds dialogue requests through `bindVillainDialogue`, so unrelated combat HUD updates do not re-render the Canvas subtree.
 
 ---
 
