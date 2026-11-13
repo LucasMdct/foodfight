@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useGameStore, VILLAIN_OUCHES, VILLAIN_TAUNTS } from './gameStore';
 
@@ -9,6 +9,10 @@ describe('combat game store guards', () => {
     useGameStore.setState((current) => ({
       state: { ...current.state, charges: 1 },
     }));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('starts a match with no power charges until a food bubble is collected', () => {
@@ -188,6 +192,77 @@ describe('combat game store guards', () => {
       best: 200,
       charges: 0,
       villainHp: 5,
+    });
+  });
+
+  it('increments dialogueRequestId on every dialogue action even when the same line repeats', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const actions = useGameStore.getState().actions;
+
+    expect(useGameStore.getState().state.dialogueRequestId).toBe(0);
+
+    actions.showVillainTaunt();
+    expect(useGameStore.getState().state.dialogueRequestId).toBe(1);
+    expect(useGameStore.getState().state.villainTalk).toBe(VILLAIN_TAUNTS[0]);
+
+    actions.triggerVillainBurst();
+    expect(useGameStore.getState().state.dialogueRequestId).toBe(2);
+    expect(useGameStore.getState().state.villainTalk).toBe(VILLAIN_TAUNTS[0]);
+
+    actions.applyVillainHit();
+    expect(useGameStore.getState().state.dialogueRequestId).toBe(3);
+    expect(useGameStore.getState().state.villainHp).toBe(4);
+    expect(useGameStore.getState().state.villainTalk).toBe(VILLAIN_OUCHES[0]);
+
+    actions.applyVillainHit();
+    expect(useGameStore.getState().state.dialogueRequestId).toBe(4);
+    expect(useGameStore.getState().state.villainHp).toBe(3);
+    expect(useGameStore.getState().state.villainTalk).toBe(VILLAIN_OUCHES[0]);
+
+    actions.showVillainOuch();
+    expect(useGameStore.getState().state.dialogueRequestId).toBe(5);
+
+    actions.beginVillainDefeat();
+    expect(useGameStore.getState().state.dialogueRequestId).toBe(6);
+  });
+
+  it('ignores stale dialogue completion and clear callbacks from earlier requests', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const actions = useGameStore.getState().actions;
+
+    actions.applyVillainHit();
+    const firstId = useGameStore.getState().state.dialogueRequestId;
+    actions.applyVillainHit();
+    const secondId = useGameStore.getState().state.dialogueRequestId;
+
+    expect(secondId).toBeGreaterThan(firstId);
+
+    actions.setVillainTalking(false, firstId);
+    expect(useGameStore.getState().state.villainTalking).toBe(true);
+
+    actions.clearVillainTaunt(firstId);
+    expect(useGameStore.getState().state.villainTalk).toBe(VILLAIN_OUCHES[0]);
+
+    actions.setVillainTalking(false, secondId);
+    expect(useGameStore.getState().state.villainTalking).toBe(false);
+
+    actions.clearVillainTaunt(secondId);
+    expect(useGameStore.getState().state.villainTalk).toBe('');
+  });
+
+  it('stops villainTalking when the third hero hit transitions to game over', () => {
+    const actions = useGameStore.getState().actions;
+    actions.showVillainTaunt();
+    expect(useGameStore.getState().state.villainTalking).toBe(true);
+
+    actions.hitHero();
+    actions.hitHero();
+    actions.hitHero();
+
+    expect(useGameStore.getState().state).toMatchObject({
+      screen: 'over',
+      lives: 0,
+      villainTalking: false,
     });
   });
 });

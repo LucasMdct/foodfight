@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Text as RNText, useWindowDimensions, View } from 'react-native';
 import {
   Canvas,
@@ -37,7 +37,7 @@ import { PROJECTILE_KIND } from '../../engine/combatMath';
 import type { Who } from '../../types/game';
 import theme from '../../theme/tokens';
 import { GAME_SCREEN_STYLES } from './GameScreen.styles';
-import { createVillainDialogueController } from './villainDialogue';
+import { bindVillainDialogue } from './villainDialogue';
 
 const useKindOpacity = (active: SharedValue<number>, kind: SharedValue<number>, expected: number) =>
   useDerivedValue(() => (active.value === 1 && kind.value === expected ? 1 : 0));
@@ -396,42 +396,17 @@ export const GameScreen = () => {
   const villainAttacking = useGameStore((s) => s.state.villainAttacking);
   const villainTalking = useGameStore((s) => s.state.villainTalking);
   const villainDying = useGameStore((s) => s.state.villainDying);
-  const villainTalk = useGameStore((s) => s.state.villainTalk);
-  const villainTalkDurationMs = useGameStore((s) => s.state.villainTalkDurationMs);
   const actions = useGameStore((s) => s.actions);
   const [hasMoved, setHasMoved] = useState(false);
   const [typedTalk, setTypedTalk] = useState('');
-  const dialogueControllerRef = useRef<ReturnType<typeof createVillainDialogueController> | null>(
-    null
-  );
-  if (dialogueControllerRef.current === null) {
-    dialogueControllerRef.current = createVillainDialogueController(
-      (nextText) => {
-        setTypedTalk(nextText);
-        if (nextText === '' && !useGameStore.getState().state.villainTalking) {
-          useGameStore.getState().actions.clearVillainTaunt();
-        }
-      },
-      () => {
-        useGameStore.getState().actions.setVillainTalking(false);
-      }
-    );
-  }
 
-  useEffect(() => {
-    return () => {
-      dialogueControllerRef.current?.dispose();
-    };
-  }, []);
+  useEffect(() => bindVillainDialogue(useGameStore, setTypedTalk), []);
 
   useEffect(() => {
     if (screen === 'game') {
       engine.reset();
-      dialogueControllerRef.current?.cancel();
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasMoved(false);
-    } else {
-      dialogueControllerRef.current?.cancel();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen]);
@@ -459,14 +434,6 @@ export const GameScreen = () => {
     );
     return () => clearTimeout(timeout);
   }, [actions, screen, villainDying]);
-
-  useEffect(() => {
-    if (!villainTalk || villainTalkDurationMs <= 0) {
-      dialogueControllerRef.current?.cancel();
-      return;
-    }
-    dialogueControllerRef.current?.show(villainTalk, villainTalkDurationMs);
-  }, [villainTalk, villainTalkDurationMs]);
 
   const tauntStyle = useAnimatedStyle(() => ({ top: engine.villainY.value - 4 }));
 

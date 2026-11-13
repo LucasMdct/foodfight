@@ -4,6 +4,7 @@ import {
   GameActions,
   INITIAL_GAME_STATE,
   START_LIVES,
+  VillainTalkKind,
   Who,
   Difficulty,
 } from '../types/game';
@@ -42,17 +43,32 @@ export const VILLAIN_DEFEAT_LINE = 'NÃÃÃO! Meus doces! Isso não fica assim!!
 const randomFrom = <T>(values: readonly T[]): T =>
   values[Math.floor(Math.random() * values.length)];
 
-const enterStagedDefeat = (state: GameState): GameState => ({
+const withVillainDialogue = (
+  state: GameState,
+  text: string,
+  kind: Exclude<VillainTalkKind, null>,
+  durationMs: number
+): GameState => ({
   ...state,
+  villainTalking: true,
+  villainTalk: text,
+  villainTaunt: text,
+  villainTalkKind: kind,
+  villainTalkDurationMs: durationMs,
+  dialogueRequestId: state.dialogueRequestId + 1,
+});
+
+const enterStagedDefeat = (state: GameState): GameState => ({
+  ...withVillainDialogue(
+    state,
+    VILLAIN_DEFEAT_LINE,
+    'defeat',
+    GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS
+  ),
   villainHp: 0,
   villainMood: 'bravo',
   villainAttacking: false,
   villainDying: true,
-  villainTalking: true,
-  villainTalk: VILLAIN_DEFEAT_LINE,
-  villainTaunt: VILLAIN_DEFEAT_LINE,
-  villainTalkKind: 'defeat',
-  villainTalkDurationMs: GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS,
 });
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -96,6 +112,7 @@ export const useGameStore = create<GameStore>((set) => ({
               ...s.state,
               lives,
               screen: 'over',
+              villainTalking: false,
               best: Math.max(s.state.best, s.state.score),
             },
           };
@@ -117,17 +134,16 @@ export const useGameStore = create<GameStore>((set) => ({
         if (villainHp === 0) {
           return { state: enterStagedDefeat(s.state) };
         }
-        const ouch = randomFrom(VILLAIN_OUCHES);
         return {
           state: {
-            ...s.state,
+            ...withVillainDialogue(
+              s.state,
+              randomFrom(VILLAIN_OUCHES),
+              'ouch',
+              GAME_CONSTANTS.VILLAIN_OUCH_DURATION_MS
+            ),
             villainHp,
             villainMood: 'bravo',
-            villainTalking: true,
-            villainTalk: ouch,
-            villainTaunt: ouch,
-            villainTalkKind: 'ouch',
-            villainTalkDurationMs: GAME_CONSTANTS.VILLAIN_OUCH_DURATION_MS,
           },
         };
       }),
@@ -192,16 +208,15 @@ export const useGameStore = create<GameStore>((set) => ({
     triggerVillainBurst: () =>
       set((s) => {
         if (s.state.screen !== 'game' || s.state.villainDying) return s;
-        const taunt = randomFrom(VILLAIN_TAUNTS);
         return {
           state: {
-            ...s.state,
+            ...withVillainDialogue(
+              s.state,
+              randomFrom(VILLAIN_TAUNTS),
+              'taunt',
+              GAME_CONSTANTS.VILLAIN_TAUNT_DURATION_MS
+            ),
             villainAttacking: true,
-            villainTalking: true,
-            villainTalk: taunt,
-            villainTaunt: taunt,
-            villainTalkKind: 'taunt',
-            villainTalkDurationMs: GAME_CONSTANTS.VILLAIN_TAUNT_DURATION_MS,
           },
         };
       }),
@@ -209,49 +224,49 @@ export const useGameStore = create<GameStore>((set) => ({
     showVillainTaunt: () =>
       set((s) => {
         if (s.state.screen !== 'game' || s.state.villainDying) return s;
-        const taunt = randomFrom(VILLAIN_TAUNTS);
         return {
-          state: {
-            ...s.state,
-            villainTalking: true,
-            villainTalk: taunt,
-            villainTaunt: taunt,
-            villainTalkKind: 'taunt',
-            villainTalkDurationMs: GAME_CONSTANTS.VILLAIN_TAUNT_DURATION_MS,
-          },
+          state: withVillainDialogue(
+            s.state,
+            randomFrom(VILLAIN_TAUNTS),
+            'taunt',
+            GAME_CONSTANTS.VILLAIN_TAUNT_DURATION_MS
+          ),
         };
       }),
 
     showVillainOuch: () =>
       set((s) => {
         if (s.state.screen !== 'game' || s.state.villainDying) return s;
-        const ouch = randomFrom(VILLAIN_OUCHES);
         return {
           state: {
-            ...s.state,
+            ...withVillainDialogue(
+              s.state,
+              randomFrom(VILLAIN_OUCHES),
+              'ouch',
+              GAME_CONSTANTS.VILLAIN_OUCH_DURATION_MS
+            ),
             villainMood: 'bravo',
-            villainTalking: true,
-            villainTalk: ouch,
-            villainTaunt: ouch,
-            villainTalkKind: 'ouch',
-            villainTalkDurationMs: GAME_CONSTANTS.VILLAIN_OUCH_DURATION_MS,
           },
         };
       }),
 
-    setVillainTalking: (talking: boolean) =>
-      set((s) =>
-        s.state.villainTalking === talking ? s : { state: { ...s.state, villainTalking: talking } }
-      ),
+    setVillainTalking: (talking: boolean, requestId?: number) =>
+      set((s) => {
+        if (requestId !== undefined && s.state.dialogueRequestId !== requestId) return s;
+        return s.state.villainTalking === talking
+          ? s
+          : { state: { ...s.state, villainTalking: talking } };
+      }),
 
     clearVillainBurst: () =>
       set((s) =>
         s.state.villainAttacking ? { state: { ...s.state, villainAttacking: false } } : s
       ),
 
-    clearVillainTaunt: () =>
-      set((s) =>
-        s.state.villainTaunt || s.state.villainTalk || s.state.villainTalking
+    clearVillainTaunt: (requestId?: number) =>
+      set((s) => {
+        if (requestId !== undefined && s.state.dialogueRequestId !== requestId) return s;
+        return s.state.villainTaunt || s.state.villainTalk || s.state.villainTalking
           ? {
               state: {
                 ...s.state,
@@ -262,8 +277,8 @@ export const useGameStore = create<GameStore>((set) => ({
                 villainTalkDurationMs: 0,
               },
             }
-          : s
-      ),
+          : s;
+      }),
 
     toSelect: () => set((s) => ({ state: { ...s.state, screen: 'select' } })),
 

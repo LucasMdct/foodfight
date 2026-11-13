@@ -24,6 +24,7 @@ export interface GameState {
   powerIndex: number;
   toast: GameToast;
   toastId: number;
+  dialogueRequestId: number;
   villainMood: VillainMood;
   villainAttacking: boolean;
   villainDying: boolean;
@@ -50,9 +51,9 @@ export interface GameActions {
   triggerVillainBurst: () => void;
   showVillainTaunt: () => void;
   showVillainOuch: () => void;
-  setVillainTalking: (talking: boolean) => void;
+  setVillainTalking: (talking: boolean, requestId?: number) => void;
   clearVillainBurst: () => void;
-  clearVillainTaunt: () => void;
+  clearVillainTaunt: (requestId?: number) => void;
   toSelect: () => void;
   updateFps: (fps: number) => void;
   reset: () => void;
@@ -73,6 +74,7 @@ export const INITIAL_GAME_STATE: GameState = {
   powerIndex: 0,
   toast: null,
   toastId: 0,
+  dialogueRequestId: 0,
   villainMood: 'feliz',
   villainAttacking: false,
   villainDying: false,
