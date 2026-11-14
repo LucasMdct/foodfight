@@ -31,7 +31,7 @@ import { Zombie } from '../../render/candies/Zombie';
 import { FoodBubble as FoodBubbleVisual } from '../../render/candies/FoodBubble';
 import { PowerShot } from '../../render/candies/PowerShot';
 import { Hud } from '../../hud/Hud';
-import { GameOverModal } from '../game-over';
+import { GameOverModal, isGameOverModalVisible } from '../game-over';
 import { GAME_CONSTANTS } from '../../types/constants';
 import { PROJECTILE_KIND } from '../../engine/combatMath';
 import type { Who } from '../../types/game';
@@ -472,7 +472,7 @@ export const GameScreen = () => {
       ) : null}
 
       <LoopReadout />
-      <GameOverModal />
+      {isGameOverModalVisible(screen) && <GameOverModal />}
     </View>
   );
 };
