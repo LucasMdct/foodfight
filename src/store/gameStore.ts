@@ -4,6 +4,7 @@ import {
   GameActions,
   INITIAL_GAME_STATE,
   START_LIVES,
+  VillainTalkKind,
   Who,
   Difficulty,
 } from '../types/game';
@@ -37,8 +38,40 @@ export const VILLAIN_OUCHES = [
   'AAAH! Vitaminas NÃO! Tudo menos isso!',
 ] as const;
 
+export const VILLAIN_DEFEAT_LINE = 'NÃÃÃO! Meus doces! Isso não fica assim!!';
+
 const randomFrom = <T>(values: readonly T[]): T =>
   values[Math.floor(Math.random() * values.length)];
+
+const withVillainDialogue = (
+  state: GameState,
+  text: string,
+  kind: Exclude<VillainTalkKind, null>,
+  durationMs: number
+): GameState => ({
+  ...state,
+  villainTalking: true,
+  villainTalk: text,
+  villainTaunt: text,
+  villainTalkKind: kind,
+  villainTalkDurationMs: durationMs,
+  dialogueRequestId: state.dialogueRequestId + 1,
+});
+
+// `resolveDialogueTiming` compresses defeat typing so the 40-char line finishes
+// with `VILLAIN_DEFEAT_DIALOGUE_HOLD_MS` to spare before the 2,500 ms win transition.
+const enterStagedDefeat = (state: GameState): GameState => ({
+  ...withVillainDialogue(
+    state,
+    VILLAIN_DEFEAT_LINE,
+    'defeat',
+    GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS
+  ),
+  villainHp: 0,
+  villainMood: 'bravo',
+  villainAttacking: false,
+  villainDying: true,
+});
 
 export const useGameStore = create<GameStore>((set) => ({
   state: INITIAL_GAME_STATE,
@@ -62,6 +95,9 @@ export const useGameStore = create<GameStore>((set) => ({
           toast: null,
           villainMood: 'feliz',
           villainAttacking: false,
+          villainDying: false,
+          villainTalking: false,
+          villainTalk: '',
           villainTaunt: '',
           villainTalkKind: null,
           villainTalkDurationMs: 0,
@@ -70,7 +106,7 @@ export const useGameStore = create<GameStore>((set) => ({
 
     hitHero: () =>
       set((s) => {
-        if (s.state.screen !== 'game') return s;
+        if (s.state.screen !== 'game' || s.state.villainDying) return s;
         const lives = Math.max(0, s.state.lives - 1);
         if (lives === 0) {
           return {
@@ -78,6 +114,7 @@ export const useGameStore = create<GameStore>((set) => ({
               ...s.state,
               lives,
               screen: 'over',
+              villainTalking: false,
               best: Math.max(s.state.best, s.state.score),
             },
           };
@@ -87,42 +124,54 @@ export const useGameStore = create<GameStore>((set) => ({
 
     incrementScore: (points: number) =>
       set((s) =>
-        s.state.screen === 'game' ? { state: { ...s.state, score: s.state.score + points } } : s
+        s.state.screen === 'game' && !s.state.villainDying
+          ? { state: { ...s.state, score: s.state.score + points } }
+          : s
       ),
 
     applyVillainHit: () =>
       set((s) => {
-        if (s.state.screen !== 'game') return s;
+        if (s.state.screen !== 'game' || s.state.villainDying) return s;
         const villainHp = Math.max(0, s.state.villainHp - 1);
         if (villainHp === 0) {
-          return {
-            state: {
-              ...s.state,
-              villainHp,
-              villainMood: 'bravo',
-              villainTaunt: randomFrom(VILLAIN_OUCHES),
-              villainTalkKind: 'ouch',
-              villainTalkDurationMs: 2000,
-              screen: 'win',
-              best: Math.max(s.state.best, s.state.score),
-            },
-          };
+          return { state: enterStagedDefeat(s.state) };
         }
         return {
           state: {
-            ...s.state,
+            ...withVillainDialogue(
+              s.state,
+              randomFrom(VILLAIN_OUCHES),
+              'ouch',
+              GAME_CONSTANTS.VILLAIN_OUCH_DURATION_MS
+            ),
             villainHp,
             villainMood: 'bravo',
-            villainTaunt: randomFrom(VILLAIN_OUCHES),
-            villainTalkKind: 'ouch',
-            villainTalkDurationMs: 2000,
+          },
+        };
+      }),
+
+    beginVillainDefeat: () =>
+      set((s) => {
+        if (s.state.screen !== 'game' || s.state.villainDying) return s;
+        return { state: enterStagedDefeat(s.state) };
+      }),
+
+    completeVillainDefeat: () =>
+      set((s) => {
+        if (s.state.screen !== 'game' || !s.state.villainDying) return s;
+        return {
+          state: {
+            ...s.state,
+            screen: 'win',
+            villainTalking: false,
+            best: Math.max(s.state.best, s.state.score),
           },
         };
       }),
 
     applyPowerFired: (powerIndex: number) =>
       set((s) => {
-        if (s.state.screen !== 'game' || s.state.charges <= 0) return s;
+        if (s.state.screen !== 'game' || s.state.villainDying || s.state.charges <= 0) return s;
         return {
           state: {
             ...s.state,
@@ -134,22 +183,9 @@ export const useGameStore = create<GameStore>((set) => ({
         };
       }),
 
-    grantPowerCharge: () =>
-      set((s) => {
-        if (s.state.screen !== 'game') return s;
-        return {
-          state: {
-            ...s.state,
-            charges: Math.min(GAME_CONSTANTS.POWER_MAX_CHARGES, s.state.charges + 1),
-            toast: 'milestone-power',
-            toastId: s.state.toastId + 1,
-          },
-        };
-      }),
-
     collectFood: () =>
       set((s) => {
-        if (s.state.screen !== 'game') return s;
+        if (s.state.screen !== 'game' || s.state.villainDying) return s;
         const charges = Math.min(GAME_CONSTANTS.POWER_MAX_CHARGES, s.state.charges + 1);
         return {
           state: {
@@ -166,58 +202,85 @@ export const useGameStore = create<GameStore>((set) => ({
 
     clearVillainMood: () =>
       set((s) =>
-        s.state.screen === 'game' && s.state.villainMood === 'bravo'
+        s.state.screen === 'game' && !s.state.villainDying && s.state.villainMood === 'bravo'
           ? { state: { ...s.state, villainMood: 'feliz' } }
           : s
       ),
 
     triggerVillainBurst: () =>
-      set((s) =>
-        s.state.screen === 'game'
-          ? {
-              state: {
-                ...s.state,
-                villainAttacking: true,
-                villainTaunt: randomFrom(VILLAIN_TAUNTS),
-                villainTalkKind: 'taunt',
-                villainTalkDurationMs: 2600,
-              },
-            }
-          : s
-      ),
+      set((s) => {
+        if (s.state.screen !== 'game' || s.state.villainDying) return s;
+        return {
+          state: {
+            ...withVillainDialogue(
+              s.state,
+              randomFrom(VILLAIN_TAUNTS),
+              'taunt',
+              GAME_CONSTANTS.VILLAIN_TAUNT_DURATION_MS
+            ),
+            villainAttacking: true,
+          },
+        };
+      }),
 
     showVillainTaunt: () =>
-      set((s) =>
-        s.state.screen === 'game'
-          ? {
-              state: {
-                ...s.state,
-                villainTaunt: randomFrom(VILLAIN_TAUNTS),
-                villainTalkKind: 'taunt',
-                villainTalkDurationMs: 2600,
-              },
-            }
-          : s
-      ),
+      set((s) => {
+        if (s.state.screen !== 'game' || s.state.villainDying) return s;
+        return {
+          state: withVillainDialogue(
+            s.state,
+            randomFrom(VILLAIN_TAUNTS),
+            'taunt',
+            GAME_CONSTANTS.VILLAIN_TAUNT_DURATION_MS
+          ),
+        };
+      }),
+
+    showVillainOuch: () =>
+      set((s) => {
+        if (s.state.screen !== 'game' || s.state.villainDying) return s;
+        return {
+          state: {
+            ...withVillainDialogue(
+              s.state,
+              randomFrom(VILLAIN_OUCHES),
+              'ouch',
+              GAME_CONSTANTS.VILLAIN_OUCH_DURATION_MS
+            ),
+            villainMood: 'bravo',
+          },
+        };
+      }),
+
+    setVillainTalking: (talking: boolean, requestId?: number) =>
+      set((s) => {
+        if (requestId !== undefined && s.state.dialogueRequestId !== requestId) return s;
+        return s.state.villainTalking === talking
+          ? s
+          : { state: { ...s.state, villainTalking: talking } };
+      }),
 
     clearVillainBurst: () =>
       set((s) =>
         s.state.villainAttacking ? { state: { ...s.state, villainAttacking: false } } : s
       ),
 
-    clearVillainTaunt: () =>
-      set((s) =>
-        s.state.villainTaunt
+    clearVillainTaunt: (requestId?: number) =>
+      set((s) => {
+        if (requestId !== undefined && s.state.dialogueRequestId !== requestId) return s;
+        return s.state.villainTaunt || s.state.villainTalk || s.state.villainTalking
           ? {
               state: {
                 ...s.state,
+                villainTalking: false,
+                villainTalk: '',
                 villainTaunt: '',
                 villainTalkKind: null,
                 villainTalkDurationMs: 0,
               },
             }
-          : s
-      ),
+          : s;
+      }),
 
     toSelect: () => set((s) => ({ state: { ...s.state, screen: 'select' } })),
 

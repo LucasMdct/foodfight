@@ -1,6 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Group, Circle, Oval, RoundedRect, Path, Skia, vec } from '@shopify/react-native-skia';
-import { useDerivedValue } from 'react-native-reanimated';
+import {
+  Easing,
+  useDerivedValue,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useBob, useSwing } from '../../anim';
 import { foodiePalette } from '../palette';
 import type { VillainMood } from '../../../types/game';
@@ -10,6 +16,8 @@ import type { VillainMood } from '../../../types/game';
 // Painted back-to-front in the exact order of the source SVG.
 const c = foodiePalette.vilao;
 const DEG = Math.PI / 180;
+export const VILLAIN_MOUTH_SCALE_MIN = 0.3;
+export const VILLAIN_MOUTH_HALF_PERIOD_MS = 130;
 
 const linerBase = Skia.Path.MakeFromSVGString('M38 106 L112 106 L103 142 L47 142 Z')!;
 const linerFolds = Skia.Path.MakeFromSVGString(
@@ -31,18 +39,38 @@ const smile = Skia.Path.MakeFromSVGString('M56 90 Q75 104 94 88')!;
 const tooth = Skia.Path.MakeFromSVGString('M84 92 L88 98 L91 90 Z')!;
 const bravoMouth = Skia.Path.MakeFromSVGString('M57 98 Q75 86 93 98')!;
 const bravoMouthLines = Skia.Path.MakeFromSVGString('M64 92 L64 97 M75 90 L75 96 M86 92 L86 97')!;
+const talkingTeeth = Skia.Path.MakeFromSVGString('M65 88 L85 88')!;
 
 export const Vilao = ({
   animated = true,
   mood = 'feliz',
+  talking = false,
 }: {
   animated?: boolean;
   mood?: VillainMood;
+  talking?: boolean;
 }) => {
   const bobY = useBob(3, 450);
   const wandSwing = useSwing(13, 350);
+  const mouthScaleY = useSharedValue(VILLAIN_MOUTH_SCALE_MIN);
+  useEffect(() => {
+    if (!talking) {
+      mouthScaleY.value = VILLAIN_MOUTH_SCALE_MIN;
+      return;
+    }
+    mouthScaleY.value = withRepeat(
+      withTiming(1, {
+        duration: VILLAIN_MOUTH_HALF_PERIOD_MS,
+        easing: Easing.inOut(Easing.ease),
+      }),
+      -1,
+      true
+    );
+  }, [mouthScaleY, talking]);
+
   const bob = useDerivedValue(() => [{ translateY: animated ? bobY.value : 0 }]);
   const wand = useDerivedValue(() => [{ rotate: wandSwing.value }]);
+  const talkingMouthTransform = useDerivedValue(() => [{ scaleY: mouthScaleY.value }]);
 
   return (
     <Group origin={vec(75, 80)} transform={bob}>
@@ -129,7 +157,19 @@ export const Vilao = ({
       <Path path={monocleChain} color={c.monocle} style="stroke" strokeWidth={2} />
 
       {/* expression */}
-      {mood === 'bravo' ? (
+      {talking ? (
+        <Group origin={vec(75, 95)} transform={talkingMouthTransform}>
+          <Oval x={61} y={84} width={28} height={22} color={c.eye} />
+          <Oval x={67} y={94} width={16} height={10} color={c.sprinkleRed} />
+          <Path
+            path={talkingTeeth}
+            color={c.eyeWhite}
+            style="stroke"
+            strokeWidth={4}
+            strokeCap="round"
+          />
+        </Group>
+      ) : mood === 'bravo' ? (
         <>
           <Path path={bravoMouth} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
           <Path

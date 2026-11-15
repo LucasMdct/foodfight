@@ -66,8 +66,8 @@ Note the loop-rate readout only renders under `__DEV__`. In a release build, rea
 
 If the reading is valid, the levers in order of effect:
 
-1. Lower `ENEMY_POOL_SIZE` (10 → 6) — removes draw calls directly, biggest win
-2. Raise `SPAWN_INTERVAL_MIN` (420 → 600 ms) — fewer simultaneous candies late in a match
+1. Lower `ENEMY_POOL_SIZE` (12 → 8) — removes draw calls directly, biggest win
+2. Increase the selected difficulty's fixed spawn interval — fewer simultaneous candies
 3. Simplify `Tablecloth` — a full-screen layer repainted every frame, the largest single draw
 4. Reduce path complexity in `src/render/foodie/characters/`
 
@@ -77,7 +77,7 @@ The POC's frame-rate criterion is unresolved: the last recorded run measured 30�
 
 Different problem from a low but flat frame rate. Two candidates:
 
-- **The difficulty ramp is working as intended.** Candies speed up and spawn more often as a match progresses, so more are on screen. Confirm by comparing early-match to late-match frame rate across a *fresh* run.
+- **The visible enemy count rises.** Spawn speed and interval stay fixed for the selected difficulty, but overlapping projectiles can increase draw cost. Compare active slot counts early and late in a fresh run.
 - **The pool is not recycling.** `obstacleActive[i]` must return to 0 when a candy exits left. Confirm with `adb shell dumpsys meminfo <package>` over several minutes; sawtooth or rising memory means allocation somewhere in the frame path.
 
 ### Game runs too fast or too slow
@@ -138,7 +138,7 @@ Only the X axis is tested; Y overlap is implied by the lane-index check. If lane
 
 ### Candies stop spawning
 
-All 10 enemy slots are occupied, so the spawn tick finds nothing free and skips silently. The difficulty ramp tightens the interval toward 420 ms as a match runs, which narrows the margin. Raise `SPAWN_INTERVAL_MIN` or `ENEMY_POOL_SIZE`.
+All 12 enemy slots are occupied, so the spawn tick finds nothing free and skips silently. Increase the selected difficulty's fixed interval or `ENEMY_POOL_SIZE` if this happens too often.
 
 ### All candies spin identically
 
@@ -152,9 +152,9 @@ Intended. Type is fixed per slot index: `['lolli','candy','donut'][i % 3]`. It i
 
 `GameScreen` calls `engine.reset()` in an effect keyed on `screen === 'game'`. If the field is dirty, that effect did not fire — check the screen transition actually passed through the store, since `GameScreen` stays mounted across `'game'` and `'over'` and will not remount on its own.
 
-### Difficulty stays ramped after a restart
+### Wrong difficulty after a restart
 
-Speed and interval are derived from `elapsedTime`, which `engine.reset()` zeroes. A restart that stays hard means `reset()` was skipped — same cause as above.
+Speed and interval come from the selected fixed preset. `engine.reset()` restores the difficulty mirror; if a restart uses the wrong preset, check that reset ran and the selected difficulty was preserved.
 
 ### Score not incrementing
 

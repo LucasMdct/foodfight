@@ -5,6 +5,7 @@ import { useTheme, useUiScale } from '../../theme';
 import { useGameStore } from '../../store/gameStore';
 import { Foodie } from '../../render/foodie/Foodie';
 import { makeStyles } from './GameOverModal.styles';
+import { isGameOverModalVisible } from './gameOverVisibility';
 
 const POP_DURATION_MS = 350;
 
@@ -20,15 +21,19 @@ export const GameOverModal = () => {
   const screen = useGameStore((s) => s.state.screen);
   const actions = useGameStore((s) => s.actions);
   const pop = useRef(new RNAnimated.Value(0)).current;
+  const visible = isGameOverModalVisible(screen);
 
   useEffect(() => {
+    if (!visible) return;
     pop.setValue(0);
     RNAnimated.timing(pop, {
       toValue: 1,
       duration: POP_DURATION_MS,
       useNativeDriver: true,
     }).start();
-  }, [pop]);
+  }, [pop, visible]);
+
+  if (!visible) return null;
 
   const cardScale = pop.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] });
   const playAgain = () => {

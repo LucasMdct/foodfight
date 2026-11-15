@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated as RNAnimated, Pressable, Text, View } from 'react-native';
+import { Animated as RNAnimated, Easing, Pressable, Text, View } from 'react-native';
 import { Canvas } from '@shopify/react-native-skia';
 import { useTheme } from '../theme';
 import { useGameStore } from '../store/gameStore';
@@ -48,6 +48,7 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
     )
   ];
   const pulse = useRef(new RNAnimated.Value(0)).current;
+  const ringSpin = useRef(new RNAnimated.Value(0)).current;
 
   useEffect(() => {
     if (!toast) return;
@@ -57,19 +58,36 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
 
   useEffect(() => {
     pulse.stopAnimation();
+    ringSpin.stopAnimation();
     pulse.setValue(0);
+    ringSpin.setValue(0);
     if (charges <= 0) return;
-    const animation = RNAnimated.loop(
+    const pulseAnim = RNAnimated.loop(
       RNAnimated.sequence([
-        RNAnimated.timing(pulse, { toValue: 1, duration: 450, useNativeDriver: true }),
-        RNAnimated.timing(pulse, { toValue: 0, duration: 450, useNativeDriver: true }),
+        RNAnimated.timing(pulse, { toValue: 1, duration: 350, useNativeDriver: true }),
+        RNAnimated.timing(pulse, { toValue: 0, duration: 350, useNativeDriver: true }),
       ])
     );
-    animation.start();
-    return () => animation.stop();
-  }, [charges, pulse]);
+    const spinAnim = RNAnimated.loop(
+      RNAnimated.timing(ringSpin, {
+        toValue: 1,
+        duration: 5000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    pulseAnim.start();
+    spinAnim.start();
+    return () => {
+      pulseAnim.stop();
+      spinAnim.stop();
+    };
+  }, [charges, pulse, ringSpin]);
 
   const buttonScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.05] });
+  const ringRotate = ringSpin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const ringScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.14] });
+  const ringOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.9, 0.4] });
 
   return (
     <View style={styles.container} pointerEvents="box-none">
@@ -88,7 +106,7 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
 
         <View style={styles.rightCluster}>
           <View style={styles.villainHpRow}>
-            <Text style={styles.villainHpLabel}>Barão</Text>
+            <Text style={styles.villainHpLabel}>Barão Brigadeiro</Text>
             <View style={styles.villainHpDots}>
               {Array.from({ length: GAME_CONSTANTS.VILLAIN_HP }, (_, i) => (
                 <View
@@ -115,17 +133,32 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
       </View>
 
       <View style={styles.powerControl}>
-        <RNAnimated.View style={{ transform: [{ scale: buttonScale }] }}>
-          <Pressable
-            onPressIn={onFire}
-            disabled={charges <= 0}
-            style={[styles.powerBtn, charges <= 0 && styles.powerBtnDisabled]}
-            accessibilityRole="button"
-            accessibilityLabel={`Usar poder, ${charges} cargas`}
-          >
-            <Text style={styles.powerText}>PODER!</Text>
-          </Pressable>
-        </RNAnimated.View>
+        <View style={styles.powerButtonFrame}>
+          {charges > 0 && (
+            <RNAnimated.View
+              pointerEvents="none"
+              style={[
+                styles.powerRing,
+                {
+                  opacity: ringOpacity,
+                  transform: [{ rotate: ringRotate }, { scale: ringScale }],
+                },
+              ]}
+            />
+          )}
+          <RNAnimated.View style={{ transform: [{ scale: buttonScale }] }}>
+            <Pressable
+              onPressIn={onFire}
+              disabled={charges <= 0}
+              style={[styles.powerBtn, charges <= 0 && styles.powerBtnDisabled]}
+              accessibilityRole="button"
+              accessibilityLabel={`Usar poder, ${charges} cargas`}
+            >
+              <Text style={styles.powerStar}>⭐</Text>
+              <Text style={styles.powerText}>PODER!</Text>
+            </Pressable>
+          </RNAnimated.View>
+        </View>
         <View style={styles.chargeRow}>
           {Array.from({ length: GAME_CONSTANTS.POWER_MAX_CHARGES }, (_, i) => (
             <View key={i} style={[styles.chargeDot, i < charges && styles.chargeDotFull]} />
@@ -137,7 +170,7 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
         <View style={styles.hintWrap} pointerEvents="none">
           <View style={styles.hintPill}>
             <Text style={styles.hintText}>
-              Deslize/toque para trocar de fileira · toque em PODER! para atacar · pegue a bolha
+              Clique em cima = sobe · clique embaixo = desce · pegue a bolha 🫧 pra ganhar PODER
             </Text>
           </View>
         </View>
@@ -148,12 +181,10 @@ export const Hud = ({ onFire, onExit, showHint = true }: HudProps) => {
           <View style={styles.toastPill}>
             <Text style={styles.toastText}>
               {toast === 'food-collected'
-                ? 'Comida de verdade! +1 PODER'
+                ? 'Comida de verdade! +1 PODER ⭐'
                 : typeof toast !== 'string' && toast.type === 'power-fired'
-                  ? toast.name
-                  : toast === 'milestone-power'
-                    ? '⭐ PODER +1!'
-                    : ''}
+                  ? `${toast.name}! 🎉`
+                  : ''}
             </Text>
           </View>
         </View>

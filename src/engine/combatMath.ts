@@ -6,7 +6,6 @@ export interface DifficultyConfig {
   readonly speed: number;
   readonly interval: number;
   readonly doubleSpawnChance: number;
-  readonly acceleration: number;
 }
 
 export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
@@ -15,28 +14,24 @@ export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
     speed: 215,
     interval: 1450,
     doubleSpawnChance: 0,
-    acceleration: 0.002,
   },
   facil: {
     label: 'Fácil',
     speed: 300,
     interval: 1050,
     doubleSpawnChance: 0.1,
-    acceleration: 0.004,
   },
   dificil: {
     label: 'Difícil',
     speed: 430,
     interval: 760,
     doubleSpawnChance: 0.3,
-    acceleration: 0.006,
   },
   impossivel: {
     label: 'Impossível',
     speed: 560,
     interval: 540,
     doubleSpawnChance: 0.55,
-    acceleration: 0.009,
   },
 };
 

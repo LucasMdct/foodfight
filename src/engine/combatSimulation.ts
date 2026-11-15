@@ -20,7 +20,7 @@ const SIMULATION_WIDTH = 900;
 const HERO_X = SIMULATION_WIDTH * GAME_CONSTANTS.HERO_X_RATIO;
 const HERO_LEFT = HERO_X + GAME_CONSTANTS.HERO_HITBOX_PADDING;
 const HERO_RIGHT = HERO_X + GAME_CONSTANTS.HERO_WIDTH - GAME_CONSTANTS.HERO_HITBOX_PADDING;
-const VILLAIN_X = SIMULATION_WIDTH - 100;
+const VILLAIN_X = SIMULATION_WIDTH - GAME_CONSTANTS.VILLAIN_SHOT_HIT_X_OFFSET;
 const SIMULATION_HEIGHT = 520;
 const LANE_HEIGHT = SIMULATION_HEIGHT / GAME_CONSTANTS.LANE_COUNT;
 
@@ -37,6 +37,7 @@ export interface CombatEnemySeed {
   readonly lane: number;
   readonly kind: ProjectileKind;
   readonly resistant?: boolean;
+  readonly scored?: boolean;
 }
 
 export interface CombatScenario {
@@ -63,8 +64,9 @@ export type CombatEvent =
   | { readonly type: 'bubbleSpawned' }
   | { readonly type: 'projectileSpawned'; readonly lane: number; readonly kind: ProjectileKind }
   | { readonly type: 'villainBurst'; readonly count: number; readonly lane: number }
-  | { readonly type: 'powerChargeGranted'; readonly charges: number }
   | { readonly type: 'powerCleared'; readonly score: number }
+  | { readonly type: 'confettiSpawned'; readonly x: number; readonly y: number }
+  | { readonly type: 'villainDefeatStarted' }
   | { readonly type: 'spawnSkipped' };
 
 export interface CombatSnapshot {
@@ -75,6 +77,8 @@ export interface CombatSnapshot {
   readonly lives: number;
   readonly activeEnemies: number;
   readonly activeShots: number;
+  readonly bubbleActive: boolean;
+  readonly bubblePending: number;
 }
 
 export interface CombatResult {
@@ -87,7 +91,7 @@ interface EnemySlot {
   x: number;
   lane: number;
   kind: ProjectileKind;
-  resistant: boolean;
+  scored: boolean;
 }
 
 interface ShotSlot {
@@ -108,7 +112,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     y: 0,
     lane: 0,
     kind: PROJECTILE_KIND.lolli,
-    resistant: false,
+    scored: false,
   }));
   const shots: ShotSlot[] = Array.from({ length: GAME_CONSTANTS.POWER_SHOT_POOL_SIZE }, () => ({
     active: false,
@@ -118,6 +122,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     powerIndex: 0,
   }));
   const events: CombatEvent[] = [];
+  const effectUntil = Array<number>(GAME_CONSTANTS.BURST_EFFECT_POOL_SIZE).fill(0);
   let rngState = scenario.seed >>> 0;
   let score = scenario.score ?? 0;
   let villainHp = scenario.villainHp ?? GAME_CONSTANTS.VILLAIN_HP;
@@ -127,7 +132,6 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let elapsedMs = 0;
   let powerIndex = 0;
   let spawnAccumulatorMs = GAME_CONSTANTS.INITIAL_SPAWN_ACCUMULATOR_MS;
-  let powerUntilScore = -1;
   let milestonesHandled = Math.floor(score / GAME_CONSTANTS.MILESTONE_SCORE_STEP);
   const difficulty = difficultyConfigAt(scenario.difficulty ?? 'facil');
 
@@ -138,7 +142,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     enemies[index].x = seed.x;
     enemies[index].lane = clampLane(seed.lane);
     enemies[index].kind = seed.kind;
-    enemies[index].resistant = seed.resistant === true;
+    enemies[index].scored = seed.scored === true;
   }
 
   let bubbleActive = scenario.bubble !== undefined;
@@ -152,6 +156,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let burstLane = 1;
   let burstNextAtMs = 0;
   let burstDelayIndex = 0;
+  let defeatActive = false;
+  let defeatStartedAtMs = 0;
+  let defeatBurstIndex = 0;
+  let defeatVillainCenterY = SIMULATION_HEIGHT / 2;
 
   for (let frameIndex = 0; frameIndex < scenario.frames.length; frameIndex += 1) {
     if (screen !== 'game') break;
@@ -159,6 +167,47 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     const frame = scenario.frames[frameIndex];
     const dtMs = Math.max(0, Math.min(GAME_CONSTANTS.MAX_FRAME_DELTA_MS, frame.dtMs));
     const lane = clampLane(frame.lane ?? 1);
+
+    if (defeatActive) {
+      elapsedMs += dtMs;
+      while (
+        defeatBurstIndex < GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_COUNT &&
+        elapsedMs >=
+          defeatStartedAtMs +
+            GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_START_MS +
+            defeatBurstIndex * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_INTERVAL_MS
+      ) {
+        defeatBurstIndex += 1;
+        rngState = nextRngState(rngState);
+        const offsetX = (rngUnit(rngState) - 0.5) * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_SPREAD_X;
+        rngState = nextRngState(rngState);
+        const offsetY = (rngUnit(rngState) - 0.5) * GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_SPREAD_Y;
+        let effectSlot = -1;
+        for (let index = 0; index < effectUntil.length; index += 1) {
+          if (effectUntil[index] <= elapsedMs) {
+            effectSlot = index;
+            break;
+          }
+        }
+        if (effectSlot >= 0) {
+          effectUntil[effectSlot] = elapsedMs + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+          events.push({
+            type: 'confettiSpawned',
+            x: SIMULATION_WIDTH - GAME_CONSTANTS.VILLAIN_DEFEAT_BURST_X_OFFSET + offsetX,
+            y: defeatVillainCenterY + offsetY,
+          });
+        } else {
+          events.push({ type: 'spawnSkipped' });
+        }
+      }
+      if (elapsedMs >= defeatStartedAtMs + GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS) {
+        defeatActive = false;
+        screen = 'win';
+        events.push({ type: 'win' });
+        break;
+      }
+      continue;
+    }
 
     if (frame.fire && charges > 0) {
       let shotSlot = -1;
@@ -170,7 +219,6 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       }
       if (shotSlot >= 0) {
         charges -= 1;
-        powerUntilScore = score + GAME_CONSTANTS.POWER_MODE_SCORE_DURATION;
         shots[shotSlot].active = true;
         shots[shotSlot].x = HERO_X + GAME_CONSTANTS.HERO_WIDTH;
         shots[shotSlot].y = lane * LANE_HEIGHT + (LANE_HEIGHT - GAME_CONSTANTS.HERO_HEIGHT) / 2;
@@ -178,17 +226,49 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         shots[shotSlot].powerIndex = powerIndex;
         events.push({ type: 'powerFired', powerIndex });
         powerIndex = (powerIndex + 1) % 3;
+        for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
+          const enemy = enemies[enemyIndex];
+          const size =
+            enemy.kind === PROJECTILE_KIND.zumbi
+              ? GAME_CONSTANTS.ZOMBIE_RENDER_SIZE
+              : GAME_CONSTANTS.CANDY_SIZE * GAME_CONSTANTS.PROJECTILE_SIZE_MULTIPLIER;
+          if (!enemy.active || enemy.x > SIMULATION_WIDTH + 10 || enemy.x + size <= 0) continue;
+          // Score ownership is settled before the slot can be reused.
+          if (!enemy.scored) {
+            enemy.scored = true;
+            score += GAME_CONSTANTS.SCORE_PER_DODGE;
+          }
+          enemy.active = false;
+          events.push({ type: 'powerCleared', score });
+          let effectSlot = -1;
+          for (let index = 0; index < effectUntil.length; index += 1) {
+            if (effectUntil[index] <= elapsedMs) {
+              effectSlot = index;
+              break;
+            }
+          }
+          if (effectSlot >= 0) {
+            effectUntil[effectSlot] = elapsedMs + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+            events.push({
+              type: 'confettiSpawned',
+              x: enemy.x + size / 2,
+              y: (enemy.lane + 0.5) * LANE_HEIGHT,
+            });
+          } else {
+            events.push({ type: 'spawnSkipped' });
+          }
+        }
       } else {
         events.push({ type: 'spawnSkipped' });
       }
     }
 
     elapsedMs += dtMs;
-    const speed = difficulty.speed + Math.min(280, elapsedMs * difficulty.acceleration);
+    const speed = difficulty.speed;
 
     if (scenario.enemies === undefined || scenario.autoSpawn === true) {
       spawnAccumulatorMs += dtMs;
-      const spawnInterval = Math.max(400, difficulty.interval - elapsedMs * 0.003);
+      const spawnInterval = difficulty.interval;
       if (spawnAccumulatorMs >= spawnInterval) {
         spawnAccumulatorMs -= spawnInterval;
         const phase = attackPhaseAt(score);
@@ -231,7 +311,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
               : (primaryLane + 1 + Math.floor(random01 * 2)) % GAME_CONSTANTS.LANE_COUNT;
           if (spawnIndex === 0) primaryLane = spawnedEnemy.lane;
           spawnedEnemy.kind = projectileKindAt(phase, random01);
-          spawnedEnemy.resistant = false;
+          spawnedEnemy.scored = false;
           events.push({
             type: 'projectileSpawned',
             lane: spawnedEnemy.lane,
@@ -266,7 +346,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         burst.x = SIMULATION_WIDTH - GAME_CONSTANTS.ENEMY_SPAWN_FROM_RIGHT;
         burst.lane = burstLane;
         burst.kind = PROJECTILE_KIND.zumbi;
-        burst.resistant = true;
+        burst.scored = false;
       } else {
         events.push({ type: 'spawnSkipped' });
       }
@@ -285,17 +365,40 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       );
       if (shot.x >= VILLAIN_X) {
         shot.active = false;
+        const villainCenterY =
+          villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
+          GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT / 2;
+        let effectSlot = -1;
+        for (let index = 0; index < effectUntil.length; index += 1) {
+          if (effectUntil[index] <= elapsedMs) {
+            effectSlot = index;
+            break;
+          }
+        }
+        if (effectSlot >= 0) {
+          effectUntil[effectSlot] = elapsedMs + GAME_CONSTANTS.BURST_EFFECT_DURATION_MS;
+          events.push({
+            type: 'confettiSpawned',
+            x: SIMULATION_WIDTH - GAME_CONSTANTS.VILLAIN_SHOT_EXPLOSION_X_OFFSET,
+            y: villainCenterY,
+          });
+        } else {
+          events.push({ type: 'spawnSkipped' });
+        }
         villainHp = Math.max(0, villainHp - 1);
         events.push({ type: 'villainHit', villainHp });
         if (villainHp === 0) {
-          screen = 'win';
-          events.push({ type: 'win' });
+          defeatActive = true;
+          defeatStartedAtMs = elapsedMs;
+          defeatBurstIndex = 0;
+          defeatVillainCenterY = villainCenterY;
+          events.push({ type: 'villainDefeatStarted' });
           break;
         }
       }
     }
 
-    if (screen !== 'game') break;
+    if (screen !== 'game' || defeatActive) continue;
 
     for (let enemyIndex = 0; enemyIndex < enemies.length; enemyIndex += 1) {
       const enemy = enemies[enemyIndex];
@@ -306,26 +409,12 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
           ? GAME_CONSTANTS.ZOMBIE_RENDER_SIZE
           : GAME_CONSTANTS.CANDY_SIZE * GAME_CONSTANTS.PROJECTILE_SIZE_MULTIPLIER;
       if (enemy.x + enemySize < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
-        enemy.active = false;
-        score += GAME_CONSTANTS.SCORE_PER_DODGE;
-        events.push({ type: 'score', score });
-        while (score >= bubbleThreshold) {
-          bubblePending += 1;
-          bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
+        if (!enemy.scored) {
+          enemy.scored = true;
+          score += GAME_CONSTANTS.SCORE_PER_DODGE;
+          events.push({ type: 'score', score });
         }
-      } else if (
-        score < powerUntilScore &&
-        !enemy.resistant &&
-        enemy.x > HERO_RIGHT &&
-        enemy.x < SIMULATION_WIDTH * 0.62
-      ) {
         enemy.active = false;
-        score += GAME_CONSTANTS.SCORE_PER_DODGE;
-        events.push({ type: 'powerCleared', score });
-        while (score >= bubbleThreshold) {
-          bubblePending += 1;
-          bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
-        }
       } else if (
         elapsedMs >= invulnerableUntilMs &&
         enemy.lane === lane &&
@@ -348,8 +437,6 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     const milestoneCount = milestoneCountAt(score);
     while (milestonesHandled < milestoneCount) {
       milestonesHandled += 1;
-      charges = powerChargeAfterPickup(charges);
-      events.push({ type: 'powerChargeGranted', charges });
       const villainLane = clampLane(
         Math.floor(
           (villainYAt(elapsedMs, SIMULATION_HEIGHT, GAME_CONSTANTS.VILLAIN_RENDER_HEIGHT) +
@@ -371,6 +458,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
       });
     }
 
+    while (score >= bubbleThreshold) {
+      bubblePending += 1;
+      bubbleThreshold += GAME_CONSTANTS.BUBBLE_EVERY;
+    }
     if (!bubbleActive && bubblePending > 0) {
       bubblePending -= 1;
       bubbleActive = true;
@@ -386,7 +477,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         bubbleLane === lane &&
         rectsOverlapX(
           bubbleX - GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
-          bubbleX + GAME_CONSTANTS.BUBBLE_SIZE + GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
+          bubbleX + GAME_CONSTANTS.BUBBLE_RENDER_SIZE + GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
           HERO_LEFT,
           HERO_RIGHT
         )
@@ -394,7 +485,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         bubbleActive = false;
         charges = powerChargeAfterPickup(charges);
         events.push({ type: 'foodCollected', charges });
-      } else if (bubbleX + GAME_CONSTANTS.BUBBLE_SIZE < GAME_CONSTANTS.ENEMY_DESPAWN_X) {
+      } else if (bubbleX < GAME_CONSTANTS.BUBBLE_DESPAWN_X) {
         bubbleActive = false;
       }
     }
@@ -408,6 +499,16 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
 
   return {
     events,
-    snapshot: { screen, score, villainHp, charges, lives, activeEnemies, activeShots },
+    snapshot: {
+      screen,
+      score,
+      villainHp,
+      charges,
+      lives,
+      activeEnemies,
+      activeShots,
+      bubbleActive,
+      bubblePending,
+    },
   };
 };
