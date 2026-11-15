@@ -3,7 +3,7 @@
 A mobile endless runner built with **Expo SDK 56**, **React Native Skia** and **Reanimated**.
 
 **Version:** 0.0.4 ([changelog](./CHANGELOG.md))
-**Status:** v0.0.4 implemented on `feature/v004` — manual review pending, no APK built yet
+**Status:** v0.0.4 release candidate on `master` — pre-release APK published; ARM hardware profiling pending
 
 Pick a Foodie, dodge the candy the Barão Brigadeiro throws across three lanes of a rolling kitchen table, collect food bubbles to charge your power, and defeat the Barão.
 
@@ -35,7 +35,7 @@ The architecture is still the strongest part: the loop runs entirely on the UI t
 
 ### Phase 2 — Game v0.0.1–v0.0.4 · **implemented, device QA pending**
 
-From v0.0.1 the project stops being a POC and becomes the game, implementing the `FoodFight v0.0.1` design in full. The released baseline is v0.0.2; v0.0.3 added difficulty selection and Barão 2.0 combat, and v0.0.4 adds bubble-only power charging, full-screen power clears, typed Barão dialogue with a talking mouth, laughing zombies, a 224 × 242 Barão, and a staged defeat sequence.
+From v0.0.1 the project stops being a POC and becomes the game, implementing the `FoodFight v0.0.1` design in full. Pre-release APKs cover v0.0.1 through v0.0.4: v0.0.3 added difficulty selection and Barão 2.0 combat, and v0.0.4 adds bubble-only power charging, full-screen power clears, typed Barão dialogue with a talking mouth, laughing zombies, a 224 × 242 Barão, and a staged defeat sequence.
 
 **Delivered:** character selection with three heroes, fixed-difficulty presets, the 224 × 242 Barão Brigadeiro villain with typed dialogue and staged defeat, Skia-rendered characters with an animated walk cycle, spinning candy projectiles and laughing zombies, food bubbles and full-screen power clears with centered confetti, scrolling tablecloth and lane dividers, a three-lives model, HUD with a 126 px lower-right circular power control, Win/Game Over with best-score tracking, a centralized theme with Fredoka typography, and Husky quality gates.
 

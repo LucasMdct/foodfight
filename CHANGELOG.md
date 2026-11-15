@@ -15,16 +15,20 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ## [Unreleased]
 
+No changes after `v0.0.4` yet.
+
+---
+
+## [0.0.4] — 2026-11-15 — _release candidate_
+
+This release packages the v0.0.4 gameplay update ("The Baron Talks (and Explodes)") for device validation. Physical-device performance profiling remains explicitly pending.
+
 ### Added
 
 - Add the v0.0.4 gameplay spec, implementation plan, design handoff, typewriter dialogue controller, and deterministic parity tests.
 - Add typewriter Barão dialogue (65 ms default cadence per character, tightened for defeat so the full line finishes before victory) with an animated talking mouth while text is being revealed.
 - Add animated zombie laughter with an opening/closing mouth and looping `HA HA HA!` pill.
 - Add the staged 2,500 ms Barão defeat sequence with inflate/shake/spin animation and nine confetti bursts before the victory modal.
-- Add the v0.0.3 difficulty flow with Muito Fácil, Fácil, Difícil, and Impossível presets.
-- Add Barão 2.0 gameplay with lane-origin attacks and 100-point zombie bursts.
-- Add enlarged Barão/projectile presentation, attack taunts, and difficulty feedback in the HUD.
-- Add the v0.0.3 gameplay spec, implementation plan, architecture updates, and deterministic harness coverage.
 
 ### Changed
 
@@ -32,18 +36,40 @@ This project has **two version tracks**, because it changed identity partway thr
 - Enlarge the gameplay Barão to the v0.0.4 handoff dimensions of 224 × 242 px and align shot hit (`W - 230`) and explosion (`W - 150`) boundaries.
 - Grant v0.0.4 power charges only from collected food bubbles, queued at every 100 points and served one at a time with 84 px bounds and a −90 px despawn boundary.
 - Clear every visible sweet and zombie immediately on accepted power fire, award 10 points once per enemy, and request centered confetti while the shot continues toward the Barão.
-- Change the screen flow to Loading → Select hero → Choose difficulty → Game → Result.
-- Preserve the selected difficulty when replaying a match.
 - Lock difficulty speed, spawn interval, and double-spawn chance to each preset for v0.0.4; remove the elapsed-time ramp.
 - Set v0.0.4 enemy (12) and effect (8) pool sizes, spawn/despawn boundaries, bubble threshold, Barão bounds, and timing constants from the design handoff.
 
 ### Fixed
 
+- Give every villain dialogue request a unique identity so identical consecutive phrases restart typing and keep the talking mouth synchronized.
+- Hide `GameOverModal` outside terminal screens so starting a match from difficulty selection never displays a stale end-of-match overlay.
+- Finish the staged defeat dialogue typing within the defeat window before transitioning to the victory modal.
+
+---
+
+## [0.0.3] — 2026-11-03 — _release candidate_
+
+This release packages difficulty selection and Barão 2.0 combat for device validation. Physical-device performance and manual gameplay QA remain explicitly pending.
+
+### Added
+
+- Add the v0.0.3 difficulty flow with Muito Fácil, Fácil, Difícil, and Impossível presets.
+- Add Barão 2.0 gameplay with lane-origin attacks and 100-point zombie bursts.
+- Add enlarged Barão/projectile presentation, attack taunts, and difficulty feedback in the HUD.
+- Add the v0.0.3 gameplay spec, implementation plan, architecture updates, and deterministic harness coverage.
+
+### Changed
+
+- Change the screen flow to Loading → Select hero → Choose difficulty → Game → Result.
+- Preserve the selected difficulty when replaying a match.
+
+### Fixed
+
+- Align production and harness spawn order, burst timing, and saturation events, and guard delayed gameplay bridges across match resets.
 - Fix power-charge mirroring, zero-charge match starts and soft vertical tracking for power shots.
 - Align the combat harness with production for bubble thresholds, hitbox padding, invulnerability, phase-four double spawns and pool saturation.
 - Port bubble reflections, zombie laugh pill, typed power-shot visuals, combat HUD markers and the hero victory modal from the v0.0.2 handoff.
 - Move combat colours into the shared theme and memoize the Skia canvas away from leaf HUD updates.
-
 - Fixed the select-screen footer to read the current app version from `app.json` instead of displaying the stale `v0.0.1` label.
 - Fixed the white flash between the loading burst and the select screen by keeping the themed app surface visible during the transition.
 - Fixed the native Expo splash to use the FoodFight asset and cream background instead of the default centered symbol.
