@@ -1,8 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GAME_CONSTANTS } from '../../types/constants';
-import { useGameStore, VILLAIN_OUCHES, VILLAIN_TAUNTS } from '../../store/gameStore';
-import { bindVillainDialogue, createVillainDialogueController } from './villainDialogue';
+import {
+  useGameStore,
+  VILLAIN_DEFEAT_LINE,
+  VILLAIN_OUCHES,
+  VILLAIN_TAUNTS,
+} from '../../store/gameStore';
+import {
+  bindVillainDialogue,
+  createVillainDialogueController,
+  resolveDialogueTiming,
+} from './villainDialogue';
 
 describe('villain typewriter dialogue controller', () => {
   beforeEach(() => {
@@ -245,5 +254,57 @@ describe('villain typewriter dialogue controller', () => {
 
     unsubscribe();
     vi.restoreAllMocks();
+  });
+
+  it('reveals the full defeat line before the 2500ms win transition and stops the mouth on completion', () => {
+    useGameStore.getState().actions.reset();
+    useGameStore.getState().actions.start();
+
+    let visibleText = '';
+    const unsubscribe = bindVillainDialogue(useGameStore, (text) => {
+      visibleText = text;
+    });
+
+    useGameStore.getState().actions.beginVillainDefeat();
+    expect(useGameStore.getState().state.villainTalkKind).toBe('defeat');
+    expect(useGameStore.getState().state.villainTalking).toBe(true);
+    expect(visibleText).toBe('');
+
+    const maxRevealMs =
+      GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS - GAME_CONSTANTS.VILLAIN_DEFEAT_DIALOGUE_HOLD_MS;
+    vi.advanceTimersByTime(maxRevealMs);
+    expect(visibleText).toBe(VILLAIN_DEFEAT_LINE);
+    expect(useGameStore.getState().state.villainTalking).toBe(false);
+
+    vi.advanceTimersByTime(GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS - maxRevealMs - 1);
+    expect(visibleText).toBe(VILLAIN_DEFEAT_LINE);
+
+    vi.advanceTimersByTime(1);
+    useGameStore.getState().actions.completeVillainDefeat();
+    expect(useGameStore.getState().state.screen).toBe('win');
+    expect(visibleText).toBe('');
+
+    unsubscribe();
+  });
+
+  it('keeps default cadence for taunts/ouches and short defeat lines, compressing long defeat lines', () => {
+    expect(resolveDialogueTiming('Oi!', 'taunt', 2800)).toEqual({
+      charIntervalMs: GAME_CONSTANTS.DIALOGUE_CHAR_INTERVAL_MS,
+      holdMs: 2800,
+    });
+    expect(resolveDialogueTiming('Curta!', 'defeat', 2500)).toEqual({
+      charIntervalMs: GAME_CONSTANTS.DIALOGUE_CHAR_INTERVAL_MS,
+      holdMs: 2500,
+    });
+
+    const defeatTiming = resolveDialogueTiming(
+      VILLAIN_DEFEAT_LINE,
+      'defeat',
+      GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS
+    );
+    expect(defeatTiming.charIntervalMs * VILLAIN_DEFEAT_LINE.length).toBeLessThanOrEqual(
+      GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS - GAME_CONSTANTS.VILLAIN_DEFEAT_DIALOGUE_HOLD_MS
+    );
+    expect(defeatTiming.holdMs).toBe(GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS);
   });
 });

@@ -1,2 +1,6 @@
 export { GameScreen } from './GameScreen';
-export { bindVillainDialogue, createVillainDialogueController } from './villainDialogue';
+export {
+  bindVillainDialogue,
+  createVillainDialogueController,
+  resolveDialogueTiming,
+} from './villainDialogue';

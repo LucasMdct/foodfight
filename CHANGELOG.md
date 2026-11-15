@@ -18,7 +18,7 @@ This project has **two version tracks**, because it changed identity partway thr
 ### Added
 
 - Add the v0.0.4 gameplay spec, implementation plan, design handoff, typewriter dialogue controller, and deterministic parity tests.
-- Add typewriter Barão dialogue at 65 ms per character with an animated talking mouth while text is being revealed.
+- Add typewriter Barão dialogue (65 ms default cadence per character, tightened for defeat so the full line finishes before victory) with an animated talking mouth while text is being revealed.
 - Add animated zombie laughter with an opening/closing mouth and looping `HA HA HA!` pill.
 - Add the staged 2,500 ms Barão defeat sequence with inflate/shake/spin animation and nine confetti bursts before the victory modal.
 - Add the v0.0.3 difficulty flow with Muito Fácil, Fácil, Difícil, and Impossível presets.

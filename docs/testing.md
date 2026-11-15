@@ -136,11 +136,11 @@ Test edge cases specifically: clip the leading and trailing edge of a candy. The
 
 ### 3.7 Barão dialogue and feedback
 
-- Dialogue reveals one character every 65 ms (typewriter effect) while the Barão's mouth opens and closes.
+- Dialogue reveals one character every 65 ms (default typewriter cadence) while the Barão's mouth opens and closes; defeat lines tighten cadence (`45 ms/char`) so all 40 characters finish before the 2,500 ms modal transition.
 - Once typing finishes, the mouth stops moving and the bubble holds for 2,800 ms (taunts) or 2,200 ms (ouches).
 - An opening taunt starts 800 ms after gameplay begins; a new dialogue line cancels any previous typewriter timer.
 - A non-final power hit sets the Barão to `bravo` for 1,400 ms and shakes him for 450 ms.
-- The final power hit types `"NÃÃÃO! Meus doces! Isso não fica assim!!"` during the 2,500 ms defeat sequence.
+- The final power hit finishes typing `"NÃÃÃO! Meus doces! Isso não fica assim!!"` before the 2,500 ms defeat sequence transitions to `win`.
 - Power-cleared projectiles and shot impacts show centered confetti using the eight-slot pool (`620 ms` duration).
 
 ---

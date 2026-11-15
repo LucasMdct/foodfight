@@ -27,7 +27,7 @@ The player should be able to select a hero, choose a fixed difficulty, dodge typ
 1. **Power is obtained only from food bubbles.** The automatic power charge at each score milestone is removed. A food bubble is queued at every 100-point threshold, one bubble at a time, and a collected bubble grants one charge up to the cap of three.
 2. **Power is a full-screen clear.** An accepted power clears every visible active enemy, including zombie attacks, creates a confetti effect at each cleared obstacle, and awards 10 points per cleared obstacle. The previous 40-point power window is removed.
 3. **Power control is redesigned.** The button is a 126 px circular control in the lower-right corner with a rotating gold ring while a charge is available. It remains outside the gameplay gesture surface.
-4. **Villain dialogue is typed.** Taunts, ouches, and defeat dialogue appear at 65 ms per character. The Barão has a talking mouth while text is being revealed; the dialogue uses the existing Fredoka font and no new runtime dependency.
+4. **Villain dialogue is typed.** Taunts and ouches appear at 65 ms per character, while the 40-character defeat line tightens its cadence so it finishes revealing with at least 700 ms of visibility before the 2,500 ms victory modal. The Barão has a talking mouth while text is being revealed; the dialogue uses the existing Fredoka font and no new runtime dependency.
 5. **Zombies laugh.** Zombie sprites have an animated mouth and a looping `HA HA HA!` label rendered inside their fixed slot.
 6. **The Barão is larger.** The gameplay villain is rendered at the v0.0.4 handoff size of 224 × 242 px, with its vertical position still driven by the UI-thread motion value.
 7. **Defeat is staged.** The final accepted hit freezes gameplay, starts the Barão inflate/shake/spin defeat animation, emits the fixed confetti pool around the villain, and transitions to the victory result only after the defeat sequence completes.
@@ -70,7 +70,7 @@ Cleared enemies are marked as scored before the bridge returns to JS so a later 
 - Opening taunt starts 800 ms after gameplay begins.
 - A normal taunt holds for 2,800 ms after typing completes.
 - An ouch holds for 2,200 ms and sets the villain mood to `bravo` for 1,400 ms; the villain shake lasts 450 ms.
-- The defeat line remains visible during the 2,500 ms defeat sequence.
+- The defeat line finishes revealing with at least 700 ms to spare and remains visible throughout the 2,500 ms defeat sequence until `win`.
 - A new dialogue request cancels the previous typewriter timer before starting.
 - Text updates are discrete JS-side updates; no dialogue value is sampled or allocated inside the frame worklet.
 
@@ -123,7 +123,8 @@ All values are named constants; literals are not duplicated across the engine, r
 | `VILLAIN_RENDER_WIDTH` | 224 | Gameplay villain width |
 | `VILLAIN_RENDER_HEIGHT` | 242 | Gameplay villain height |
 | `VILLAIN_DEFEAT_DURATION_MS` | 2500 | Delay before the win result |
-| `DIALOGUE_CHAR_INTERVAL_MS` | 65 | Typewriter cadence |
+| `DIALOGUE_CHAR_INTERVAL_MS` | 65 | Default typewriter cadence |
+| `VILLAIN_DEFEAT_DIALOGUE_HOLD_MS` | 700 | Minimum post-typing hold for defeat dialogue before victory |
 | `VILLAIN_OUCH_DURATION_MS` | 2200 | Ouch dialogue hold |
 | `VILLAIN_TAUNT_DURATION_MS` | 2800 | Taunt dialogue hold |
 | `VILLAIN_TALK_DELAY_MS` | 800 | Opening taunt delay |

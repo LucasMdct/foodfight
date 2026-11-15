@@ -58,6 +58,8 @@ const withVillainDialogue = (
   dialogueRequestId: state.dialogueRequestId + 1,
 });
 
+// `resolveDialogueTiming` compresses defeat typing so the 40-char line finishes
+// with `VILLAIN_DEFEAT_DIALOGUE_HOLD_MS` to spare before the 2,500 ms win transition.
 const enterStagedDefeat = (state: GameState): GameState => ({
   ...withVillainDialogue(
     state,

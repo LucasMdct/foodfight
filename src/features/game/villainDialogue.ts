@@ -1,8 +1,8 @@
 import { GAME_CONSTANTS } from '../../types/constants';
-import type { GameActions, GameState } from '../../types/game';
+import type { GameActions, GameState, VillainTalkKind } from '../../types/game';
 
 export interface VillainDialogueController {
-  show: (text: string, holdMs?: number) => void;
+  show: (text: string, holdMs?: number, charIntervalMs?: number) => void;
   cancel: () => void;
   dispose: () => void;
 }
@@ -11,7 +11,7 @@ export interface VillainDialogueStore {
   getState: () => {
     state: Pick<
       GameState,
-      'screen' | 'villainTalk' | 'villainTalkDurationMs' | 'dialogueRequestId'
+      'screen' | 'villainTalk' | 'villainTalkKind' | 'villainTalkDurationMs' | 'dialogueRequestId'
     >;
     actions: Pick<GameActions, 'setVillainTalking' | 'clearVillainTaunt'>;
   };
@@ -19,12 +19,38 @@ export interface VillainDialogueStore {
     listener: (snapshot: {
       state: Pick<
         GameState,
-        'screen' | 'villainTalk' | 'villainTalkDurationMs' | 'dialogueRequestId'
+        'screen' | 'villainTalk' | 'villainTalkKind' | 'villainTalkDurationMs' | 'dialogueRequestId'
       >;
       actions: Pick<GameActions, 'setVillainTalking' | 'clearVillainTaunt'>;
     }) => void
   ) => () => void;
 }
+
+/**
+ * Resolves typewriter cadence and post-reveal hold time for a dialogue request.
+ * Defeat lines tighten their cadence so the full line finishes revealing with
+ * readable dwell time inside the terminal defeat window before `win` mounts.
+ */
+export const resolveDialogueTiming = (
+  text: string,
+  kind: VillainTalkKind,
+  durationMs: number
+): { charIntervalMs: number; holdMs: number } => {
+  const defaultCadence = GAME_CONSTANTS.DIALOGUE_CHAR_INTERVAL_MS;
+  if (kind !== 'defeat' || text.length === 0 || durationMs <= 0) {
+    return { charIntervalMs: defaultCadence, holdMs: durationMs };
+  }
+
+  const typingBudgetMs =
+    durationMs > GAME_CONSTANTS.VILLAIN_DEFEAT_DIALOGUE_HOLD_MS
+      ? durationMs - GAME_CONSTANTS.VILLAIN_DEFEAT_DIALOGUE_HOLD_MS
+      : Math.floor(durationMs * 0.7);
+  const charIntervalMs = Math.max(
+    1,
+    Math.min(defaultCadence, Math.floor(typingBudgetMs / text.length))
+  );
+  return { charIntervalMs, holdMs: durationMs };
+};
 
 /**
  * Drives the character-by-character typewriter effect and post-line hold timer
@@ -56,7 +82,11 @@ export const createVillainDialogueController = (
     onChange('');
   };
 
-  const show = (text: string, holdMs = GAME_CONSTANTS.VILLAIN_TAUNT_DURATION_MS) => {
+  const show = (
+    text: string,
+    holdMs = GAME_CONSTANTS.VILLAIN_TAUNT_DURATION_MS,
+    charIntervalMs = GAME_CONSTANTS.DIALOGUE_CHAR_INTERVAL_MS
+  ) => {
     requestToken += 1;
     const token = requestToken;
     clearTimers();
@@ -85,7 +115,7 @@ export const createVillainDialogueController = (
           onHoldExpire?.();
         }, holdMs);
       }
-    }, GAME_CONSTANTS.DIALOGUE_CHAR_INTERVAL_MS);
+    }, charIntervalMs);
   };
 
   const dispose = () => {
@@ -132,7 +162,8 @@ export const bindVillainDialogue = (
   );
 
   const sync = (snapshot: ReturnType<VillainDialogueStore['getState']>) => {
-    const { screen, villainTalk, villainTalkDurationMs, dialogueRequestId } = snapshot.state;
+    const { screen, villainTalk, villainTalkKind, villainTalkDurationMs, dialogueRequestId } =
+      snapshot.state;
     if (screen !== 'game' || dialogueRequestId <= 0 || !villainTalk || villainTalkDurationMs <= 0) {
       lastSeenRequestId = dialogueRequestId;
       if (activeRequestId !== null) {
@@ -148,7 +179,12 @@ export const bindVillainDialogue = (
 
     lastSeenRequestId = dialogueRequestId;
     activeRequestId = dialogueRequestId;
-    controller.show(villainTalk, villainTalkDurationMs);
+    const { charIntervalMs, holdMs } = resolveDialogueTiming(
+      villainTalk,
+      villainTalkKind,
+      villainTalkDurationMs
+    );
+    controller.show(villainTalk, holdMs, charIntervalMs);
   };
 
   sync(store.getState());
