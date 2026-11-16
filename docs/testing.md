@@ -1,8 +1,8 @@
 # Testing Guide
 
-The validation protocol for Food Fight v0.0.4. Pure combat rules, typewriter dialogue, presentation contracts, and race conditions are covered by automated Vitest tests; frame timing and visual fidelity still require a physical device because the question that matters most (render performance on real hardware) cannot be answered any other way.
+The validation protocol for Food Fight v0.0.5. Pure combat rules, typewriter dialogue, presentation contracts, persistence, and race conditions are covered by automated Vitest tests; frame timing and visual fidelity still require a physical device because the question that matters most (render performance on real hardware) cannot be answered any other way.
 
-**Status: automated checks cover v0.0.4; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.4 draws a 12-slot typed enemy pool, an 8-slot confetti pool, a 224 × 242 Barão, animated mouths, and staged defeat bursts, treat that result as a **baseline, not a prediction**.
+**Status: automated checks cover v0.0.5; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.5 draws a 12-slot typed enemy pool, an 8-slot confetti pool, a 224 × 242 Barão, animated mouths, and staged defeat bursts, treat that result as a **baseline, not a prediction**.
 
 ---
 
@@ -230,7 +230,7 @@ Copy this into a new dated file under `docs/` and fill it in:
 ```markdown
 # Test Run — YYYY-MM-DD
 
-**Version:** v0.0.4
+**Version:** v0.0.5
 **Device:** model, SoC, RAM
 **OS:** version
 **Build:** release / dev
@@ -243,11 +243,13 @@ Copy this into a new dated file under `docs/` and fill it in:
 | ------------------ | --------------------------------------------- | -------- | ------ |
 | Frame rate         | ≥55 fps                                       |          |        |
 | Swipe latency      | <100 ms                                       |          |        |
-| Collision accuracy | no false +/-                                  |          |        |
+| Collision accuracy | no false +/- (including during lane slides)   |          |        |
 | Lives              | 1 per hit, 3 ends run                         |          |        |
 | Fixed difficulty   | constant speed/interval per preset            |          |        |
 | Powers             | full-screen clear, five hits stage defeat/win |          |        |
 | Food bubbles       | 100-pt threshold, one active, cap three       |          |        |
+| Persistence        | best score preserved across app kill/restart  |          |        |
+| Pause / Resume     | background pauses cleanly, resumes no jump    |          |        |
 | Terminal freeze    | staged defeat/win/over ignore late events     |          |        |
 | Memory             | <50 MB / 2 min                                |          |        |
 | Stability          | 0 crashes                                     |          |        |
@@ -260,17 +262,21 @@ Then add a `CHANGELOG.md` entry if the run changes the project's conclusions.
 
 ---
 
-## Outstanding for v0.0.4
+## Outstanding for v0.0.5
 
 Carried from the branch's known debts — none of these have been verified on hardware:
 
+- Persistence of best score across cold restarts on Android and iOS devices
+- Background/foreground transition and pause overlay presentation on device
+- Continuous Y collision accuracy during rapid lane transitions on touch devices
+- Hero bob animation offset timing (Alface 0s, Feijão -0.15s, Arroz -0.30s)
 - Villain spin and 2,500 ms staged defeat animation before the victory modal
 - Typewriter dialogue reveal (65 ms/char) and Barão talking mouth on device
 - Zombie mouth animation and looping `HA HA HA!` pill
 - 126 px lower-right circular `PODER!` button and rotating dashed gold ring
 - 1.4 s invulnerability flicker timing and 130 ms lane-change swipe/tap
 - Background scroll confined to the game screen
-- Frame rate under the full v0.0.4 scene (12 enemy slots, 8 confetti slots, 224 × 242 Barão)
+- Frame rate under the full v0.0.5 scene (12 enemy slots, 8 confetti slots, 224 × 242 Barão)
 - Difficulty card layout and all four fixed difficulty presets on a short landscape device
 - Bubble-only charging, full-screen power clears including zombies, and centered confetti
 - p95 comparison against the v0.0.1 baseline using the platform profiler

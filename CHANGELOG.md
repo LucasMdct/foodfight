@@ -15,7 +15,27 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ## [Unreleased]
 
-No changes after `v0.0.4` yet.
+### Added
+
+- Add persistent all-time best score via `@react-native-async-storage/async-storage` under storage key `@foodfight:best_score` with non-blocking startup hydration and safe memory fallback on I/O error.
+- Add discrete `AppState` pause/resume handling in `GameScreen` with a `Pausado` pill overlay and simulation time-delta freeze on the UI thread.
+- Add continuous vertical collision checks (`heroIntersectsObstacleY` and `heroIntersectsBubbleY`) to eliminate false-positive collisions during lane changes without per-frame worklet allocations.
+- Add design-verified walk-cycle bob animation offsets from `Foodie.dc.html` (Alface 0s, Feijão -0.15s, Arroz -0.30s).
+- Add interactive design handoff `docs/design/project/FoodFight v0.0.5.dc.html` with 14 documented visual states.
+- Add specification `docs/specs/2026-11-16-foodfight-v005-stability.md` and implementation plan `docs/plans/2026-11-16-foodfight-v005-stability.md`.
+
+### Changed
+
+- Bump project version to `0.0.5` across `package.json`, `package-lock.json`, `app.json`, and version tests.
+- Update `useRunnerEngine` and combat simulation harness to continuously test visual Y overlap on obstacles and bubbles.
+- Update `GameScreen` and `gameStore` to hydrate best score asynchronously on launch and persist on victory or game over.
+- Update `docs/architecture.md`, `docs/testing.md`, and `docs/troubleshooting.md` with v0.0.5 stabilization architecture.
+
+### Fixed
+
+- Fix lane transition collision debt where hero was vulnerable to destination lane collisions before visual arrival.
+- Fix best score loss on app reload by persisting non-negative integer scores with corruption resilience.
+- Fix fast-forward physics jump when resuming from background by freezing worklet time delta.
 
 ---
 
