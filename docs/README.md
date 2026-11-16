@@ -27,6 +27,7 @@ Project entry point and quick start live in the [root README](../README.md). Ver
 
 | Design handoff | Purpose |
 |---|---|
+| [FoodFight v0.0.5.dc.html](./design/project/FoodFight%20v0.0.5.dc.html) | v0.0.5 visual design handoff |
 | [FoodFight v0.0.4.dc.html](./design/project/FoodFight%20v0.0.4.dc.html) | v0.0.4 gameplay design handoff |
 
 ---
