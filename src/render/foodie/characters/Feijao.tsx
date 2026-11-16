@@ -11,7 +11,7 @@ const spot1 = Skia.Path.MakeFromSVGString('M34 52 Q28 76 36 98 Q26 78 30 58 Z')!
 const mouth = Skia.Path.MakeFromSVGString('M52 86 Q60 95 68 86')!;
 
 export const Feijao = () => {
-  const { legSwing, armSwing, bobY } = useWalkCycle();
+  const { legSwing, armSwing, bobY } = useWalkCycle('feijao');
   const legL = useDerivedValue(() => [{ rotate: legSwing.value }]);
   const legR = useDerivedValue(() => [{ rotate: -legSwing.value }]);
   const armL = useDerivedValue(() => [{ rotate: -armSwing.value }]);
