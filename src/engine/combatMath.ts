@@ -140,3 +140,30 @@ export const villainYAt = (
   const phase = (elapsedMs / GAME_CONSTANTS.VILLAIN_CYCLE_MS) * 2 * Math.PI;
   return centreY + Math.sin(phase) * amplitude;
 };
+
+export const heroIntersectsObstacleY = (
+  heroY: number,
+  obstacleY: number,
+  obstacleSize: number,
+  heroHeight = GAME_CONSTANTS.HERO_HEIGHT,
+  padding = GAME_CONSTANTS.HERO_HITBOX_PADDING
+): boolean => {
+  'worklet';
+  const heroTop = heroY + padding;
+  const heroBottom = heroY + heroHeight - padding;
+  return heroTop < obstacleY + obstacleSize && heroBottom > obstacleY;
+};
+
+export const heroIntersectsBubbleY = (
+  heroY: number,
+  bubbleY: number,
+  bubbleSize = GAME_CONSTANTS.BUBBLE_RENDER_SIZE,
+  bubblePadding = GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
+  heroHeight = GAME_CONSTANTS.HERO_HEIGHT,
+  padding = GAME_CONSTANTS.HERO_HITBOX_PADDING
+): boolean => {
+  'worklet';
+  const heroTop = heroY + padding;
+  const heroBottom = heroY + heroHeight - padding;
+  return heroTop < bubbleY + bubbleSize + bubblePadding && heroBottom > bubbleY - bubblePadding;
+};

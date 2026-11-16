@@ -7,6 +7,8 @@ import {
   difficultyAtIndex,
   difficultyConfigAt,
   difficultyIndexAt,
+  heroIntersectsBubbleY,
+  heroIntersectsObstacleY,
   milestoneCountAt,
   nextRngState,
   powerChargeAfterPickup,
@@ -166,5 +168,53 @@ describe('combat thresholds and villain motion', () => {
   it('moves a power shot toward the villain without teleporting', () => {
     expect(trackShotY(100, 300, 110, 220)).toBeCloseTo(200);
     expect(trackShotY(100, 300, 440, 220)).toBe(300);
+  });
+});
+
+describe('hero vertical collision during lane transition', () => {
+  const laneHeight = 520 / 3; // 173.333
+  const heroHeight = GAME_CONSTANTS.HERO_HEIGHT; // 120
+  const candySize = 68;
+
+  const heroYLane0 = 0 * laneHeight + (laneHeight - heroHeight) / 2; // ~26.67
+  const heroYLane1 = 1 * laneHeight + (laneHeight - heroHeight) / 2; // ~200
+  const heroYMidpoint = (heroYLane0 + heroYLane1) / 2; // ~113.33
+
+  const candyYLane0 = 0 * laneHeight + (laneHeight - candySize) / 2; // ~52.67
+  const candyYLane1 = 1 * laneHeight + (laneHeight - candySize) / 2; // ~226.0
+
+  it('detects hit in same lane and rejects hit in adjacent lane when hero is resting', () => {
+    expect(heroIntersectsObstacleY(heroYLane1, candyYLane1, candySize)).toBe(true);
+    expect(heroIntersectsObstacleY(heroYLane1, candyYLane0, candySize)).toBe(false);
+  });
+
+  it('avoids false positive at initial transition position when moving to another lane', () => {
+    // Hero begins transition at Lane 1 position towards Lane 0
+    // Obstacle in Lane 0 must NOT register hit yet
+    expect(heroIntersectsObstacleY(heroYLane1, candyYLane0, candySize)).toBe(false);
+    // Obstacle in Lane 1 is still overlapping
+    expect(heroIntersectsObstacleY(heroYLane1, candyYLane1, candySize)).toBe(true);
+  });
+
+  it('avoids false positives at midpoint of lane transition', () => {
+    // Hero is midway between Lane 1 and Lane 0
+    // Neither Lane 0 nor Lane 1 obstacle overlaps the hero's padded hitbox
+    expect(heroIntersectsObstacleY(heroYMidpoint, candyYLane0, candySize)).toBe(false);
+    expect(heroIntersectsObstacleY(heroYMidpoint, candyYLane1, candySize)).toBe(false);
+  });
+
+  it('detects hit at final transition position once arriving in target lane', () => {
+    // Hero reaches Lane 0
+    expect(heroIntersectsObstacleY(heroYLane0, candyYLane0, candySize)).toBe(true);
+    expect(heroIntersectsObstacleY(heroYLane0, candyYLane1, candySize)).toBe(false);
+  });
+
+  it('detects bubble collection with forgiving hitbox padding only when overlapping', () => {
+    const bubbleSize = GAME_CONSTANTS.BUBBLE_RENDER_SIZE; // 84
+    const bubbleYLane1 = 1 * laneHeight + (laneHeight - bubbleSize) / 2;
+    const bubbleYLane0 = 0 * laneHeight + (laneHeight - bubbleSize) / 2;
+
+    expect(heroIntersectsBubbleY(heroYLane1, bubbleYLane1)).toBe(true);
+    expect(heroIntersectsBubbleY(heroYLane1, bubbleYLane0)).toBe(false);
   });
 });
