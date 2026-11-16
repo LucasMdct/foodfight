@@ -45,6 +45,10 @@ export default function App() {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch((error) => {
       console.warn('[orientation] landscape lock failed', error);
     });
+    useGameStore
+      .getState()
+      .actions.hydrateBestScore()
+      .catch(() => {});
   }, []);
 
   return (

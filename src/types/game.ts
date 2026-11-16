@@ -1,4 +1,5 @@
 export type Who = 'alface' | 'feijao' | 'arroz';
+export type HeroId = Who;
 export type Difficulty = 'mfacil' | 'facil' | 'dificil' | 'impossivel';
 export type Screen = 'select' | 'difficulty' | 'game' | 'over' | 'win';
 export type GameToast =
@@ -57,6 +58,7 @@ export interface GameActions {
   toSelect: () => void;
   updateFps: (fps: number) => void;
   reset: () => void;
+  hydrateBestScore: () => Promise<void>;
 }
 
 export const START_LIVES = 3;
