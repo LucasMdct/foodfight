@@ -128,64 +128,45 @@ export const Vilao = ({
       <Circle cx={92} cy={70} r={9} color={c.eyeWhite} />
       <Circle cx={60} cy={72} r={4.5} color={c.eye} />
       <Circle cx={90} cy={72} r={4.5} color={c.eye} />
-      {mood === 'bravo' ? (
-        <>
-          <Path
-            path={bravoBrowL}
-            color={c.eye}
-            style="stroke"
-            strokeWidth={5.5}
-            strokeCap="round"
-          />
-          <Path
-            path={bravoBrowR}
-            color={c.eye}
-            style="stroke"
-            strokeWidth={5.5}
-            strokeCap="round"
-          />
-        </>
-      ) : (
-        <>
-          <Path path={browL} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
-          <Path path={browR} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
-        </>
-      )}
+      <Group opacity={mood === 'bravo' ? 1 : 0}>
+        <Path path={bravoBrowL} color={c.eye} style="stroke" strokeWidth={5.5} strokeCap="round" />
+        <Path path={bravoBrowR} color={c.eye} style="stroke" strokeWidth={5.5} strokeCap="round" />
+      </Group>
+      <Group opacity={mood !== 'bravo' ? 1 : 0}>
+        <Path path={browL} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
+        <Path path={browR} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
+      </Group>
 
       {/* monocle */}
       <Circle cx={92} cy={70} r={12.5} color={c.monocle} style="stroke" strokeWidth={2.5} />
       <Path path={monocleChain} color={c.monocle} style="stroke" strokeWidth={2} />
 
       {/* expression */}
-      {talking ? (
-        <Group origin={vec(75, 95)} transform={talkingMouthTransform}>
-          <Oval x={61} y={84} width={28} height={22} color={c.eye} />
-          <Oval x={67} y={94} width={16} height={10} color={c.sprinkleRed} />
-          <Path
-            path={talkingTeeth}
-            color={c.eyeWhite}
-            style="stroke"
-            strokeWidth={4}
-            strokeCap="round"
-          />
-        </Group>
-      ) : mood === 'bravo' ? (
-        <>
-          <Path path={bravoMouth} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
-          <Path
-            path={bravoMouthLines}
-            color={c.eye}
-            style="stroke"
-            strokeWidth={2.5}
-            strokeCap="round"
-          />
-        </>
-      ) : (
-        <>
-          <Path path={smile} color={c.eye} style="stroke" strokeWidth={3.5} strokeCap="round" />
-          <Path path={tooth} color={c.eyeWhite} />
-        </>
-      )}
+      <Group opacity={talking ? 1 : 0} origin={vec(75, 95)} transform={talkingMouthTransform}>
+        <Oval x={61} y={84} width={28} height={22} color={c.eye} />
+        <Oval x={67} y={94} width={16} height={10} color={c.sprinkleRed} />
+        <Path
+          path={talkingTeeth}
+          color={c.eyeWhite}
+          style="stroke"
+          strokeWidth={4}
+          strokeCap="round"
+        />
+      </Group>
+      <Group opacity={!talking && mood === 'bravo' ? 1 : 0}>
+        <Path path={bravoMouth} color={c.eye} style="stroke" strokeWidth={4} strokeCap="round" />
+        <Path
+          path={bravoMouthLines}
+          color={c.eye}
+          style="stroke"
+          strokeWidth={2.5}
+          strokeCap="round"
+        />
+      </Group>
+      <Group opacity={!talking && mood !== 'bravo' ? 1 : 0}>
+        <Path path={smile} color={c.eye} style="stroke" strokeWidth={3.5} strokeCap="round" />
+        <Path path={tooth} color={c.eyeWhite} />
+      </Group>
 
       {/* hat */}
       <RoundedRect x={57} y={2} width={36} height={24} r={3} color={c.hat} />

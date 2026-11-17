@@ -443,7 +443,10 @@ export const GameScreen = () => {
     return () => clearTimeout(timeout);
   }, [actions, screen, villainDying]);
 
-  const tauntStyle = useAnimatedStyle(() => ({ top: engine.villainY.value - 4 }));
+  const tauntStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: engine.villainY.value - 4 }],
+    opacity: typedTalk ? 1 : 0,
+  }));
 
   const handleMoveLane = useCallback(
     (direction: -1 | 1) => {
@@ -473,11 +476,9 @@ export const GameScreen = () => {
 
       <Hud onFire={engine.firePower} onExit={actions.toSelect} showHint={!hasMoved} />
 
-      {typedTalk ? (
-        <Animated.View pointerEvents="none" style={[GAME_SCREEN_STYLES.tauntBubble, tauntStyle]}>
-          <RNText style={GAME_SCREEN_STYLES.tauntText}>{typedTalk}</RNText>
-        </Animated.View>
-      ) : null}
+      <Animated.View pointerEvents="none" style={[GAME_SCREEN_STYLES.tauntBubble, tauntStyle]}>
+        <RNText style={GAME_SCREEN_STYLES.tauntText}>{typedTalk}</RNText>
+      </Animated.View>
 
       <LoopReadout />
       {isPaused && (

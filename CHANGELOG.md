@@ -33,6 +33,7 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ### Fixed
 
+- Fix Android Fabric crash when Barão talks by switching taunt bubble to GPU translateY transform, keeping view permanently mounted, and stabilizing Skia expression hierarchy with static opacity groups.
 - Fix lane transition collision debt where hero was vulnerable to destination lane collisions before visual arrival.
 - Fix best score loss on app reload by persisting non-negative integer scores with corruption resilience.
 - Fix fast-forward physics jump when resuming from background by freezing worklet time delta.

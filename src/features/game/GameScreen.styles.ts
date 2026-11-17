@@ -10,6 +10,7 @@ export const GAME_SCREEN_STYLES = StyleSheet.create({
   loopText: { color: theme.colors.surface, fontSize: 11 },
   tauntBubble: {
     position: 'absolute',
+    top: 0,
     right: Math.round(GAME_CONSTANTS.VILLAIN_RENDER_WIDTH * 0.92),
     width: 220,
     minHeight: 52,
@@ -27,6 +28,7 @@ export const GAME_SCREEN_STYLES = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 18,
     elevation: 6,
+    pointerEvents: 'none',
   },
   tauntText: {
     color: theme.colors.villain,
