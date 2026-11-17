@@ -1,8 +1,8 @@
 import { useSwing, useBob } from '../anim';
 import type { HeroId } from '../../types/game';
-import { HERO_BOB_INITIAL_RATIO, HERO_BOB_DELAYS_S } from './walkCycleConfig';
+import { HERO_BOB_DELAYS_S } from './walkCycleConfig';
 
-export { HERO_BOB_DELAYS_S, HERO_BOB_INITIAL_RATIO };
+export { HERO_BOB_DELAYS_S };
 
 /**
  * Hero walk cycle: legs swing ±16° over a 0.32s half-cycle, arms swing ±14°
@@ -13,6 +13,6 @@ export { HERO_BOB_DELAYS_S, HERO_BOB_INITIAL_RATIO };
 export const useWalkCycle = (who: HeroId = 'alface') => {
   const legSwing = useSwing(16, 320);
   const armSwing = useSwing(14, 320);
-  const bobY = useBob(3, 320, HERO_BOB_INITIAL_RATIO[who]);
+  const bobY = useBob(3, 320, HERO_BOB_DELAYS_S[who] * 1000);
   return { legSwing, armSwing, bobY };
 };

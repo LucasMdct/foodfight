@@ -1,11 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   useSharedValue,
+  withSequence,
   withRepeat,
   withTiming,
   Easing,
   type SharedValue,
 } from 'react-native-reanimated';
+import { bobTimelineForDelay } from './bobTimeline';
+
+export { bobTimelineForDelay } from './bobTimeline';
+export type { BobTimeline } from './bobTimeline';
 
 const DEG = Math.PI / 180;
 
@@ -23,15 +28,28 @@ export const useSwing = (deg: number, periodMs: number): SharedValue<number> => 
 };
 
 /** Ping-pong vertical bob: 0..-px over periodMs each half. */
-export const useBob = (px: number, periodMs: number, initialRatio = 0): SharedValue<number> => {
-  const v = useSharedValue(-px * initialRatio);
+export const useBob = (px: number, periodMs: number, phaseDelayMs = 0): SharedValue<number> => {
+  const timeline = useMemo(
+    () => bobTimelineForDelay(px, periodMs, phaseDelayMs),
+    [periodMs, phaseDelayMs, px]
+  );
+  const v = useSharedValue(timeline.initialValue);
   useEffect(() => {
     v.value = withRepeat(
-      withTiming(-px, { duration: periodMs, easing: Easing.inOut(Easing.ease) }),
+      withSequence(
+        withTiming(timeline.firstTarget, {
+          duration: timeline.firstDurationMs,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(timeline.secondTarget, {
+          duration: timeline.secondDurationMs,
+          easing: Easing.inOut(Easing.ease),
+        })
+      ),
       -1,
-      true
+      false
     );
-  }, [px, periodMs, v]);
+  }, [timeline, v]);
   return v;
 };
 

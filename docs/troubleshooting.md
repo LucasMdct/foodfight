@@ -162,7 +162,7 @@ Score is awarded for **dodging** — 10 points when a candy exits the left edge 
 
 ### Best score not updating or not persisting
 
-`best` updates inside the same transition that sets `screen: 'over'` or `screen: 'win'`. It only rises when the finished run beats it, survives `reset()` along with the hero choice, and is asynchronously persisted via `@react-native-async-storage/async-storage` (`@foodfight:best_score`). If best score does not survive an app restart, check `src/store/bestScoreStorage.ts` logs: non-integer or corrupt values are rejected safely with memory fallback.
+`best` updates inside the same transition that sets `screen: 'over'` or `screen: 'win'`. It only rises when the finished run beats it, survives `reset()` along with the hero choice, and is asynchronously persisted via `@react-native-async-storage/async-storage` (`@foodfight:best_score`). Values outside the safe `[0, 10,000,000)` range or corrupt values are rejected and the in-memory score remains active. Storage failures are intentionally handled as a silent memory fallback so they cannot interrupt gameplay.
 
 ---
 

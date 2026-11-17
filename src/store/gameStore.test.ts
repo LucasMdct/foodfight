@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useGameStore, VILLAIN_OUCHES, VILLAIN_TAUNTS } from './gameStore';
+import type { KeyValueStorage } from './bestScoreStorage';
 
 describe('combat game store guards', () => {
   beforeEach(() => {
@@ -271,13 +272,25 @@ describe('combat game store guards', () => {
     actions.reset();
 
     useGameStore.setState((s) => ({ state: { ...s.state, best: 200 } }));
-    await actions.hydrateBestScore();
-    expect(useGameStore.getState().state.best).toBeGreaterThanOrEqual(200);
+    const higherStorage: KeyValueStorage = {
+      getItem: vi.fn(async () => '900'),
+      setItem: vi.fn(async () => undefined),
+    };
+    await actions.hydrateBestScore(higherStorage);
+    expect(useGameStore.getState().state.best).toBe(900);
+
+    const lowerStorage: KeyValueStorage = {
+      getItem: vi.fn(async () => '150'),
+      setItem: vi.fn(async () => undefined),
+    };
+    await actions.hydrateBestScore(lowerStorage);
+    expect(useGameStore.getState().state.best).toBe(900);
   });
 
   it('preserves best score and selected difficulty across replay after game over or win', () => {
     const actions = useGameStore.getState().actions;
     actions.reset();
+    useGameStore.setState((s) => ({ state: { ...s.state, best: 0 } }));
     actions.toDifficulty();
     actions.start('dificil');
 

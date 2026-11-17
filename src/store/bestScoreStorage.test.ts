@@ -22,6 +22,7 @@ describe('bestScoreStorage', () => {
     it('accepts valid integers >= 0', () => {
       expect(normalizeBestScore(0)).toBe(0);
       expect(normalizeBestScore(100)).toBe(100);
+      expect(normalizeBestScore(9_999_999)).toBe(9_999_999);
       expect(normalizeBestScore('250')).toBe(250);
       expect(normalizeBestScore(' 450 ')).toBe(450);
     });
@@ -42,6 +43,9 @@ describe('bestScoreStorage', () => {
       expect(normalizeBestScore(NaN)).toBeNull();
       expect(normalizeBestScore(Infinity)).toBeNull();
       expect(normalizeBestScore(-Infinity)).toBeNull();
+      expect(normalizeBestScore(10_000_000)).toBeNull();
+      expect(normalizeBestScore(Number.MAX_SAFE_INTEGER)).toBeNull();
+      expect(normalizeBestScore('10000000')).toBeNull();
       expect(normalizeBestScore(null)).toBeNull();
       expect(normalizeBestScore(undefined)).toBeNull();
       expect(normalizeBestScore({})).toBeNull();

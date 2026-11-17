@@ -12,9 +12,3 @@ export const HERO_BOB_DELAYS_S: Record<HeroId, number> = {
   feijao: -0.15,
   arroz: -0.3,
 };
-
-export const HERO_BOB_INITIAL_RATIO: Record<HeroId, number> = {
-  alface: 0,
-  feijao: 0.15 / 0.32,
-  arroz: 0.3 / 0.32,
-};

@@ -1,20 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { BestScoreStorage } from '../types/game';
 
 export const BEST_SCORE_STORAGE_KEY = '@foodfight/best_score';
+export const MAX_BEST_SCORE = 10_000_000;
 
-export interface KeyValueStorage {
-  getItem: (key: string) => Promise<string | null>;
-  setItem: (key: string, value: string) => Promise<void>;
-}
+export type KeyValueStorage = BestScoreStorage;
 
 /**
  * Validates and normalizes candidate best score values.
- * Accepts only finite integers >= 0. Rejects strings with non-digits,
- * negative numbers, floats, NaN, objects, and infinities.
+ * Accepts only safe integers in the [0, MAX_BEST_SCORE) range.
  */
 export const normalizeBestScore = (candidate: unknown): number | null => {
   if (typeof candidate === 'number') {
-    if (!Number.isFinite(candidate) || !Number.isInteger(candidate) || candidate < 0) {
+    if (!Number.isSafeInteger(candidate) || candidate < 0 || candidate >= MAX_BEST_SCORE) {
       return null;
     }
     return candidate;
@@ -26,7 +24,7 @@ export const normalizeBestScore = (candidate: unknown): number | null => {
       return null;
     }
     const parsed = Number(trimmed);
-    if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed >= MAX_BEST_SCORE) {
       return null;
     }
     return parsed;
