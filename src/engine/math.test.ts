@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { candySpeedAt, laneTopY, rectsOverlapX, spawnIntervalAt } from './math';
+import { candySpeedAt, laneTopY, rectsOverlapX, rectsOverlapY, spawnIntervalAt } from './math';
 
 describe('laneTopY', () => {
   it('centres a 120px hero in each of three 200px lanes', () => {
@@ -43,5 +43,19 @@ describe('rectsOverlapX', () => {
 
   it('rejects separated rectangles', () => {
     expect(rectsOverlapX(10, 50, 90, 130)).toBe(false);
+  });
+});
+
+describe('rectsOverlapY', () => {
+  it('does not count touching vertical edges as an overlap', () => {
+    expect(rectsOverlapY(10, 50, 50, 90)).toBe(false);
+  });
+
+  it('detects a one-pixel vertical overlap', () => {
+    expect(rectsOverlapY(10, 50, 49, 90)).toBe(true);
+  });
+
+  it('rejects vertically separated rectangles', () => {
+    expect(rectsOverlapY(10, 50, 90, 130)).toBe(false);
   });
 });

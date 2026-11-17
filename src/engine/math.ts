@@ -45,3 +45,14 @@ export const rectsOverlapX = (
   'worklet';
   return aLeft < bRight && aRight > bLeft;
 };
+
+/** Y-axis overlap of two half-open rectangles. Touching edges do not count. */
+export const rectsOverlapY = (
+  aTop: number,
+  aBottom: number,
+  bTop: number,
+  bBottom: number
+): boolean => {
+  'worklet';
+  return aTop < bBottom && aBottom > bTop;
+};

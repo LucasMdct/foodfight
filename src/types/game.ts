@@ -1,10 +1,16 @@
 export type Who = 'alface' | 'feijao' | 'arroz';
+export type HeroId = Who;
 export type Difficulty = 'mfacil' | 'facil' | 'dificil' | 'impossivel';
 export type Screen = 'select' | 'difficulty' | 'game' | 'over' | 'win';
 export type GameToast =
   'food-collected' | { readonly type: 'power-fired'; readonly name: string } | null;
 export type VillainMood = 'feliz' | 'bravo';
 export type VillainTalkKind = 'taunt' | 'ouch' | 'defeat' | null;
+
+export interface BestScoreStorage {
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+}
 
 /**
  * Discrete game state kept in React/Zustand. Per-frame values (hero position,
@@ -57,6 +63,7 @@ export interface GameActions {
   toSelect: () => void;
   updateFps: (fps: number) => void;
   reset: () => void;
+  hydrateBestScore: (storage?: BestScoreStorage) => Promise<void>;
 }
 
 export const START_LIVES = 3;

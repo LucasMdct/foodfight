@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Group, Circle, Oval, RoundedRect, Path, Skia, vec,
-} from '@shopify/react-native-skia';
+import { Group, Circle, Oval, RoundedRect, Path, Skia, vec } from '@shopify/react-native-skia';
 import { useDerivedValue } from 'react-native-reanimated';
 import { useWalkCycle } from '../useWalkCycle';
 import { foodiePalette } from '../palette';
@@ -11,7 +9,7 @@ const c = foodiePalette.alface;
 const smile = Skia.Path.MakeFromSVGString('M53 84 Q60 91 67 84')!;
 
 export const Alface = () => {
-  const { legSwing, armSwing, bobY } = useWalkCycle();
+  const { legSwing, armSwing, bobY } = useWalkCycle('alface');
   const legL = useDerivedValue(() => [{ rotate: legSwing.value }]);
   const legR = useDerivedValue(() => [{ rotate: -legSwing.value }]);
   const armL = useDerivedValue(() => [{ rotate: -armSwing.value }]);

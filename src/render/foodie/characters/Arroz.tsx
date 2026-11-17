@@ -14,7 +14,7 @@ const shade = Skia.Path.MakeFromSVGString('M78 48 Q88 78 78 108 Q84 78 76 50 Z')
 const mouth = Skia.Path.MakeFromSVGString('M54 86 Q60 92 66 86')!;
 
 export const Arroz = () => {
-  const { legSwing, armSwing, bobY } = useWalkCycle();
+  const { legSwing, armSwing, bobY } = useWalkCycle('arroz');
   const legL = useDerivedValue(() => [{ rotate: legSwing.value }]);
   const legR = useDerivedValue(() => [{ rotate: -legSwing.value }]);
   const armL = useDerivedValue(() => [{ rotate: -armSwing.value }]);
