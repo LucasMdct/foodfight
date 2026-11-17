@@ -27,6 +27,8 @@ This project has **two version tracks**, because it changed identity partway thr
 ### Changed
 
 - Bump project version to `0.0.5` across `package.json`, `package-lock.json`, `app.json`, and version tests.
+- Upgrade the runtime to Expo SDK 57.0.33 / React Native 0.86.3 with Reanimated 4.5.1 and Worklets 0.10.1, which includes the Hermes V1 memory fix required by the Android release build.
+- Upgrade React Native Skia to 2.14.0 and explicitly exclude it from Expo's bundled-version check because the newer version is required for the Android Canvas memory-pressure fix.
 - Update `useRunnerEngine` and combat simulation harness to continuously test visual Y overlap on obstacles and bubbles.
 - Update `GameScreen` and `gameStore` to hydrate best score asynchronously on launch and persist on victory or game over.
 - Update `docs/architecture.md`, `docs/testing.md`, and `docs/troubleshooting.md` with v0.0.5 stabilization architecture.

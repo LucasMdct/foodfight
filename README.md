@@ -1,6 +1,6 @@
 # Food Fight
 
-A mobile endless runner built with **Expo SDK 56**, **React Native Skia** and **Reanimated**.
+A mobile endless runner built with **Expo SDK 57**, **React Native Skia** and **Reanimated**.
 
 **Version:** 0.0.5 ([changelog](./CHANGELOG.md))
 **Status:** v0.0.5 release candidate on `feature/v005` — stabilization, persistent best score via AsyncStorage, pause/resume AppState handling, transition-accurate collision, and design-verified hero bob offsets

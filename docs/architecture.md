@@ -389,5 +389,5 @@ Background and analysis from the POC: [results.md](./results.md).
 - [Reanimated — shared values](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/glossary#shared-value)
 - [Reanimated — `useFrameCallback`](https://docs.swmansion.com/react-native-reanimated/docs/advanced/useFrameCallback)
 - [Gesture Handler — Fling](https://docs.swmansion.com/react-native-gesture-handler/docs/gestures/fling-gesture)
-- [Expo SDK 56](https://docs.expo.dev/versions/v56.0.0/)
+- [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/)
 - [Game Programming Patterns — Game Loop](https://gameprogrammingpatterns.com/game-loop.html)
