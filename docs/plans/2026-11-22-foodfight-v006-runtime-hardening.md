@@ -22,7 +22,7 @@
 - Create: `src/engine/workletSafety.test.ts`
 - Read: `src/engine/combatMath.ts`
 
-- [ ] Read `src/engine/combatMath.ts` as UTF-8 and assert that no function parameter contains `= GAME_CONSTANTS.`.
+- [ ] Inspect every exported function in `src/engine/combatMath.ts` containing the `'worklet'` directive and assert that no signature contains `= GAME_CONSTANTS.`.
 - [ ] Run `npx vitest run src/engine/workletSafety.test.ts` and confirm it passes against the fixed helpers.
 
 ### Task 2: Add the compiled-bundle verifier
@@ -32,7 +32,7 @@
 - Modify: `package.json`
 
 - [ ] Search `dist/_expo/static/js/android` for `.hbc` files and fail with a clear message when none exist.
-- [ ] Read every Hermes bundle as UTF-8 and reject `function combatMathTs...(...=GAME_CONSTANTS`.
+- [ ] Read every Hermes bundle and reject any function signature containing `= GAME_CONSTANTS.` regardless of its source-module name.
 - [ ] Add `"verify:android-bundle": "node scripts/verify-android-bundle.mjs"`.
 - [ ] Run `npx expo export --platform android --clear` followed by `npm run verify:android-bundle`.
 

@@ -38,13 +38,19 @@ Written before implementation, one per feature.
 
 ## Releases
 
-Operational records for shipped versions live in [`releases/`](./releases/). Start with the [v0.0.5 release record](./releases/2026-11-22-foodfight-v005.md).
+Operational records for shipped and in-progress versions live in [`releases/`](./releases/).
+
+| Release record | Status |
+|---|---|
+| [v0.0.5 release record](./releases/2026-11-22-foodfight-v005.md) | Released |
+| [v0.0.6 release record](./releases/2026-11-22-foodfight-v006.md) | In development |
 
 | Spec | Subject |
 |---|---|
 | [2026-07-05-foodfight-v001-design.md](./specs/2026-07-05-foodfight-v001-design.md) | **v0.0.1 game design** — heroes, villain, screens, theme |
 | [2026-11-02-foodfight-v002-combat.md](./specs/2026-11-02-foodfight-v002-combat.md) | **v0.0.2 combat loop** — attacks, powers, food bubble, victory/defeat, pools and harness |
 | [2026-11-03-foodfight-v004-design.md](./specs/2026-11-03-foodfight-v004-design.md) | **v0.0.4 gameplay** — full-screen power, typed villain dialogue, laughing zombies, and staged defeat |
+| [2026-11-22-foodfight-v006-runtime-hardening.md](./specs/2026-11-22-foodfight-v006-runtime-hardening.md) | **v0.0.6 runtime hardening** — Worklets closure regression guard and Android bundle verification |
 | [2026-11-02-foodfight-v003-gameplay-design.md](./specs/2026-11-02-foodfight-v003-gameplay-design.md) | **v0.0.3 approved design record** — difficulty, Barão 2.0, milestones and reactions |
 | [2026-11-02-foodfight-v003-gameplay.md](./specs/2026-11-02-foodfight-v003-gameplay.md) | **v0.0.3 gameplay** — difficulty screen, Barão 2.0, milestones, bursts and power clear mode |
 | [poc-runner-skia.md](./specs/poc-runner-skia.md) | The original POC specification and acceptance criteria |
@@ -61,6 +67,7 @@ Step-by-step implementation plans derived from the specs above.
 | [2026-07-05-foodfight-v001.md](./plans/2026-07-05-foodfight-v001.md) | **v0.0.1 game implementation** |
 | [2026-11-02-foodfight-v002-combat.md](./plans/2026-11-02-foodfight-v002-combat.md) | **v0.0.2 combat implementation** |
 | [2026-11-03-foodfight-v004.md](./plans/2026-11-03-foodfight-v004.md) | **v0.0.4 gameplay implementation** |
+| [2026-11-22-foodfight-v006-runtime-hardening.md](./plans/2026-11-22-foodfight-v006-runtime-hardening.md) | **v0.0.6 runtime-hardening implementation** |
 | [2026-11-02-foodfight-v003-gameplay.md](./plans/2026-11-02-foodfight-v003-gameplay.md) | **v0.0.3 gameplay implementation** |
 | [2026-07-04-play-again-button.md](./plans/2026-07-04-play-again-button.md) | Game Over modal (POC) |
 | [2026-07-04-dopamine-loader.md](./plans/2026-07-04-dopamine-loader.md) | Loading screen (POC) |

@@ -10,7 +10,7 @@ if (bundles.length === 0) {
   throw new Error(`No Hermes Android bundles found in ${bundleDirectory}`);
 }
 
-const forbiddenDefault = /function\s+combatMathTs\d+\([^)]*=\s*GAME_CONSTANTS\./g;
+const forbiddenDefault = /function\s+[A-Za-z_$][\w$]*\s*\([^)]*=\s*GAME_CONSTANTS\./g;
 const violations = [];
 
 for (const bundlePath of bundles) {
