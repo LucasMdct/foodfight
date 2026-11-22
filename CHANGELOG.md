@@ -15,6 +15,10 @@ This project has **two version tracks**, because it changed identity partway thr
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.0.5] — 2026-11-22 — _released_
+
 ### Added
 
 - Add persistent all-time best score via `@react-native-async-storage/async-storage` under storage key `@foodfight:best_score` with non-blocking startup hydration and safe memory fallback on I/O error.
@@ -39,6 +43,7 @@ This project has **two version tracks**, because it changed identity partway thr
 - Fix lane transition collision debt where hero was vulnerable to destination lane collisions before visual arrival.
 - Fix best score loss on app reload by persisting non-negative integer scores with corruption resilience.
 - Fix fast-forward physics jump when resuming from background by freezing worklet time delta.
+- Fix Android Worklets crash caused by `GAME_CONSTANTS` default parameters being evaluated before the UI-thread closure is installed.
 
 ---
 

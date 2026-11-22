@@ -10,7 +10,7 @@ The project has two eras: the **POC** that tested React Native Skia, and the **g
 
 | Document                                   | What it covers                                                                                     | Read time |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------- | --------- |
-| [architecture.md](./architecture.md)       | How the current v0.0.4 game is built: fixed pools, full-screen power, typewriter, and staged defeat | 20 min    |
+| [architecture.md](./architecture.md)       | How the current v0.0.5 game is built: fixed pools, full-screen power, typewriter, and staged defeat | 20 min    |
 | [testing.md](./testing.md)                 | Validation protocol for v0.0.4 — automated suite complete, physical-device QA pending               | 12 min    |
 | [troubleshooting.md](./troubleshooting.md) | Symptom → cause → fix                                                                              | reference |
 | [results.md](./results.md)                 | POC measurements and the unresolved frame-rate verdict                                             | 8 min     |
@@ -35,6 +35,10 @@ Project entry point and quick start live in the [root README](../README.md). Ver
 ## Specs
 
 Written before implementation, one per feature.
+
+## Releases
+
+Operational records for shipped versions live in [`releases/`](./releases/). Start with the [v0.0.5 release record](./releases/2026-11-22-foodfight-v005.md).
 
 | Spec | Subject |
 |---|---|
