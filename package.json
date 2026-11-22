@@ -1,6 +1,6 @@
 {
   "name": "foodfight",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -10,7 +10,8 @@
     "lint": "eslint . --max-warnings=0",
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:android-bundle": "node scripts/verify-android-bundle.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/fredoka": "^0.4.1",

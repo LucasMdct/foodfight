@@ -1,8 +1,8 @@
 # Testing Guide
 
-The validation protocol for Food Fight v0.0.5. Pure combat rules, typewriter dialogue, presentation contracts, persistence, and race conditions are covered by automated Vitest tests; frame timing and visual fidelity still require a physical device because the question that matters most (render performance on real hardware) cannot be answered any other way.
+The validation protocol for Food Fight v0.0.6. Pure combat rules, typewriter dialogue, presentation contracts, persistence, race conditions, and Worklets closure safety are covered by automated tests; frame timing and visual fidelity still require a physical device because the question that matters most (render performance on real hardware) cannot be answered any other way.
 
-**Status: automated checks cover v0.0.5; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.5 draws a 12-slot typed enemy pool, an 8-slot confetti pool, a 224 × 242 Barão, animated mouths, and staged defeat bursts, treat that result as a **baseline, not a prediction**.
+**Status: automated checks cover v0.0.6; device validation is outstanding.** The POC's frame-rate criterion is **unresolved**: the last recorded run measured 30–50 fps and has not been re-measured ([results.md](./results.md)). Because v0.0.6 keeps the v0.0.5 scene and adds release verification, treat that result as a **baseline, not a prediction**.
 
 ---
 
@@ -28,7 +28,7 @@ Record the device model, OS version, build type, display refresh rate and the `G
 
 1. Cold launch. The loading screen holds until Fredoka fonts resolve.
 2. Orientation locks to landscape without a flash of portrait.
-3. Select screen shows all three heroes — Alface, Feijão, Arroz — and the `v0.0.4` version label.
+3. Select screen shows all three heroes — Alface, Feijão, Arroz — and the `v0.0.6` version label.
 4. Pick each hero in turn; the correct character appears in-game.
 5. Press **CONTINUAR →** and verify the difficulty screen shows all four cards.
 6. Choose each difficulty in turn; the selected label appears in the game HUD.
@@ -262,7 +262,25 @@ Then add a `CHANGELOG.md` entry if the run changes the project's conclusions.
 
 ---
 
-## Outstanding for v0.0.5
+## v0.0.6 release checks
+
+After exporting Android, run the compiled-bundle guard:
+
+```powershell
+npx expo export --platform android --clear
+npm run verify:android-bundle
+```
+
+The verifier must report at least one Hermes Android bundle and reject any worklet signature that evaluates `GAME_CONSTANTS` in a default parameter.
+
+For a native crash, capture the complete report before closing it:
+
+```powershell
+adb logcat -c
+adb logcat -v threadtime AndroidRuntime:E ReactNativeJS:E Worklets:E *:S
+```
+
+## Outstanding for v0.0.6
 
 Carried from the branch's known debts — none of these have been verified on hardware:
 
@@ -276,7 +294,7 @@ Carried from the branch's known debts — none of these have been verified on ha
 - 126 px lower-right circular `PODER!` button and rotating dashed gold ring
 - 1.4 s invulnerability flicker timing and 130 ms lane-change swipe/tap
 - Background scroll confined to the game screen
-- Frame rate under the full v0.0.5 scene (12 enemy slots, 8 confetti slots, 224 × 242 Barão)
+- Frame rate under the full v0.0.6 scene (12 enemy slots, 8 confetti slots, 224 × 242 Barão)
 - Difficulty card layout and all four fixed difficulty presets on a short landscape device
 - Bubble-only charging, full-screen power clears including zombies, and centered confetti
 - p95 comparison against the v0.0.1 baseline using the platform profiler
