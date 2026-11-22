@@ -287,6 +287,50 @@ describe('villain typewriter dialogue controller', () => {
     unsubscribe();
   });
 
+  it('keeps defeat dialogue intact and ignores new dialogue requests while villain is dying', () => {
+    useGameStore.getState().actions.reset();
+    useGameStore.getState().actions.start();
+
+    let visibleText = '';
+    const unsubscribe = bindVillainDialogue(useGameStore, (text) => {
+      visibleText = text;
+    });
+
+    useGameStore.getState().actions.beginVillainDefeat();
+    const defeatRequestId = useGameStore.getState().state.dialogueRequestId;
+    expect(defeatRequestId).toBe(1);
+
+    const timing = resolveDialogueTiming(
+      VILLAIN_DEFEAT_LINE,
+      'defeat',
+      GAME_CONSTANTS.VILLAIN_DEFEAT_DURATION_MS
+    );
+
+    // Halfway through typing the defeat line
+    vi.advanceTimersByTime(timing.charIntervalMs * 10);
+    expect(visibleText).toBe(VILLAIN_DEFEAT_LINE.slice(0, 10));
+
+    // A stray hit or taunt during staged defeat is ignored by store guard (villainDying: true)
+    useGameStore.getState().actions.applyVillainHit();
+    useGameStore.getState().actions.showVillainTaunt();
+    expect(useGameStore.getState().state.dialogueRequestId).toBe(defeatRequestId);
+
+    // Typing continues smoothly to full defeat text
+    vi.advanceTimersByTime(timing.charIntervalMs * (VILLAIN_DEFEAT_LINE.length - 10));
+    expect(visibleText).toBe(VILLAIN_DEFEAT_LINE);
+    expect(useGameStore.getState().state.villainTalking).toBe(false);
+
+    // Defeat text remains visible during staged defeat hold
+    vi.advanceTimersByTime(500);
+    expect(visibleText).toBe(VILLAIN_DEFEAT_LINE);
+
+    useGameStore.getState().actions.completeVillainDefeat();
+    expect(useGameStore.getState().state.screen).toBe('win');
+    expect(visibleText).toBe('');
+
+    unsubscribe();
+  });
+
   it('keeps default cadence for taunts/ouches and short defeat lines, compressing long defeat lines', () => {
     expect(resolveDialogueTiming('Oi!', 'taunt', 2800)).toEqual({
       charIntervalMs: GAME_CONSTANTS.DIALOGUE_CHAR_INTERVAL_MS,

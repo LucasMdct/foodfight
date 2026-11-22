@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   GameState,
   GameActions,
+  BestScoreStorage,
   INITIAL_GAME_STATE,
   START_LIVES,
   VillainTalkKind,
@@ -9,6 +10,7 @@ import {
   Difficulty,
 } from '../types/game';
 import { GAME_CONSTANTS } from '../types/constants';
+import { loadPersistedBestScore, savePersistedBestScore } from './bestScoreStorage';
 
 interface GameStore {
   state: GameState;
@@ -73,7 +75,7 @@ const enterStagedDefeat = (state: GameState): GameState => ({
   villainDying: true,
 });
 
-export const useGameStore = create<GameStore>((set) => ({
+export const useGameStore = create<GameStore>((set, get) => ({
   state: INITIAL_GAME_STATE,
 
   actions: {
@@ -109,13 +111,17 @@ export const useGameStore = create<GameStore>((set) => ({
         if (s.state.screen !== 'game' || s.state.villainDying) return s;
         const lives = Math.max(0, s.state.lives - 1);
         if (lives === 0) {
+          const nextBest = Math.max(s.state.best, s.state.score);
+          if (nextBest > s.state.best) {
+            savePersistedBestScore(nextBest).catch(() => {});
+          }
           return {
             state: {
               ...s.state,
               lives,
               screen: 'over',
               villainTalking: false,
-              best: Math.max(s.state.best, s.state.score),
+              best: nextBest,
             },
           };
         }
@@ -159,12 +165,16 @@ export const useGameStore = create<GameStore>((set) => ({
     completeVillainDefeat: () =>
       set((s) => {
         if (s.state.screen !== 'game' || !s.state.villainDying) return s;
+        const nextBest = Math.max(s.state.best, s.state.score);
+        if (nextBest > s.state.best) {
+          savePersistedBestScore(nextBest).catch(() => {});
+        }
         return {
           state: {
             ...s.state,
             screen: 'win',
             villainTalking: false,
-            best: Math.max(s.state.best, s.state.score),
+            best: nextBest,
           },
         };
       }),
@@ -295,5 +305,13 @@ export const useGameStore = create<GameStore>((set) => ({
           best: s.state.best,
         },
       })),
+
+    hydrateBestScore: async (storage?: BestScoreStorage) => {
+      const current = get().state.best;
+      const loaded = await loadPersistedBestScore(current, storage);
+      if (loaded > get().state.best) {
+        set((s) => ({ state: { ...s.state, best: Math.max(s.state.best, loaded) } }));
+      }
+    },
   },
 }));

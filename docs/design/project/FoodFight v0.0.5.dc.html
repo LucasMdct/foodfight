@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FoodFight v0.0.5 — Handoff visual (estabilização)</title>
+<!--
+  FoodFight v0.0.5 — handoff visual
+  ---------------------------------------------------------------------------
+  Arquivo autocontido: CSS e JavaScript embutidos, sem support.js, sem CDN,
+  sem servidor. Abra direto no navegador (file://).
+
+  Fontes de verdade usadas (nada foi inventado fora delas, exceto onde marcado
+  como "PROPOSTA v0.0.5" nas notas):
+    - FoodFight v0.0.4.dc.html  → cena, HUD, botão PODER!, ring, modais, confete,
+                                  zumbi + pílula HA HA HA!, bolha, tiros, keyframes
+    - Foodie.dc.html            → geometria dos heróis e do Barão (verbatim),
+                                  boca falando, bob offsets por herói
+    - src/theme/tokens.ts       → paleta e raios (todas as cores aqui existem lá)
+    - src/hud/Hud.styles.ts, GameScreen.styles.ts, GameOverModal.styles.ts
+                                → dimensões já portadas para React Native
+
+  Fredoka: carregada de node_modules/@expo-google-fonts/fredoka (relativo ao
+  repositório) quando existir; caso contrário cai em system-ui. Nenhuma fonte
+  remota é obrigatória.
+-->
+<style>
+/* ======================================================================
+   0. Fonte local opcional (Fredoka) — sem rede
+   ====================================================================== */
+@font-face{font-family:'Fredoka';font-weight:400;src:local('Fredoka'),url('../../../node_modules/@expo-google-fonts/fredoka/400Regular/Fredoka_400Regular.ttf') format('truetype')}
+@font-face{font-family:'Fredoka';font-weight:500;src:local('Fredoka Medium'),url('../../../node_modules/@expo-google-fonts/fredoka/500Medium/Fredoka_500Medium.ttf') format('truetype')}
+@font-face{font-family:'Fredoka';font-weight:600;src:local('Fredoka SemiBold'),url('../../../node_modules/@expo-google-fonts/fredoka/600SemiBold/Fredoka_600SemiBold.ttf') format('truetype')}
+@font-face{font-family:'Fredoka';font-weight:700;src:local('Fredoka Bold'),url('../../../node_modules/@expo-google-fonts/fredoka/700Bold/Fredoka_700Bold.ttf') format('truetype')}
+
+/* ======================================================================
+   1. Tokens — espelho 1:1 de src/theme/tokens.ts (nenhuma cor nova)
+   ====================================================================== */
+:root{
+  --brand:#FF6B6B; --brand-shadow:#E04F4F;
+  --positive:#7BC950; --positive-shadow:#59A335;
+  --score:#FFB627; --score-shadow:#E09A10;
+  --villain:#9B5DE5; --villain-dark:#3D2C4E; --villain-border:#E5D4F7;
+  --candy-pink:#FF7BAC; --candy-teal:#4ECDC4; --candy-teal-dark:#3BB8B0;
+  --donut-base:#F4A259; --sprinkle-yellow:#FFD23F;
+  --bg:#FFF3E2; --bg-grad-top:#FFE9C9; --bg-grad-mid:#FFF4E0; --bg-grad-bottom:#FFEFD6;
+  --surface:#FFFFFF; --surface-alt:#FFFDF6; --border:#F0DFC0; --border-soft:#E7D8BD;
+  --heart-full:#FF6B6B; --heart-empty:#E9DAC4;
+  --text-strong:#5A4327; --text-body:#8A6A45; --text-muted:#B08F63;
+  --overlay:rgba(70,40,10,0.45); --win-overlay:rgba(123,201,80,0.4);
+  --win-surface:#EAF6E1; --win-text:#3E7D2E;
+  --power-disabled:#D8CBB4; --power-disabled-shadow:#BEB09A;
+  --lane-divider:rgba(138,90,52,0.28); --table-grid:rgba(255,107,107,0.13);
+  --hero-shadow:rgba(90,50,10,0.18); --shadow-warm:rgba(90,60,20,0.14);
+  --r-sm:14px; --r-md:16px; --r-lg:20px; --r-xl:26px; --r-xxl:30px; --r-pill:999px;
+
+  /* Chrome do handoff (fora do jogo) — tons do Guia de Estilo v0.0.2 */
+  --doc-bg:#F6EFE3; --doc-ink:#3E2F1C;
+}
+
+/* ======================================================================
+   2. Keyframes — copiados de FoodFight v0.0.4.dc.html e Foodie.dc.html
+   ====================================================================== */
+@keyframes ff-scroll{from{background-position:0 0,0 0}to{background-position:-88px 0,-88px 0}}
+@keyframes ff-spin{to{transform:rotate(360deg)}}
+@keyframes ff-flicker{50%{opacity:0.25}}
+@keyframes ff-pop{0%{transform:scale(0.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+@keyframes ff-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes ff-zwobble{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+@keyframes ff-toast{0%{transform:translate(-50%,14px);opacity:0}15%{transform:translate(-50%,0);opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes ff-bubble{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes ff-glow{0%,100%{filter:drop-shadow(0 0 4px rgba(255,210,63,0.9))}50%{filter:drop-shadow(0 0 16px rgba(255,210,63,1))}}
+@keyframes ff-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px) rotate(-3deg)}40%{transform:translateX(7px) rotate(3deg)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes ff-burst{0%{transform:scale(0.15);opacity:1}70%{opacity:1}100%{transform:scale(1.7);opacity:0}}
+@keyframes ff-diffin{0%{transform:translateY(36px) scale(0.85);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes ff-wiggle{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
+@keyframes ff-mouth{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}
+@keyframes ff-ha{0%{opacity:0}35%,85%{opacity:1}100%{opacity:0}}
+@keyframes ff-vildie{0%{transform:scale(1) rotate(0deg)}25%{transform:scale(1.12) rotate(-10deg)}45%{transform:scale(1.24) rotate(10deg)}62%{transform:scale(1.38) rotate(-14deg)}78%{transform:scale(1.5) rotate(14deg)}100%{transform:scale(0.02) rotate(720deg);opacity:0}}
+@keyframes ff-ring{0%,100%{transform:scale(1);opacity:0.9}50%{transform:scale(1.14);opacity:0.4}}
+@keyframes ff-leg{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+@keyframes ff-arm{from{transform:rotate(14deg)}to{transform:rotate(-14deg)}}
+@keyframes ff-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes ff-wave{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(18deg)}}
+/* v0.0.5 — usados só pelo handoff para mover o tiro e esmaecer o overlay */
+@keyframes ff-shot-travel{from{transform:translateX(0)}to{transform:translateX(var(--travel))}}
+@keyframes ff-fade-out{from{opacity:1}to{opacity:0}}
+@keyframes ff-fade-in{from{opacity:0}to{opacity:1}}
+
+/* ======================================================================
+   3. Layout do documento (navegação | palco | notas)
+   ====================================================================== */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--doc-bg);color:var(--doc-ink);font-family:'Fredoka',system-ui,sans-serif;
+  display:grid;grid-template-columns:264px minmax(0,1fr) 380px;grid-template-rows:100vh;overflow:hidden}
+button{font-family:inherit}
+
+.doc-nav{padding:18px 16px;overflow:auto;border-right:2px solid var(--border);background:var(--surface-alt)}
+.doc-nav h1{margin:0;font-size:22px;font-weight:700;color:var(--brand);letter-spacing:1px;line-height:1}
+.doc-nav .doc-sub{font-size:12px;font-weight:500;color:var(--text-muted);margin:6px 0 16px}
+.doc-nav h2{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin:16px 0 8px}
+.nav-list{display:flex;flex-direction:column;gap:4px}
+.nav-btn{cursor:pointer;text-align:left;border:2px solid transparent;background:transparent;border-radius:12px;
+  padding:7px 10px;font-size:14px;font-weight:600;color:var(--text-body)}
+.nav-btn:hover{background:var(--bg)}
+.nav-btn[aria-pressed="true"]{background:var(--surface);border-color:var(--score);color:var(--text-strong)}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px}
+.chip{cursor:pointer;border:2px solid var(--border);background:var(--surface);border-radius:var(--r-pill);
+  padding:5px 12px;font-size:13px;font-weight:600;color:var(--text-body)}
+.chip[aria-pressed="true"]{border-color:var(--positive);background:var(--win-surface);color:var(--win-text)}
+
+.doc-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;min-width:0}
+.stage-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.stage-title{font-size:18px;font-weight:700;color:var(--text-strong)}
+.stage-steps{display:flex;gap:6px}
+.stage-action{cursor:pointer;border:none;background:var(--positive);color:var(--surface);font-size:13px;font-weight:700;
+  border-radius:var(--r-pill);padding:6px 14px;box-shadow:0 3px 0 var(--positive-shadow)}
+.stage-action:active{transform:translateY(2px)}
+.device-frame{position:relative;flex:0 0 auto}
+.stage-caption{font-size:13px;font-weight:500;color:var(--text-body);min-height:20px;text-align:center;max-width:900px}
+.stage-caption b{color:var(--text-strong)}
+
+.doc-notes{padding:18px 18px 40px;overflow:auto;border-left:2px solid var(--border);background:var(--surface-alt);font-size:13px;line-height:1.5}
+.doc-notes h2{font-size:15px;margin:18px 0 6px;color:var(--text-strong)}
+.doc-notes h3{font-size:13px;margin:12px 0 4px;color:var(--text-strong)}
+.doc-notes p{margin:4px 0}
+.doc-notes ul{margin:4px 0;padding-left:18px}
+.doc-notes code{font-size:12px;background:var(--bg);border-radius:6px;padding:0 4px}
+.doc-notes details{border:2px solid var(--border);border-radius:12px;padding:6px 10px;margin:8px 0;background:var(--surface)}
+.doc-notes summary{cursor:pointer;font-weight:700;color:var(--text-strong)}
+.doc-notes table{border-collapse:collapse;width:100%;margin:6px 0}
+.doc-notes td,.doc-notes th{border-bottom:1px solid var(--border);padding:3px 4px;text-align:left;vertical-align:top}
+.state-note{background:var(--surface);border:2px solid var(--score);border-radius:12px;padding:10px 12px}
+.tag-proposal{display:inline-block;font-size:11px;font-weight:700;color:var(--surface);background:var(--villain);border-radius:var(--r-pill);padding:0 8px;margin-left:4px}
+.swatch{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;border:1px solid var(--border-soft)}
+
+/* ======================================================================
+   4. Viewport do jogo — 900 × 520 landscape (referência do harness)
+      Escalado por JS para caber no palco; coordenadas internas em px reais.
+   ====================================================================== */
+.device{position:absolute;left:0;top:0;width:900px;height:520px;transform-origin:0 0;overflow:hidden;border-radius:22px;
+  box-shadow:0 0 0 10px var(--villain-dark),0 24px 60px rgba(50,25,0,0.35);
+  background:linear-gradient(180deg,var(--bg-grad-top) 0%,var(--bg-grad-mid) 55%,var(--bg-grad-bottom) 100%)}
+.screen{position:absolute;inset:0}
+
+/* Pausa: congela TODAS as animações da cena e do HUD (não do overlay) */
+.device.is-frozen .freeze-scope,.device.is-frozen .freeze-scope *{animation-play-state:paused!important}
+
+/* Mesa de cozinha (z 0) */
+.field{position:absolute;inset:0;background-color:var(--bg);
+  background-image:repeating-linear-gradient(90deg,var(--table-grid) 0 44px,transparent 44px 88px),repeating-linear-gradient(0deg,var(--table-grid) 0 44px,transparent 44px 88px);
+  animation:ff-scroll 0.9s linear infinite}
+.field.scroll-stopped{animation-play-state:paused}
+.lane-divider{position:absolute;left:0;right:0;border-top:3px dashed var(--lane-divider)}
+
+/* Sprites posicionados: o wrapper só posiciona; a animação vive no filho
+   (separação posição/animação — mesma regra já usada no Skia). */
+.sprite{position:absolute;left:0;top:0}
+.burst{position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;pointer-events:none;z-index:8}
+.burst > svg{opacity:0;animation:ff-burst 0.6s ease-out forwards}
+
+/* Barão (z 5) */
+.vil{position:absolute;right:0.2%;width:224px;height:242px;z-index:5}
+.vil-pose{width:100%;height:100%;filter:drop-shadow(0 18px 16px rgba(90,50,10,0.3)) drop-shadow(0 0 26px rgba(155,93,229,0.45))}
+.talk{position:absolute;right:92%;top:-4px;width:220px;min-height:52px;font-size:15px;font-weight:600;color:var(--villain);
+  background:var(--surface);border:2.5px solid var(--villain-border);border-radius:18px 18px 4px 18px;padding:11px 14px;
+  box-shadow:0 8px 18px rgba(90,50,150,0.2);animation:ff-pop 0.25s ease-out both;line-height:1.4}
+
+/* Herói (z 6) — 100 × 126 no handoff; 96 × 120 em GAME_CONSTANTS */
+.hero{position:absolute;left:9%;width:100px;height:126px;transform:translateY(-58%);transition:top 0.13s ease-out;z-index:6}
+.hero-shadow{position:absolute;left:14px;right:14px;bottom:-8px;height:14px;border-radius:50%;background:var(--hero-shadow)}
+
+/* HUD (z 10) */
+.hud{position:absolute;top:16px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:flex-start;z-index:10}
+.hud-hero{display:flex;align-items:center;gap:10px;background:var(--surface);border:2px solid var(--border);border-radius:var(--r-pill);padding:8px 16px 8px 10px;box-shadow:0 6px 16px var(--shadow-warm)}
+.hud-vil{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface);border:2px solid var(--villain-border);border-radius:18px;padding:8px 18px;box-shadow:0 6px 16px var(--shadow-warm)}
+.hud-score{font-size:22px;font-weight:700;color:var(--surface);background:var(--score);border-radius:var(--r-pill);padding:8px 22px;box-shadow:0 4px 0 var(--score-shadow),0 8px 18px rgba(224,154,16,0.3)}
+.hud-exit{border:2px solid var(--border);background:var(--surface);color:#9B8464;font-size:14px;font-weight:600;border-radius:var(--r-pill);padding:9px 16px}
+
+/* Botão PODER! — 126 px, canto inferior direito, fora da área de gesto */
+.power{position:absolute;bottom:26px;right:26px;z-index:10;display:flex;flex-direction:column;align-items:center;gap:9px}
+.power-frame{position:relative;width:126px;height:126px}
+.power-ring{position:absolute;inset:-11px;border-radius:50%;border:5px dashed var(--sprinkle-yellow);animation:ff-spin 5s linear infinite,ff-ring 1s ease-in-out infinite}
+.power-btn{border:5px solid var(--surface);width:126px;height:126px;border-radius:50%;font-size:21px;font-weight:700;letter-spacing:0.5px;line-height:1.15;color:var(--surface)}
+.power-btn.is-charged{background:var(--brand);box-shadow:0 8px 0 var(--brand-shadow),0 18px 34px rgba(90,60,20,0.35);animation:ff-pulse 0.7s ease-in-out infinite}
+.power-btn.is-empty{background:var(--power-disabled);box-shadow:0 8px 0 var(--power-disabled-shadow),0 18px 34px rgba(90,60,20,0.35)}
+.power-btn.is-pressed{transform:translateY(6px);box-shadow:0 2px 0 var(--brand-shadow),0 8px 18px rgba(90,60,20,0.35);animation:none}
+.charge-dot{width:17px;height:17px;border-radius:50%;border:2.5px solid var(--surface);box-shadow:0 2px 5px rgba(90,60,20,0.25)}
+
+.hint{position:absolute;bottom:20px;left:20px;z-index:10;font-size:12.5px;font-weight:500;color:var(--text-muted);background:rgba(255,255,255,0.85);border-radius:14px;padding:8px 14px;line-height:1.5}
+.toast{position:absolute;left:50%;top:20%;transform:translateX(-50%);z-index:12;font-size:24px;font-weight:700;color:var(--surface);background:var(--score);border-radius:var(--r-pill);padding:10px 28px;box-shadow:0 5px 0 var(--score-shadow),0 12px 24px rgba(224,154,16,0.35);animation:ff-toast 1.4s ease-out both;white-space:nowrap}
+
+/* Modais (z 20) */
+.modal-overlay{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:var(--overlay)}
+.modal-overlay.is-win{background:var(--win-overlay)}
+.modal-card{background:var(--surface-alt);border-radius:var(--r-xxl);padding:30px 44px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 24px 60px rgba(50,25,0,0.35);animation:ff-pop 0.35s ease-out both;max-width:86%}
+.modal-title{font-size:36px;font-weight:700;color:var(--brand);line-height:1}
+.modal-title.is-win{font-size:38px;color:var(--positive);text-shadow:0 3px 0 var(--positive-shadow)}
+.modal-sub{font-size:16px;font-weight:500;color:var(--text-body);text-align:center;max-width:520px}
+.stats{display:flex;gap:20px;margin-top:2px;position:relative}
+.stat{display:flex;flex-direction:column;align-items:center;background:var(--bg);border-radius:var(--r-md);padding:10px 22px;border:2px solid transparent}
+.stat.is-win{background:var(--win-surface)}
+.stat.is-record{border-color:var(--score)}
+.stat-label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+.stat-label.is-win{color:var(--positive-shadow)}
+.stat-value{font-size:28px;font-weight:700;color:var(--text-strong)}
+.stat-value.is-win{color:var(--win-text)}
+.record-ribbon{position:absolute;left:50%;top:-14px;transform:translateX(-50%);font-size:13px;font-weight:700;letter-spacing:0.5px;color:var(--surface);background:var(--score);border-radius:var(--r-pill);padding:2px 12px;box-shadow:0 3px 0 var(--score-shadow);white-space:nowrap;animation:ff-pop 0.35s 0.2s ease-out both}
+.saved-note{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-muted)}
+.btn-row{display:flex;gap:12px;margin-top:4px}
+.btn-primary{border:none;font-size:19px;font-weight:700;color:var(--surface);background:var(--positive);padding:13px 30px;border-radius:var(--r-pill);box-shadow:0 5px 0 var(--positive-shadow)}
+.btn-primary.is-pressed{transform:translateY(3px);box-shadow:0 2px 0 var(--positive-shadow)}
+.btn-secondary{font-size:19px;font-weight:600;color:var(--text-body);background:var(--surface);border:2px solid var(--border);padding:13px 26px;border-radius:var(--r-pill)}
+.btn-secondary.is-pressed{transform:translateY(3px)}
+
+/* PROPOSTA v0.0.5 — pausa / retomada (z 15: acima do HUD, abaixo dos modais) */
+.pause-overlay{position:absolute;inset:0;z-index:15;background:var(--overlay);display:flex;align-items:center;justify-content:center;animation:ff-fade-in 0.2s ease-out both}
+.pause-overlay.is-leaving{animation:ff-fade-out 0.25s ease-in forwards}
+.pause-pill{display:flex;align-items:center;gap:14px;background:var(--surface-alt);border:2px solid var(--border);border-radius:var(--r-pill);padding:14px 28px 14px 20px;box-shadow:0 12px 30px rgba(50,25,0,0.3);animation:ff-pop 0.3s ease-out both}
+.pause-icon{display:flex;gap:6px}
+.pause-icon i{display:block;width:8px;height:26px;border-radius:4px;background:var(--text-strong)}
+.pause-title{font-size:24px;font-weight:700;color:var(--text-strong);line-height:1}
+.pause-sub{font-size:13px;font-weight:500;color:var(--text-muted);margin-top:4px}
+.resume-pill{position:absolute;left:50%;top:20%;transform:translateX(-50%);z-index:16;display:flex;align-items:center;gap:10px;font-size:22px;font-weight:700;color:var(--surface);background:var(--positive);border-radius:var(--r-pill);padding:10px 26px;box-shadow:0 5px 0 var(--positive-shadow),0 12px 24px rgba(89,163,53,0.35);white-space:nowrap}
+.resume-pill.is-leaving{animation:ff-fade-out 0.25s ease-in forwards}
+
+/* Telas de seleção e dificuldade (copiadas da v0.0.4 com px fixos) */
+.select-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;animation:ff-pop 0.4s ease-out both}
+.hero-card{width:190px;display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--surface);border-radius:var(--r-xl);padding:18px 14px 14px;border:4px solid transparent;box-shadow:0 10px 24px rgba(90,60,20,0.12)}
+.hero-card.is-selected{border-color:var(--score)}
+.best-chip{position:absolute;top:18px;right:22px;display:flex;align-items:center;gap:8px;background:var(--surface);border:2px solid var(--border);border-radius:var(--r-pill);padding:6px 16px 6px 12px;box-shadow:0 6px 16px var(--shadow-warm);animation:ff-pop 0.35s ease-out both}
+.diff-card{width:186px;display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--surface);border-radius:var(--r-xl);padding:24px 16px;box-shadow:0 10px 24px rgba(90,60,20,0.12)}
+.diff-card.is-selected{outline:4px solid var(--score);outline-offset:3px}
+
+/* Prancheta de personagens (medidas) */
+.roster{display:flex;align-items:flex-end;justify-content:center;gap:34px;padding:40px 30px 70px;height:100%}
+.measure{position:relative;outline:2px dashed var(--villain);outline-offset:0}
+.measure-label{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);font-size:12px;font-weight:700;color:var(--villain);white-space:nowrap}
+.measure-name{position:absolute;left:50%;bottom:-48px;transform:translateX(-50%);font-size:13px;font-weight:600;color:var(--text-strong);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- =====================================================================
+     NAVEGAÇÃO ENTRE ESTADOS
+     ===================================================================== -->
+<nav class="doc-nav" aria-label="Estados do handoff">
+  <h1>FOOD FIGHT</h1>
+  <div class="doc-sub">FoodFight v0.0.5 · handoff visual de estabilização<br>base: v0.0.4 · viewport 900 × 520</div>
+
+  <h2>Estados</h2>
+  <div class="nav-list" id="nav-states"></div>
+
+  <h2>Herói</h2>
+  <div class="chip-row" id="nav-heroes"></div>
+
+  <h2>Dificuldade</h2>
+  <div class="chip-row" id="nav-diffs"></div>
+</nav>
+
+<!-- =====================================================================
+     PALCO
+     ===================================================================== -->
+<main class="doc-stage">
+  <div class="stage-head">
+    <div class="stage-title" id="stage-title"></div>
+    <div class="stage-steps" id="stage-steps"></div>
+    <button class="stage-action" id="stage-replay" type="button">↻ Reproduzir</button>
+  </div>
+  <div class="device-frame" id="device-frame">
+    <div class="device" id="device" role="img" aria-label="Viewport landscape do jogo"></div>
+  </div>
+  <div class="stage-caption" id="stage-caption"></div>
+</main>
+
+<!-- =====================================================================
+     NOTAS DE HANDOFF
+     ===================================================================== -->
+<aside class="doc-notes" id="doc-notes">
+  <div class="state-note" id="state-note"></div>
+
+  <h2>Especificação global</h2>
+
+  <details open>
+    <summary>Dimensões principais</summary>
+    <table>
+      <tr><th>Elemento</th><th>Medida</th><th>Fonte</th></tr>
+      <tr><td>Viewport de referência</td><td>900 × 520, 3 lanes de 173,3</td><td>harness</td></tr>
+      <tr><td>Barão Brigadeiro</td><td>224 × 242 (viewBox 150 × 160)</td><td>v0.0.4</td></tr>
+      <tr><td>Herói em jogo</td><td>100 × 126, left 9%, centro da lane, translateY −58%</td><td>v0.0.4</td></tr>
+      <tr><td>Doce</td><td>68 × 68 (base 52 × 1,3)</td><td>v0.0.4</td></tr>
+      <tr><td>Zumbi</td><td>arte 100 × 92 (viewBox 80 × 74), hitbox 96</td><td>v0.0.4</td></tr>
+      <tr><td>Pílula HA HA HA!</td><td>13 px bold, padding 1 × 9, raio 999</td><td>v0.0.4</td></tr>
+      <tr><td>Bolha de comida</td><td>84 × 84 (viewBox 72)</td><td>v0.0.4</td></tr>
+      <tr><td>Tiro de poder</td><td>60 × 60 (viewBox 56)</td><td>v0.0.4</td></tr>
+      <tr><td>Confete</td><td>110 × 110, centrado no ponto</td><td>v0.0.4</td></tr>
+      <tr><td>Botão PODER!</td><td>126 × 126, borda 5 branca, bottom/right 26</td><td>v0.0.4</td></tr>
+      <tr><td>Ring dourado</td><td>inset −11 (Ø 148), borda 5 tracejada</td><td>v0.0.4</td></tr>
+      <tr><td>Bolinhas de carga</td><td>17 × 17, borda 2,5, gap 6</td><td>v0.0.4</td></tr>
+      <tr><td>Balão de fala</td><td>220 × ≥52, borda 2,5, raio 18/18/4/18</td><td>v0.0.4</td></tr>
+      <tr><td>Cartão de modal</td><td>padding 30 × 44, raio 30</td><td>v0.0.4</td></tr>
+      <tr><td>Pílula de pausa <span class="tag-proposal">PROPOSTA</span></td><td>altura ≈ 58, padding 14/28/14/20, raio 999</td><td>v0.0.5</td></tr>
+    </table>
+  </details>
+
+  <details>
+    <summary>Paleta (hex) — todas existem em tokens.ts</summary>
+    <div id="palette-table"></div>
+  </details>
+
+  <details>
+    <summary>Tipografia — Fredoka</summary>
+    <table>
+      <tr><th>Uso</th><th>Tamanho / peso</th></tr>
+      <tr><td>Logo FOOD FIGHT</td><td>64 / 700, sombra 0 4 #E04F4F</td></tr>
+      <tr><td>Título de modal</td><td>36 / 700 (vitória 38)</td></tr>
+      <tr><td>Placar do HUD</td><td>22 / 700</td></tr>
+      <tr><td>PODER!</td><td>21 / 700, letter-spacing 0,5</td></tr>
+      <tr><td>Pausado <span class="tag-proposal">PROPOSTA</span></td><td>24 / 700 + 13 / 500</td></tr>
+      <tr><td>Continuando! <span class="tag-proposal">PROPOSTA</span></td><td>22 / 700</td></tr>
+      <tr><td>Toast</td><td>24 / 700</td></tr>
+      <tr><td>Botões de modal</td><td>19 / 700 (primário), 19 / 600 (secundário)</td></tr>
+      <tr><td>Subtítulo de modal</td><td>16 / 500</td></tr>
+      <tr><td>Balão do Barão</td><td>15 / 600, line-height 1,4</td></tr>
+      <tr><td>Rótulos de estatística</td><td>12 / 600, caixa alta, tracking 1</td></tr>
+      <tr><td>NOVO RECORDE! <span class="tag-proposal">PROPOSTA</span></td><td>13 / 700</td></tr>
+    </table>
+  </details>
+
+  <details>
+    <summary>Raios e espaçamentos</summary>
+    <p>Raios: sm 14 · md 16 · lg 20 · xl 26 · xxl 30 · pill 999.</p>
+    <p>Espaços: xs 4 · sm 8 · md 14 · lg 20 · xl 24.</p>
+    <p>HUD: inset top 16, left/right 18. Botão PODER!: bottom/right 26, gap até as cargas 9. Dica: bottom/left 20.</p>
+  </details>
+
+  <details>
+    <summary>Ordem de camadas (de trás para frente)</summary>
+    <ol>
+      <li>Mesa (tecido rolando 88 px / 0,9 s) — z 0</li>
+      <li>Divisórias tracejadas em 33,33% e 66,66%</li>
+      <li>Doces e zumbis — z 4 · bolha — z 4</li>
+      <li>Barão + aura + balão — z 5</li>
+      <li>Tiros de poder e herói — z 6</li>
+      <li>Confetes — z 8</li>
+      <li>HUD, botão PODER!, dica — z 10</li>
+      <li>Toast — z 12</li>
+      <li>Overlay de pausa — z 15 · pílula Continuando! — z 16 <span class="tag-proposal">PROPOSTA</span></li>
+      <li>Modais de vitória / derrota — z 20</li>
+    </ol>
+    <p>No Skia, 1–6 e 8 vivem no mesmo Canvas na ordem acima; HUD, balão, pausa e modais são Views RN por cima.</p>
+  </details>
+
+  <details>
+    <summary>Estados dos botões</summary>
+    <ul>
+      <li><b>PODER! carregado:</b> #FF6B6B, sombra 0 8 #E04F4F, pulso 0,7 s, ring visível.</li>
+      <li><b>PODER! vazio:</b> #D8CBB4, sombra 0 8 #BEB09A, sem pulso, sem ring.</li>
+      <li><b>PODER! pressionado:</b> translateY 6, dispara no press-in.</li>
+      <li><b>Primário (Jogar de novo):</b> #7BC950, sombra 0 5 #59A335; pressionado translateY 3.</li>
+      <li><b>Secundário (Trocar herói):</b> branco, borda 2 #F0DFC0; pressionado translateY 3.</li>
+      <li><b>Durante a pausa:</b> nenhum botão do jogo recebe toque; visual inalterado sob o overlay.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>Diálogo do Barão</summary>
+    <ul>
+      <li>Revelação de 65 ms por caractere; derrota comprimida para terminar antes da vitória (40 caracteres a 45 ms).</li>
+      <li>A boca anima (<code>ff-mouth</code> 0,26 s, origem 75/95) <b>só enquanto revela</b>; ao terminar volta à boca do humor atual.</li>
+      <li>Permanência após revelar: 2.800 ms provocação · 2.200 ms ai · 2.500 ms derrota (até a vitória).</li>
+      <li>Toda nova solicitação — inclusive o mesmo texto — reinicia do primeiro caractere e cancela os timers anteriores.</li>
+      <li>Balão aparece com <code>ff-pop</code> 0,25 s e some sem animação.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>Pausa e retomada <span class="tag-proposal">PROPOSTA</span></summary>
+    <ul>
+      <li>Entrou em <code>inactive</code>/<code>background</code>: a cena congela no frame atual (tecido, sprites, ring, pulso) e o overlay #46280A @ 45% entra em 200 ms com a pílula “Pausado”.</li>
+      <li>Voltou a <code>active</code>: a pílula troca para “Continuando!” (verde positivo), o overlay sai em 250 ms e a cena retoma do ponto congelado. A pílula some após 900 ms.</li>
+      <li>Sem contagem regressiva e sem botão: a v0.0.5 não adiciona mecânica nova.</li>
+      <li>A pausa não aparece sobre modais de vitória/derrota (cena já congelada).</li>
+      <li>Implementação: um booleano discreto controla a View; nada é re-renderizado por frame.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>Ring do poder</summary>
+    <ul>
+      <li>Visível somente com carga ≥ 1.</li>
+      <li>Duas animações sobrepostas: giro de 5 s linear + pulso de escala 1 → 1,14 e opacidade 0,9 → 0,4 em 1 s.</li>
+      <li>Sem carga: ring desmontado, botão cinza, bolinhas #E9DAC4.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>Modais</summary>
+    <ul>
+      <li>Só existem em <code>over</code> e <code>win</code>; nunca durante <code>game</code> (inclusive na derrota estagiada).</li>
+      <li>Entrada: cartão <code>ff-pop</code> 0,35 s sobre a cena congelada.</li>
+      <li>Derrota: overlay #46280A @ 45%, Barão feliz 110 × 120, título #FF6B6B.</li>
+      <li>Vitória: overlay #7BC950 @ 40%, herói 110 × 136 pulsando, título #7BC950, blocos #EAF6E1.</li>
+      <li>Recorde: ver estado 11 — selo “NOVO RECORDE!” e nota de salvamento <span class="tag-proposal">PROPOSTA</span>.</li>
+    </ul>
+  </details>
+
+  <details>
+    <summary>Portabilidade para React Native Skia</summary>
+    <ul>
+      <li>Geometria dos personagens: portar de <code>Foodie.dc.html</code> sem alterar coordenadas.</li>
+      <li>Bob dos heróis: ciclo de 0,64 s com atraso <b>Alface 0 s · Feijão −0,15 s · Arroz −0,30 s</b> (fase 0 / 0,234 / 0,469 do ciclo). Precisa virar constante nomeada por herói.</li>
+      <li>Sprites: o grupo externo só translada; escala/rotação/opacidade no grupo interno.</li>
+      <li>Confete: 9 explosões de derrota em 260 + i × 200 ms; pool fixo de 8 slots (a v0.0.5 não aumenta).</li>
+      <li>Pausa, balão, modais e HUD: Views RN acima do Canvas, controladas por estado discreto.</li>
+      <li>Filtros CSS (drop-shadow, glow) são aproximações do protótipo; no Skia já existe a aura de raio 118 a 14%.</li>
+    </ul>
+  </details>
+
+  <details open>
+    <summary>Pendências e assets ausentes</summary>
+    <ul>
+      <li><b>Ícone monocromático Android:</b> não existe fonte em <code>docs/design/project/</code>. Nenhum asset foi criado; <code>assets/android-icon-monochrome.png</code> continua pendente de decisão visual.</li>
+      <li><b>Versionamento.dc.html</b> descreve outra “v0.0.5” (crescer até 2×, 16 confetes, pool 14, passinho). Ela <b>não</b> foi adotada: esta v0.0.5 é de estabilização e mantém 1,5×, 9 confetes e pool 8.</li>
+      <li><b>Pausa e recorde salvo</b> não têm precedente no handoff; estão marcados como PROPOSTA e precisam de aprovação antes do port.</li>
+      <li><b>HUD:</b> o código atual agrupa o HP do Barão no cluster direito; este handoff mantém o cartão central da v0.0.4.</li>
+      <li><b>Herói:</b> 100 × 126 no handoff contra 96 × 120 em <code>GAME_CONSTANTS</code>; divergência herdada, não alterada.</li>
+      <li><b>Fredoka:</b> carregada de <code>node_modules</code> se existir; sem ela o protótipo usa system-ui.</li>
+    </ul>
+  </details>
+</aside>
+
+<script>
+'use strict';
+/* =========================================================================
+   FoodFight v0.0.5 — lógica do handoff
+   Tudo aqui é demonstração visual. Nenhuma regra de jogo é implementada.
+   ========================================================================= */
+
+/* ---------- Constantes vindas do handoff v0.0.4 e de GAME_CONSTANTS ---------- */
+const W = 900;
+const H = 520;
+const LANE_H = H / 3;
+const HERO_X = W * 0.09;
+const CANDY_PX = 68;
+const ZOMBIE_PX = 96;
+const VILLAIN_W = 224;
+const VILLAIN_H = 242;
+const SHOT_SPEED = 620;                     // px/s
+const VILLAIN_SHOT_HIT_X = W - 230;
+const VILLAIN_SHOT_FX_X = W - 150;
+const DIALOGUE_CHAR_MS = 65;
+const DEFEAT_CHAR_MS = 45;                  // compressão da fala de derrota
+const TAUNT_HOLD_MS = 2800;
+const DEFEAT_DURATION_MS = 2500;
+const DEFEAT_BURSTS = 9;
+const DEFEAT_BURST_START_MS = 260;
+const DEFEAT_BURST_STEP_MS = 200;
+const PAUSE_FADE_OUT_MS = 250;
+const RESUME_PILL_MS = 900;
+/* Bob offsets por herói — Foodie.dc.html linhas 31, 67 e 100 */
+const HERO_BOB_DELAY_S = { alface: 0, feijao: -0.15, arroz: -0.3 };
+
+const HERO_NAMES = { alface: 'Alface', feijao: 'Feijão', arroz: 'Arroz' };
+const HERO_COLORS = { alface: '#3E7D2E', feijao: '#8A5A34', arroz: '#B39B62' };
+const POWERS = {
+  alface: ['Folha Bumerangue', 'Furacão Verde', 'Muralha de Salada'],
+  feijao: ['Meteoro Carioca', 'Rajada de Feijão', 'Escudo de Caldo'],
+  arroz: ['Grão Turbo', 'Chuva de Arroz', 'Broto Explosivo'],
+};
+const DIFFS = {
+  mfacil: { label: 'Muito Fácil', stars: 1, color: '#7BC950', text: '#3E7D2E', copy: 'Doces devagarinho.<br>Perfeito pra começar!' },
+  facil: { label: 'Fácil', stars: 2, color: '#FFB627', text: '#C98A0A', copy: 'Um desafio gostoso,<br>no ritmo certo.' },
+  dificil: { label: 'Difícil', stars: 3, color: '#FF6B6B', text: '#E04F4F', copy: 'Chuva de doces!<br>Reflexos afiados.' },
+  impossivel: { label: 'Impossível', stars: 4, color: '#9B5DE5', text: '#D8BFFF', copy: 'O Barão sem piedade.<br>Você foi avisado…' },
+};
+const TAUNT = 'Aposto meu chapéu que você não come nem UM feijão!';
+const DEFEAT_LINE = 'NÃÃÃO! Meus doces! Isso não fica assim!!';
+
+/* ---------- Estado do handoff ---------- */
+const ui = { view: 'normal', step: 0, who: 'alface', diff: 'facil', dialogueRequestId: 0 };
+
+/* ---------- Timers: todos registrados para cancelamento único ----------
+   Mesma regra pedida à engenharia: trocar de estado cancela tudo. */
+const timers = new Set();
+const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; };
+const every = (fn, ms) => { const id = setInterval(fn, ms); timers.add(id); return id; };
+const cancelAll = () => { timers.forEach((id) => { clearTimeout(id); clearInterval(id); }); timers.clear(); };
+
+/* =========================================================================
+   Arte — geometria verbatim de Foodie.dc.html e FoodFight v0.0.4.dc.html
+   ========================================================================= */
+const anim = (on, value) => (on ? 'animation:' + value + ';' : '');
+
+function heroSvg(who, animated = true) {
+  const bob = HERO_BOB_DELAY_S[who];
+  const legA = anim(animated, 'ff-leg 0.32s ease-in-out infinite alternate');
+  const legB = anim(animated, 'ff-leg 0.32s ease-in-out -0.32s infinite alternate');
+  const armA = anim(animated, 'ff-arm 0.32s ease-in-out infinite alternate');
+  const armB = anim(animated, 'ff-arm 0.32s ease-in-out -0.32s infinite alternate');
+  const bobAnim = anim(animated, 'ff-bob 0.64s ease-in-out ' + bob + 's infinite');
+  const open = '<svg viewBox="0 0 120 150" width="100%" height="100%" style="display:block;overflow:visible">';
+  if (who === 'alface') {
+    return open +
+      '<g style="transform-origin:48px 114px;' + legA + '"><rect x="42" y="108" width="12" height="26" rx="6" fill="#4E9A3C"/><ellipse cx="48" cy="136" rx="11" ry="6.5" fill="#2F6B24"/></g>' +
+      '<g style="transform-origin:72px 114px;' + legB + '"><rect x="66" y="108" width="12" height="26" rx="6" fill="#4E9A3C"/><ellipse cx="72" cy="136" rx="11" ry="6.5" fill="#2F6B24"/></g>' +
+      '<g style="transform-origin:60px 80px;' + bobAnim + '">' +
+        '<g style="transform-origin:24px 78px;' + armA + '"><ellipse cx="19" cy="88" rx="8" ry="14" fill="#4E9A3C" transform="rotate(18 19 88)"/></g>' +
+        '<g style="transform-origin:96px 78px;' + armB + '"><ellipse cx="101" cy="88" rx="8" ry="14" fill="#4E9A3C" transform="rotate(-18 101 88)"/></g>' +
+        '<circle cx="60" cy="52" r="30" fill="#66B84E"/><circle cx="32" cy="66" r="22" fill="#66B84E"/><circle cx="88" cy="66" r="22" fill="#66B84E"/>' +
+        '<circle cx="38" cy="90" r="20" fill="#5CAB45"/><circle cx="82" cy="90" r="20" fill="#5CAB45"/><circle cx="60" cy="98" r="24" fill="#5CAB45"/>' +
+        '<circle cx="60" cy="74" r="31" fill="#A9DD7E"/><circle cx="60" cy="76" r="25" fill="#C9EF9F"/>' +
+        '<circle cx="50" cy="72" r="5" fill="#3B2B20"/><circle cx="70" cy="72" r="5" fill="#3B2B20"/>' +
+        '<circle cx="51.7" cy="70.2" r="1.8" fill="#FFFFFF"/><circle cx="71.7" cy="70.2" r="1.8" fill="#FFFFFF"/>' +
+        '<ellipse cx="41" cy="82" rx="5.5" ry="3.2" fill="#FF9DB0" opacity="0.75"/><ellipse cx="79" cy="82" rx="5.5" ry="3.2" fill="#FF9DB0" opacity="0.75"/>' +
+        '<path d="M53 84 Q60 91 67 84" stroke="#3B2B20" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
+      '</g></svg>';
+  }
+  if (who === 'feijao') {
+    return open +
+      '<g style="transform-origin:48px 116px;' + legA + '"><rect x="42" y="110" width="12" height="24" rx="6" fill="#A9723F"/><ellipse cx="48" cy="136" rx="11" ry="6.5" fill="#7A4E28"/></g>' +
+      '<g style="transform-origin:72px 116px;' + legB + '"><rect x="66" y="110" width="12" height="24" rx="6" fill="#A9723F"/><ellipse cx="72" cy="136" rx="11" ry="6.5" fill="#7A4E28"/></g>' +
+      '<g style="transform-origin:60px 80px;' + bobAnim + '">' +
+        '<g style="transform-origin:28px 76px;' + armA + '"><ellipse cx="23" cy="86" rx="8" ry="14" fill="#A9723F" transform="rotate(18 23 86)"/></g>' +
+        '<g style="transform-origin:92px 76px;' + armB + '"><ellipse cx="97" cy="86" rx="8" ry="14" fill="#A9723F" transform="rotate(-18 97 86)"/></g>' +
+        '<ellipse cx="60" cy="76" rx="34" ry="40" fill="#C89A6B"/>' +
+        '<path d="M34 52 Q28 76 36 98 Q26 78 30 58 Z" fill="#8A5A34" opacity="0.45"/>' +
+        '<ellipse cx="84" cy="52" rx="7" ry="10" fill="#8A5A34" opacity="0.4" transform="rotate(24 84 52)"/>' +
+        '<ellipse cx="38" cy="104" rx="6" ry="8" fill="#8A5A34" opacity="0.4" transform="rotate(-18 38 104)"/>' +
+        '<ellipse cx="60" cy="80" rx="23" ry="27" fill="#EBCB9E"/>' +
+        '<circle cx="51" cy="74" r="5" fill="#3B2B20"/><circle cx="69" cy="74" r="5" fill="#3B2B20"/>' +
+        '<circle cx="52.7" cy="72.2" r="1.8" fill="#FFFFFF"/><circle cx="70.7" cy="72.2" r="1.8" fill="#FFFFFF"/>' +
+        '<ellipse cx="43" cy="84" rx="5.5" ry="3.2" fill="#FF9DB0" opacity="0.75"/><ellipse cx="77" cy="84" rx="5.5" ry="3.2" fill="#FF9DB0" opacity="0.75"/>' +
+        '<path d="M52 86 Q60 95 68 86" stroke="#3B2B20" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
+      '</g></svg>';
+  }
+  return open +
+    '<g style="transform-origin:48px 118px;' + legA + '"><rect x="43" y="112" width="12" height="22" rx="6" fill="#EFE4CC"/><ellipse cx="49" cy="136" rx="11" ry="6.5" fill="#D9C9A8"/></g>' +
+    '<g style="transform-origin:72px 118px;' + legB + '"><rect x="65" y="112" width="12" height="22" rx="6" fill="#EFE4CC"/><ellipse cx="71" cy="136" rx="11" ry="6.5" fill="#D9C9A8"/></g>' +
+    '<g style="transform-origin:60px 82px;' + bobAnim + '">' +
+      '<path d="M60 40 Q58 26 46 22 Q56 24 60 32 Q62 22 74 20 Q64 26 61 40 Z" fill="#7BC950"/>' +
+      '<g style="transform-origin:34px 80px;' + armA + '"><ellipse cx="29" cy="90" rx="8" ry="13" fill="#EFE4CC" transform="rotate(18 29 90)"/></g>' +
+      '<g style="transform-origin:86px 80px;' + armB + '"><ellipse cx="91" cy="90" rx="8" ry="13" fill="#EFE4CC" transform="rotate(-18 91 90)"/></g>' +
+      '<ellipse cx="60" cy="80" rx="28" ry="42" fill="#FFFDF6" stroke="#EADFC8" stroke-width="2.5"/>' +
+      '<path d="M78 48 Q88 78 78 108 Q84 78 76 50 Z" fill="#F1E7D2"/>' +
+      '<circle cx="51" cy="74" r="5" fill="#3B2B20"/><circle cx="69" cy="74" r="5" fill="#3B2B20"/>' +
+      '<circle cx="52.7" cy="72.2" r="1.8" fill="#FFFFFF"/><circle cx="70.7" cy="72.2" r="1.8" fill="#FFFFFF"/>' +
+      '<ellipse cx="44" cy="84" rx="5.5" ry="3.2" fill="#FFC1CB" opacity="0.85"/><ellipse cx="76" cy="84" rx="5.5" ry="3.2" fill="#FFC1CB" opacity="0.85"/>' +
+      '<path d="M54 86 Q60 92 66 86" stroke="#3B2B20" stroke-width="2.6" fill="none" stroke-linecap="round"/>' +
+    '</g></svg>';
+}
+
+/* Barão — viewBox 150 × 160. animated=false em jogo (o movimento vem do motor). */
+function villainSvg({ mood = 'feliz', talking = false, animated = false } = {}) {
+  const bravo = mood === 'bravo';
+  const brows = bravo
+    ? '<path d="M45 55 L69 71" stroke="#241206" stroke-width="5.5" stroke-linecap="round"/><path d="M105 55 L81 71" stroke="#241206" stroke-width="5.5" stroke-linecap="round"/>'
+    : '<path d="M48 62 L67 68" stroke="#241206" stroke-width="4" stroke-linecap="round"/><path d="M102 62 L83 68" stroke="#241206" stroke-width="4" stroke-linecap="round"/>';
+  let mouth;
+  if (talking) {
+    mouth = '<g style="transform-origin:75px 95px;animation:ff-mouth 0.26s ease-in-out infinite">' +
+      '<ellipse cx="75" cy="95" rx="14" ry="11" fill="#241206"/><ellipse cx="75" cy="99" rx="8" ry="5" fill="#FF6B6B"/>' +
+      '<path d="M65 88 L85 88" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/></g>';
+  } else if (bravo) {
+    mouth = '<path d="M57 98 Q75 86 93 98" stroke="#241206" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+      '<path d="M64 92 L64 97 M75 90 L75 96 M86 92 L86 97" stroke="#241206" stroke-width="2.5" stroke-linecap="round"/>';
+  } else {
+    mouth = '<path d="M56 90 Q75 104 94 88" stroke="#241206" stroke-width="3.5" fill="none" stroke-linecap="round"/>' +
+      '<path d="M84 92 L88 98 L91 90 Z" fill="#FFFFFF"/>';
+  }
+  return '<svg viewBox="0 0 150 160" width="100%" height="100%" style="display:block;overflow:visible">' +
+    '<g style="transform-origin:75px 80px;' + anim(animated, 'ff-bob 0.9s ease-in-out infinite') + '">' +
+      '<path d="M38 106 L112 106 L103 142 L47 142 Z" fill="#D94F4F"/>' +
+      '<path d="M38 106 L46 100 L54 106 L62 100 L70 106 L78 100 L86 106 L94 100 L102 106 L112 106 L38 106 Z" fill="#B93E3E"/>' +
+      '<path d="M52 108 L54 140 M75 108 L75 141 M98 108 L96 140" stroke="#B93E3E" stroke-width="3" fill="none"/>' +
+      '<g style="transform-origin:120px 86px;animation:ff-wave 0.7s ease-in-out infinite">' +
+        '<rect x="124" y="38" width="5" height="52" rx="2.5" fill="#E8D9C0" transform="rotate(14 126 64)"/>' +
+        '<circle cx="133" cy="34" r="15" fill="#FF7BAC"/>' +
+        '<path d="M133 34 m-9 0 a9 9 0 0 1 18 0 a6.5 6.5 0 0 1 -13 0 a4 4 0 0 1 8 0" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+        '<ellipse cx="118" cy="88" rx="9" ry="14" fill="#4A2C17" transform="rotate(-30 118 88)"/>' +
+      '</g>' +
+      '<ellipse cx="30" cy="92" rx="9" ry="14" fill="#4A2C17" transform="rotate(24 30 92)"/>' +
+      '<circle cx="75" cy="76" r="44" fill="#4A2C17"/>' +
+      '<path d="M42 58 Q52 38 75 34 Q56 44 48 62 Z" fill="#6B4226" opacity="0.7"/>' +
+      '<rect x="52" y="46" width="9" height="3.5" rx="1.75" fill="#FF7BAC" transform="rotate(24 56 47)"/>' +
+      '<rect x="88" y="44" width="9" height="3.5" rx="1.75" fill="#FFD23F" transform="rotate(-18 92 45)"/>' +
+      '<rect x="42" y="88" width="9" height="3.5" rx="1.75" fill="#4ECDC4" transform="rotate(-30 46 89)"/>' +
+      '<rect x="100" y="94" width="9" height="3.5" rx="1.75" fill="#9B5DE5" transform="rotate(20 104 95)"/>' +
+      '<rect x="66" y="104" width="9" height="3.5" rx="1.75" fill="#FFD23F" transform="rotate(-8 70 105)"/>' +
+      '<rect x="98" y="60" width="9" height="3.5" rx="1.75" fill="#FF6B6B" transform="rotate(40 102 61)"/>' +
+      '<rect x="36" y="74" width="9" height="3.5" rx="1.75" fill="#FFD23F" transform="rotate(60 40 75)"/>' +
+      '<circle cx="58" cy="70" r="9" fill="#FFFFFF"/><circle cx="92" cy="70" r="9" fill="#FFFFFF"/>' +
+      '<circle cx="60" cy="72" r="4.5" fill="#241206"/><circle cx="90" cy="72" r="4.5" fill="#241206"/>' +
+      brows +
+      '<circle cx="92" cy="70" r="12.5" fill="none" stroke="#FFD23F" stroke-width="2.5"/>' +
+      '<path d="M92 82.5 Q96 96 104 100" stroke="#FFD23F" stroke-width="2" fill="none"/>' +
+      mouth +
+      '<rect x="57" y="2" width="36" height="24" rx="3" fill="#232323"/>' +
+      '<rect x="49" y="24" width="52" height="7" rx="3.5" fill="#232323"/>' +
+      '<rect x="57" y="17" width="36" height="7" fill="#9B5DE5"/>' +
+    '</g></svg>';
+}
+
+const CANDY_SVG = {
+  lolli: '<svg viewBox="0 0 52 52" width="68" height="68" style="animation:ff-spin 0.9s linear infinite"><rect x="24" y="26" width="4" height="24" rx="2" fill="#E8D9C0"/><circle cx="26" cy="19" r="14" fill="#FF7BAC"/><path d="M26 19 m-9 0 a9 9 0 0 1 18 0 a6.5 6.5 0 0 1 -13 0 a4 4 0 0 1 8 0" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
+  candy: '<svg viewBox="0 0 52 52" width="68" height="68" style="animation:ff-spin 1.1s linear infinite reverse"><path d="M12 26 L3 17 L6 26 L3 35 Z" fill="#3BB8B0"/><path d="M40 26 L49 17 L46 26 L49 35 Z" fill="#3BB8B0"/><ellipse cx="26" cy="26" rx="14" ry="11" fill="#4ECDC4"/><path d="M20 16 Q18 26 20 36 M26 15 Q24 26 26 37 M32 16 Q30 26 32 36" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.8"/></svg>',
+  donut: '<svg viewBox="0 0 52 52" width="68" height="68" style="animation:ff-spin 1.3s linear infinite"><circle cx="26" cy="26" r="10" fill="none" stroke="#F4A259" stroke-width="10"/><circle cx="26" cy="26" r="10" fill="none" stroke="#FF7BAC" stroke-width="9" stroke-dasharray="34 63" stroke-linecap="round"/><rect x="20" y="14" width="5" height="2.4" rx="1.2" fill="#FFD23F" transform="rotate(20 22 15)"/><rect x="32" y="20" width="5" height="2.4" rx="1.2" fill="#FFFFFF" transform="rotate(-30 34 21)"/></svg>',
+};
+
+function zombieArt() {
+  return '<div style="position:absolute;left:-16px;top:-34px;width:100px;height:104px">' +
+    '<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:700;color:#9B5DE5;background:#FFFFFF;border-radius:999px;padding:1px 9px;white-space:nowrap;box-shadow:0 2px 6px rgba(90,50,10,0.2)">HA' +
+      '<span style="opacity:0;animation:ff-ha 1.05s linear infinite">HA</span>' +
+      '<span style="opacity:0;animation:ff-ha 1.05s 0.35s linear infinite">HA</span>' +
+      '<span style="opacity:0;animation:ff-ha 1.05s 0.7s linear infinite">!</span></div>' +
+    '<svg viewBox="0 0 80 74" width="100" height="92" style="animation:ff-zwobble 0.5s ease-in-out infinite;transform-origin:50% 60%">' +
+      '<path d="M14 52 L66 52 L60 72 L20 72 Z" fill="#D94F4F"/><circle cx="40" cy="36" r="28" fill="#4A2C17"/>' +
+      '<path d="M22 22 Q34 12 50 16 Q36 18 28 28 Z" fill="#7FB069" opacity="0.85"/>' +
+      '<ellipse cx="58" cy="46" rx="9" ry="7" fill="#7FB069" opacity="0.8"/>' +
+      '<path d="M52 14 L56 22 M56 14 L52 22" stroke="#241206" stroke-width="3" stroke-linecap="round"/>' +
+      '<circle cx="28" cy="32" r="7" fill="#FFFFFF"/><circle cx="29" cy="35" r="3.5" fill="#241206"/>' +
+      '<circle cx="52" cy="34" r="5" fill="#FFFFFF"/><circle cx="52" cy="36" r="2.5" fill="#241206"/>' +
+      '<g style="transform-origin:40px 51px;animation:ff-mouth 0.32s ease-in-out infinite">' +
+        '<ellipse cx="40" cy="52" rx="12" ry="9" fill="#241206"/><ellipse cx="40" cy="55" rx="6" ry="4" fill="#FF6B6B"/>' +
+        '<path d="M31 46 L49 46" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/></g>' +
+      '<rect x="16" y="38" width="8" height="3" rx="1.5" fill="#FFD23F" transform="rotate(30 20 39)"/>' +
+      '<rect x="50" y="22" width="8" height="3" rx="1.5" fill="#FF7BAC" transform="rotate(-20 54 23)"/>' +
+    '</svg></div>';
+}
+
+const BUBBLE_SVG = '<svg viewBox="0 0 72 72" width="84" height="84" style="animation:ff-bubble 1.2s ease-in-out infinite">' +
+  '<ellipse cx="36" cy="44" rx="22" ry="7" fill="#FFFFFF"/><ellipse cx="36" cy="41" rx="22" ry="7" fill="#F4F7FA" stroke="#D8E0E8" stroke-width="1.5"/>' +
+  '<path d="M18 41 A18 8 0 0 1 36 34 A18 8 0 0 1 43 41 Z" fill="#FFFDF6"/>' +
+  '<circle cx="27" cy="36" r="2.5" fill="#FFFDF6"/><circle cx="32" cy="34" r="3" fill="#FFFDF6"/><circle cx="37" cy="36" r="2.5" fill="#FFFDF6"/>' +
+  '<path d="M40 36 A14 6 0 0 1 54 41 L40 41 Z" fill="#8A5A34"/>' +
+  '<ellipse cx="47" cy="37.5" rx="3" ry="2" fill="#C89A6B"/><ellipse cx="42" cy="39" rx="3" ry="2" fill="#C89A6B"/>' +
+  '<path d="M30 30 Q33 24 30 20" stroke="#7BC950" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
+  '<circle cx="36" cy="36" r="33" fill="rgba(180,220,255,0.18)" stroke="rgba(150,200,255,0.75)" stroke-width="2"/>' +
+  '<path d="M16 22 A26 26 0 0 1 30 8" stroke="rgba(255,255,255,0.95)" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>';
+
+const SHOT_SVG = {
+  alface: '<svg viewBox="0 0 56 56" width="60" height="60" style="animation:ff-spin 0.5s linear infinite"><path d="M28 6 Q44 16 46 30 Q40 48 28 50 Q14 44 10 28 Q14 12 28 6 Z" fill="#7BC950"/><path d="M28 10 Q28 28 28 46 M16 22 Q28 28 40 20 M15 34 Q28 32 41 36" stroke="#C9EF9F" stroke-width="2.5" fill="none"/></svg>',
+  feijao: '<svg viewBox="0 0 56 56" width="60" height="60"><path d="M8 34 Q2 28 8 24 L18 28 Z" fill="#FFD23F" opacity="0.9"/><ellipse cx="32" cy="28" rx="18" ry="14" fill="#C89A6B" transform="rotate(-14 32 28)"/><path d="M20 22 Q16 28 20 36 Q14 28 18 22 Z" fill="#8A5A34"/><circle cx="38" cy="24" r="3" fill="#EBCB9E"/></svg>',
+  arroz: '<svg viewBox="0 0 56 56" width="60" height="60"><path d="M6 32 L16 28 L6 24 Z" fill="#FFD23F" opacity="0.9"/><ellipse cx="32" cy="28" rx="16" ry="11" fill="#FFFDF6" stroke="#EADFC8" stroke-width="2" transform="rotate(-12 32 28)"/><path d="M40 18 Q44 12 42 6 Q46 12 44 18 Z" fill="#7BC950"/></svg>',
+};
+
+const CONFETTI_SVG = '<svg viewBox="0 0 110 110" width="110" height="110">' +
+  '<circle cx="55" cy="55" r="16" fill="#FFD23F" opacity="0.9"/>' +
+  '<circle cx="55" cy="16" r="7" fill="#FF6B6B"/><circle cx="90" cy="36" r="6" fill="#4ECDC4"/>' +
+  '<circle cx="94" cy="74" r="7" fill="#9B5DE5"/><circle cx="62" cy="98" r="6" fill="#7BC950"/>' +
+  '<circle cx="24" cy="88" r="7" fill="#FF7BAC"/><circle cx="14" cy="46" r="6" fill="#FFB627"/>' +
+  '<rect x="70" y="12" width="10" height="4" rx="2" fill="#7BC950" transform="rotate(30 75 14)"/>' +
+  '<rect x="18" y="20" width="10" height="4" rx="2" fill="#9B5DE5" transform="rotate(-40 23 22)"/>' +
+  '<rect x="88" y="52" width="10" height="4" rx="2" fill="#FF6B6B" transform="rotate(70 93 54)"/>' +
+  '<rect x="34" y="96" width="10" height="4" rx="2" fill="#4ECDC4" transform="rotate(-20 39 98)"/></svg>';
+
+const STAR = (fill) => '<svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 2 L14.8 8.6 L22 9.3 L16.6 14 L18.2 21 L12 17.3 L5.8 21 L7.4 14 L2 9.3 L9.2 8.6 Z" fill="' + fill + '"/></svg>';
+const HEART = (fill) => '<svg width="18" height="16" viewBox="0 0 20 18"><path d="M10 17 C3 11 0 7 0 4.5 A4.5 4.5 0 0 1 10 2.5 A4.5 4.5 0 0 1 20 4.5 C20 7 17 11 10 17 Z" fill="' + fill + '"/></svg>';
+const VIL_HP = (fill) => '<svg width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="' + fill + '"/><rect x="6" y="4" width="5" height="2" rx="1" fill="#FFFFFF" transform="rotate(24 8 5)" opacity="0.8"/></svg>';
+/* PROPOSTA v0.0.5 — ícone de "salvo": check desenhado com stroke positivo */
+const SAVED_ICON = '<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#EAF6E1"/><path d="M4.5 8.2 L7 10.5 L11.5 5.8" stroke="#7BC950" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/* =========================================================================
+   Composição de cenas
+   ========================================================================= */
+const laneCenterY = (lane) => lane * LANE_H + LANE_H / 2;
+const sizeOf = (type) => (type === 'zumbi' ? ZOMBIE_PX : CANDY_PX);
+
+function enemyHtml(e) {
+  const size = sizeOf(e.type);
+  const y = laneCenterY(e.lane) - size / 2;
+  const box = e.type === 'zumbi' ? 'width:96px;height:96px' : 'width:68px;height:68px';
+  const inner = e.type === 'zumbi' ? zombieArt() : CANDY_SVG[e.type];
+  return '<div class="sprite" style="' + box + ';transform:translate(' + e.x + 'px,' + y + 'px);z-index:4;overflow:visible">' + inner + '</div>';
+}
+
+function burstHtml(b) {
+  const delay = b.delayMs ? 'animation-delay:' + b.delayMs + 'ms;' : '';
+  return '<div class="burst" style="left:' + b.x + 'px;top:' + b.y + 'px"><svg viewBox="0 0 110 110" width="110" height="110" style="' + delay + '">' + CONFETTI_SVG.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '') + '</svg></div>';
+}
+
+function villainHtml(p) {
+  const top = p.vilY - VILLAIN_H / 2;
+  let pose = 'ff-bubble 1.6s ease-in-out infinite';
+  if (p.vilDying) pose = 'ff-vildie 2.2s ease-in forwards';
+  else if (p.vilMood === 'bravo') pose = 'ff-shake 0.45s ease-in-out 2';
+  const talk = p.talkText ? '<div class="talk" id="ff-talk">' + p.talkText + '</div>' : '<div id="ff-talk-slot"></div>';
+  return '<div class="vil" style="top:' + top + 'px"><div class="vil-pose" style="animation:' + pose + '"><div id="ff-vil-art" style="width:224px;height:242px">' +
+    villainSvg({ mood: p.vilMood, talking: p.vilTalking }) + '</div></div>' + talk + '</div>';
+}
+
+function hudHtml(p) {
+  const hearts = [0, 1, 2].map((i) => HEART(i < p.lives ? '#FF6B6B' : '#E9DAC4')).join('');
+  const vilHearts = [0, 1, 2, 3, 4].map((i) => VIL_HP(i < p.vilHP ? '#9B5DE5' : '#E9DAC4')).join('');
+  return '<div class="hud">' +
+    '<div class="hud-hero"><div style="width:40px;height:48px">' + heroSvg(ui.who) + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:15px;font-weight:700;color:#5A4327;line-height:1">' + HERO_NAMES[ui.who] + '</div>' +
+      '<div style="display:flex;gap:3px">' + hearts + '</div></div></div>' +
+    '<div class="hud-vil"><div style="font-size:13px;font-weight:700;color:#9B5DE5;line-height:1">Barão Brigadeiro</div>' +
+      '<div style="display:flex;gap:3px">' + vilHearts + '</div>' +
+      '<div style="font-size:11px;font-weight:600;color:#B08F63;line-height:1">' + DIFFS[ui.diff].label + '</div></div>' +
+    '<div style="display:flex;gap:10px;align-items:center"><div class="hud-score">' + p.score + '</div><div class="hud-exit">Sair</div></div>' +
+  '</div>';
+}
+
+function powerHtml(p) {
+  const charged = p.charges > 0;
+  const dots = [0, 1, 2].map((i) => '<div class="charge-dot" style="background:' + (i < p.charges ? '#FFD23F' : '#E9DAC4') + '"></div>').join('');
+  const cls = p.powerPressed ? 'is-charged is-pressed' : charged ? 'is-charged' : 'is-empty';
+  return '<div class="power"><div class="power-frame">' + (charged ? '<div class="power-ring"></div>' : '') +
+    '<button class="power-btn ' + cls + '" type="button" tabindex="-1">⭐<br>PODER!</button></div>' +
+    '<div style="display:flex;gap:6px">' + dots + '</div></div>';
+}
+
+function modalHtml(p) {
+  const won = p.modal === 'win';
+  const record = p.newRecord;
+  const statCls = (base) => base + (won ? ' is-win' : '');
+  const recordBlockCls = 'stat' + (won ? ' is-win' : '') + (record ? ' is-record' : '');
+  const art = won
+    ? '<div style="width:110px;height:136px;animation:ff-pulse 0.8s ease-in-out infinite">' + heroSvg(ui.who) + '</div>'
+    : '<div style="width:110px;height:120px">' + villainSvg({ mood: 'feliz', animated: true }) + '</div>';
+  const title = won ? '<div class="modal-title is-win">VOCÊ VENCEU!</div>' : '<div class="modal-title">Doce demais!</div>';
+  const sub = won
+    ? 'O Barão Brigadeiro caiu… comida de verdade venceu!'
+    : 'O Barão Brigadeiro venceu dessa vez… mas comida de verdade nunca desiste!';
+  const saved = p.bestSaved ? '<div class="saved-note">' + SAVED_ICON + 'Recorde salvo neste aparelho</div>' : '';
+  return '<div class="modal-overlay' + (won ? ' is-win' : '') + '"><div class="modal-card">' + art + title +
+    '<div class="modal-sub">' + sub + '</div>' +
+    '<div class="stats">' + (record ? '<div class="record-ribbon">NOVO RECORDE!</div>' : '') +
+      '<div class="' + statCls('stat') + '"><div class="' + statCls('stat-label') + '">Pontos</div><div class="' + statCls('stat-value') + '">' + p.score + '</div></div>' +
+      '<div class="' + recordBlockCls + '"><div class="' + statCls('stat-label') + '">Recorde</div><div class="' + statCls('stat-value') + '">' + p.best + '</div></div>' +
+    '</div>' + saved +
+    '<div class="btn-row"><button type="button" tabindex="-1" class="btn-primary' + (p.pressed === 'again' ? ' is-pressed' : '') + '">Jogar de novo</button>' +
+      '<button type="button" tabindex="-1" class="btn-secondary' + (p.pressed === 'switch' ? ' is-pressed' : '') + '">Trocar herói</button></div>' +
+  '</div></div>';
+}
+
+function pauseHtml(p) {
+  if (p.pause === 'paused' || p.pause === 'leaving') {
+    return '<div class="pause-overlay' + (p.pause === 'leaving' ? ' is-leaving' : '') + '" id="ff-pause">' +
+      '<div class="pause-pill"><div class="pause-icon"><i></i><i></i></div><div><div class="pause-title">Pausado</div>' +
+      '<div class="pause-sub">Volte ao jogo para continuar</div></div></div></div>';
+  }
+  return '';
+}
+
+function resumeHtml(p) {
+  if (!p.resumePill) return '';
+  return '<div class="resume-pill" id="ff-resume"><svg width="18" height="20" viewBox="0 0 18 20"><path d="M3 2 L16 10 L3 18 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/></svg>Continuando!</div>';
+}
+
+/* Parâmetros padrão de uma partida */
+const BASE_GAME = {
+  lives: 3, score: 230, best: 340, charges: 0, vilHP: 5, vilMood: 'feliz', vilTalking: false, vilDying: false,
+  talkText: '', vilY: H / 2, heroLane: 1, invuln: false, enemies: [], bubble: null, shots: [], bursts: [],
+  toast: '', modal: null, newRecord: false, bestSaved: false, pressed: null, pause: null, resumePill: false,
+  scrollStopped: false, powerPressed: false, showHint: false,
+};
+const NORMAL_ENEMIES = [
+  { type: 'candy', x: 330, lane: 0 },
+  { type: 'zumbi', x: 470, lane: 2 },
+  { type: 'lolli', x: 560, lane: 1 },
+  { type: 'donut', x: 690, lane: 0 },
+];
+
+function gameScene(overrides) {
+  const p = Object.assign({}, BASE_GAME, overrides);
+  const heroTop = laneCenterY(p.heroLane);
+  const bubble = p.bubble
+    ? '<div class="sprite" style="width:84px;height:84px;z-index:4;transform:translate(' + p.bubble.x + 'px,' + (laneCenterY(p.bubble.lane) - 42) + 'px)">' + BUBBLE_SVG + '</div>'
+    : '';
+  const shots = p.shots.map((s) => {
+    const travel = s.travel ? 'animation:ff-shot-travel ' + (s.travel / SHOT_SPEED).toFixed(3) + 's linear forwards;--travel:' + s.travel + 'px;' : '';
+    return '<div class="sprite" style="width:60px;height:60px;z-index:6;left:' + s.x + 'px;top:' + (laneCenterY(s.lane) - 30) + 'px;' + travel + '">' +
+      '<div style="animation:ff-glow 0.4s ease-in-out infinite">' + SHOT_SVG[ui.who] + '</div></div>';
+  }).join('');
+  const toast = p.toast ? '<div class="toast">' + p.toast + '</div>' : '';
+  const hint = p.showHint
+    ? '<div class="hint">Toque em <strong>cima</strong> = sobe · toque <strong>embaixo</strong> = desce<br>Pegue a bolha 🫧 pra ganhar PODER</div>'
+    : '';
+  return '<div class="screen freeze-scope">' +
+    '<div class="field' + (p.scrollStopped ? ' scroll-stopped' : '') + '">' +
+      '<div class="lane-divider" style="top:33.33%"></div><div class="lane-divider" style="top:66.66%"></div>' +
+      villainHtml(p) +
+      p.enemies.map(enemyHtml).join('') +
+      p.bursts.map(burstHtml).join('') +
+      bubble + shots +
+      '<div class="hero" style="top:' + heroTop + 'px;' + (p.invuln ? 'animation:ff-flicker 0.2s steps(2) infinite' : '') + '">' +
+        '<div class="hero-shadow"></div>' + heroSvg(ui.who) + '</div>' +
+      toast +
+    '</div>' + hudHtml(p) + powerHtml(p) + hint + '</div>' +
+    pauseHtml(p) + resumeHtml(p) + (p.modal ? modalHtml(p) : '');
+}
+
+function selectScene({ best = 340, firstRun = false } = {}) {
+  const card = (who, power, bg) =>
+    '<div class="hero-card' + (ui.who === who ? ' is-selected' : '') + '"><div style="width:108px;height:134px">' + heroSvg(who) + '</div>' +
+    '<div style="font-size:23px;font-weight:700;color:' + HERO_COLORS[who] + '">' + HERO_NAMES[who] + '</div>' +
+    '<div style="font-size:12px;font-weight:600;color:' + (who === 'alface' ? '#7BC950' : HERO_COLORS[who]) + ';background:' + bg + ';border-radius:10px;padding:4px 12px">' + power + '</div></div>';
+  const chip = firstRun || best <= 0 ? '' :
+    '<div class="best-chip"><span style="font-size:18px">🏆</span><div style="display:flex;flex-direction:column;line-height:1.05">' +
+    '<span style="font-size:11px;font-weight:600;color:#B08F63;text-transform:uppercase;letter-spacing:1px">Recorde</span>' +
+    '<span style="font-size:20px;font-weight:700;color:#5A4327">' + best + '</span></div></div>';
+  return '<div class="screen select-screen">' +
+    '<div style="position:absolute;top:-40px;left:-60px;width:280px;height:280px;border-radius:50%;background:rgba(255,210,63,0.25)"></div>' +
+    '<div style="position:absolute;bottom:-70px;right:-50px;width:320px;height:320px;border-radius:50%;background:rgba(123,201,80,0.18)"></div>' +
+    chip +
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;position:relative">' +
+      '<div style="font-size:64px;font-weight:700;line-height:1;letter-spacing:2px;color:#FF6B6B;text-shadow:0 4px 0 #E04F4F,0 8px 18px rgba(224,79,79,0.3)">FOOD FIGHT</div>' +
+      '<div style="font-size:16px;font-weight:500;color:#8A6A45;background:#FFFDF6;border:2px solid #F0DFC0;border-radius:999px;padding:6px 18px">Desvie dos doces e derrote o <strong style="color:#9B5DE5">Barão Brigadeiro</strong>!</div>' +
+    '</div>' +
+    '<div style="font-size:22px;font-weight:600;color:#5A4327">Escolha seu heroizinho</div>' +
+    '<div style="display:flex;gap:20px;position:relative">' +
+      card('alface', 'Folha Bumerangue', '#EAF6E1') + card('feijao', 'Meteoro Carioca', '#F7EDDE') + card('arroz', 'Grão Turbo', '#FBF6E9') +
+    '</div>' +
+    '<button type="button" tabindex="-1" style="border:none;font-size:24px;font-weight:700;letter-spacing:1px;color:#FFFFFF;background:#7BC950;padding:13px 52px;border-radius:999px;box-shadow:0 6px 0 #59A335,0 14px 26px rgba(89,163,53,0.35);animation:ff-pulse 1.6s ease-in-out infinite">CONTINUAR →</button>' +
+    '<div style="position:absolute;bottom:16px;left:22px;font-size:12px;font-weight:500;color:#C4A87E">FOOD FIGHT · estilo v0.0.5 - By Lucas Medeiros</div>' +
+  '</div>';
+}
+
+function difficultyScene() {
+  const card = (key, i) => {
+    const d = DIFFS[key];
+    const dark = key === 'impossivel';
+    const stars = Array.from({ length: d.stars }, () => STAR(d.color)).join('');
+    const extraAnim = dark ? ', ff-wiggle 0.6s 0.7s ease-in-out infinite' : '';
+    return '<div class="diff-card' + (ui.diff === key ? ' is-selected' : '') + '" style="border-bottom:8px solid ' + d.color + ';' +
+      (dark ? 'background:#3D2C4E;box-shadow:0 10px 28px rgba(90,50,150,0.35);' : '') +
+      'animation:ff-diffin 0.4s ' + (0.05 + i * 0.07).toFixed(2) + 's ease-out both' + extraAnim + '">' +
+      '<div style="display:flex;gap:3px">' + stars + '</div>' +
+      '<div style="font-size:22px;font-weight:700;color:' + d.text + '">' + d.label + '</div>' +
+      '<div style="font-size:13px;font-weight:500;color:' + (dark ? '#B49CD9' : '#9B8464') + ';text-align:center">' + d.copy + '</div></div>';
+  };
+  return '<div class="screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:24px">' +
+    '<div style="position:absolute;top:-50px;right:-60px;width:300px;height:300px;border-radius:50%;background:rgba(155,93,229,0.12)"></div>' +
+    '<div style="display:flex;align-items:center;gap:14px;animation:ff-diffin 0.4s ease-out both">' +
+      '<div style="width:64px;height:80px">' + heroSvg(ui.who) + '</div>' +
+      '<div style="display:flex;flex-direction:column"><div style="font-size:40px;font-weight:700;color:#5A4327;line-height:1.1">Qual o tamanho da fome, <span style="color:#7BC950">' + HERO_NAMES[ui.who] + '</span>?</div>' +
+      '<div style="font-size:15px;font-weight:500;color:#B08F63">Escolha a dificuldade da batalha — ela não muda no meio do jogo!</div></div>' +
+    '</div>' +
+    '<div style="display:flex;gap:18px">' + Object.keys(DIFFS).map(card).join('') + '</div>' +
+    '<button type="button" tabindex="-1" style="font-size:15px;font-weight:600;color:#8A6A45;background:#FFFFFF;border:2px solid #F0DFC0;padding:10px 24px;border-radius:999px">← Trocar herói</button>' +
+  '</div>';
+}
+
+function rosterScene() {
+  const box = (w, h, inner, label, name, extra = '') =>
+    '<div class="measure" style="width:' + w + 'px;height:' + h + 'px;' + extra + '">' + inner +
+    '<div class="measure-label">' + label + '</div><div class="measure-name">' + name + '</div></div>';
+  return '<div class="screen" style="background:#FFF3E2"><div class="roster">' +
+    box(100, 126, heroSvg('alface'), '100 × 126 · bob 0 s', 'Alface') +
+    box(100, 126, heroSvg('feijao'), '100 × 126 · bob −0,15 s', 'Feijão') +
+    box(100, 126, heroSvg('arroz'), '100 × 126 · bob −0,30 s', 'Arroz') +
+    box(96, 96, '<div style="position:relative;width:96px;height:96px">' + zombieArt() + '</div>', 'hitbox 96 · arte 100 × 92', 'Zumbi + HA HA HA!') +
+    box(84, 84, BUBBLE_SVG, '84 × 84', 'Bolha') +
+    box(VILLAIN_W, VILLAIN_H, '<div style="width:224px;height:242px;filter:drop-shadow(0 0 26px rgba(155,93,229,0.45))">' + villainSvg({ talking: true, animated: true }) + '</div>', '224 × 242 · boca 75/95', 'Barão Brigadeiro') +
+  '</div></div>';
+}
+
+/* =========================================================================
+   Estados (navegação). Cada estado tem passos; cada passo monta a cena e,
+   se precisar, agenda animações (sempre via later/every → cancelAll).
+   ========================================================================= */
+const POWER_ENEMIES_FX = () => NORMAL_ENEMIES.map((e) => ({ x: e.x + sizeOf(e.type) / 2, y: laneCenterY(e.lane) }));
+
+const VIEWS = [
+  {
+    id: 'normal', label: '1 · Partida normal',
+    note: '<b>Gameplay base.</b> Três lanes, mesa rolando 88 px a cada 0,9 s, quatro tipos de inimigo no pool fixo, herói na lane do meio, PODER! vazio. A dica de controle aparece até o primeiro movimento.',
+    steps: [{ name: 'Partida', run: () => mount(gameScene({ enemies: NORMAL_ENEMIES, showHint: true }), 'Sem carga: botão cinza #D8CBB4, sem ring. Barão na lane central (vilY = 260).') }],
+  },
+  {
+    id: 'charged', label: '2 · Poder carregado',
+    note: '<b>Carga ≥ 1.</b> Botão vermelho pulsando, ring dourado tracejado girando, bolinhas preenchidas em #FFD23F. A bolha da próxima carga segue na lane 1.',
+    steps: [{ name: 'Duas cargas', run: () => mount(gameScene({ enemies: NORMAL_ENEMIES.slice(0, 3), charges: 2, bubble: { x: 600, lane: 1 } }), 'Ring: inset −11, borda 5 tracejada, giro 5 s + pulso 1 s.') }],
+  },
+  {
+    id: 'powerClear', label: '3 · Power clear', replay: true,
+    note: '<b>Disparo aceito.</b> Todo inimigo visível explode em confete centrado no próprio sprite (+10 cada), o toast dourado mostra o nome do poder, e o tiro voa até W − 230 com impacto em W − 150.',
+    steps: [{ name: 'Disparo', run: playPowerClear }],
+  },
+  {
+    id: 'dialogue', label: '4 · Diálogo digitado', replay: true,
+    note: '<b>Máquina de escrever.</b> 65 ms por letra com a boca animando; ao terminar a boca para e o balão permanece 2.800 ms. “Mesma frase” cria uma nova solicitação com o mesmo texto e reinicia do primeiro caractere.',
+    steps: [{ name: 'Provocação', run: () => playDialogue(false) }, { name: 'Mesma frase de novo', run: () => playDialogue(true) }],
+  },
+  {
+    id: 'defeat', label: '5 · Derrota do Barão', replay: true,
+    note: '<b>Derrota estagiada (2.500 ms).</b> A cena congela, o Barão infla até 1,5×, treme, gira 720° e some; nove confetes em 260 + i × 200 ms. A fala de derrota termina antes da vitória. A modal só abre ao fim.',
+    steps: [{ name: 'Sequência', run: playDefeat }],
+  },
+  {
+    id: 'win', label: '6 · Modal de vitória',
+    note: '<b>screen = win.</b> Overlay verde 40%, herói pulando, blocos verdes. Aparece somente depois da derrota estagiada.',
+    steps: [{ name: 'Vitória', run: () => mount(gameScene({ vilHP: 0, score: 280, best: 340, scrollStopped: true, modal: 'win', vilDying: true }), 'Cartão: padding 30 × 44, raio 30, ff-pop 0,35 s.') }],
+  },
+  {
+    id: 'over', label: '7 · Modal de Game Over',
+    note: '<b>screen = over.</b> Overlay marrom 45%, Barão feliz, título #FF6B6B. Corações vazios no HUD por trás.',
+    steps: [{ name: 'Game Over', run: () => mount(gameScene({ lives: 0, score: 230, best: 340, enemies: NORMAL_ENEMIES.slice(1, 3), scrollStopped: true, modal: 'over' }), 'A cena por trás fica congelada.') }],
+  },
+  {
+    id: 'paused', label: '8 · Pausa / background',
+    note: '<b>PROPOSTA v0.0.5.</b> App em inactive/background: tudo congela no frame atual e um overlay discreto com a pílula “Pausado” cobre a cena. Nada se move, nenhum evento é emitido.',
+    steps: [{ name: 'Pausado', run: () => { mount(gameScene({ enemies: NORMAL_ENEMIES, charges: 1, talkText: 'Desiste! Criança não gosta de alface mesmo!', pause: 'paused' }), 'Repare: ring, pulso, tecido e zumbi estão parados.'); setFrozen(true); } }],
+  },
+  {
+    id: 'resume', label: '9 · Retomada', replay: true,
+    note: '<b>PROPOSTA v0.0.5.</b> Voltou a active: pílula verde “Continuando!”, overlay sai em 250 ms e a cena retoma do ponto congelado — sem teleporte.',
+    steps: [{ name: 'Retomar', run: playResume }],
+  },
+  {
+    id: 'best', label: '10 · Recorde salvo',
+    note: '<b>PROPOSTA v0.0.5.</b> Novo recorde: selo dourado “NOVO RECORDE!” sobre as estatísticas, borda #FFB627 no bloco Recorde e nota “Recorde salvo neste aparelho”. Na seleção, chip de recorde no canto superior direito. Falha de armazenamento não mostra erro.',
+    steps: [
+      { name: 'Novo recorde', run: () => mount(gameScene({ vilHP: 0, score: 410, best: 410, scrollStopped: true, modal: 'win', newRecord: true, bestSaved: true, vilDying: true }), 'Pontos 410 > recorde anterior 340.') },
+      { name: 'Seleção com recorde', run: () => mount(selectScene({ best: 410 }), 'Recorde lido do aparelho; a tela não espera a leitura.') },
+      { name: 'Primeira execução', run: () => mount(selectScene({ firstRun: true }), 'Sem recorde salvo: o chip não aparece.') },
+      { name: 'Placar menor', run: () => mount(gameScene({ lives: 0, score: 120, best: 410, scrollStopped: true, modal: 'over', bestSaved: true }), 'Placar 120 não substitui o recorde 410; sem selo.') },
+      { name: 'Falha de armazenamento', run: () => mount(gameScene({ lives: 0, score: 120, best: 120, scrollStopped: true, modal: 'over' }), 'Leitura/gravação falhou: recorde da sessão, sem nota de salvamento e sem mensagem de erro.') },
+    ],
+  },
+  {
+    id: 'replay', label: '11 · Jogar de novo',
+    note: '<b>Replay mantém a dificuldade.</b> “Jogar de novo” volta a 3 vidas, placar 0, cargas 0, Barão 5/5, sem diálogo, sem inimigos, mesmo rótulo de dificuldade no HUD. O recorde é preservado.',
+    steps: [
+      { name: 'Toque', run: () => mount(gameScene({ lives: 0, score: 230, best: 340, enemies: NORMAL_ENEMIES.slice(1, 3), scrollStopped: true, modal: 'over', pressed: 'again' }), 'Botão primário pressionado (translateY 3).') },
+      { name: 'Nova partida', run: () => mount(gameScene({ score: 0, best: 340, showHint: true }), 'Estado limpo; dificuldade “' + DIFFS[ui.diff].label + '” mantida no HUD.') },
+    ],
+  },
+  {
+    id: 'switchHero', label: '12 · Trocar herói',
+    note: '<b>Troca de herói.</b> “Trocar herói” volta para a seleção (com o recorde preservado), depois para a dificuldade e uma nova partida limpa com o novo herói.',
+    steps: [
+      { name: 'Toque', run: () => mount(gameScene({ vilHP: 0, score: 280, best: 340, scrollStopped: true, modal: 'win', pressed: 'switch', vilDying: true }), 'Botão secundário pressionado.') },
+      { name: 'Seleção', run: () => mount(selectScene({ best: 340 }), 'Use os chips de herói à esquerda para alternar a seleção.') },
+      { name: 'Dificuldade', run: () => mount(difficultyScene(), 'Dificuldade atual destacada com contorno #FFB627.') },
+      { name: 'Nova partida', run: () => mount(gameScene({ score: 0, best: 340, showHint: true }), 'Novo herói no HUD e no campo; partida limpa.') },
+    ],
+  },
+  {
+    id: 'difficulties', label: '13 · Quatro dificuldades',
+    note: '<b>Muito Fácil, Fácil, Difícil, Impossível.</b> Cartões 186 px com borda inferior de 8 px na cor do nível; Impossível escuro (#3D2C4E) com wiggle. A dificuldade não muda durante a partida.',
+    steps: [{ name: 'Cartões', run: () => mount(difficultyScene(), 'Alterne a dificuldade à esquerda para ver o destaque e o rótulo do HUD.') }],
+  },
+  {
+    id: 'roster', label: '14 · Personagens e medidas',
+    note: '<b>Prancheta.</b> Heróis com bob desencontrado (Alface 0 s, Feijão −0,15 s, Arroz −0,30 s), zumbi com pílula HA HA HA!, bolha de 84 px e Barão 224 × 242 falando (boca em 75/95 do viewBox).',
+    steps: [{ name: 'Medidas', run: () => mount(rosterScene(), 'Contornos tracejados = caixa de render.') }],
+  },
+];
+
+/* ---------- Animações demonstrativas ---------- */
+function playPowerClear() {
+  const name = POWERS[ui.who][0];
+  mount(gameScene({ enemies: NORMAL_ENEMIES, charges: 2 }), '<b>Antes:</b> 4 inimigos visíveis, 2 cargas.');
+  later(() => {
+    mount(gameScene({ enemies: NORMAL_ENEMIES, charges: 2, powerPressed: true }), '<b>Press-in</b> no PODER!');
+  }, 700);
+  later(() => {
+    const startX = HERO_X + 74;
+    mount(gameScene({
+      charges: 1, score: 270, bursts: POWER_ENEMIES_FX(), toast: name + '! 🎉',
+      shots: [{ x: startX, lane: 1, travel: VILLAIN_SHOT_HIT_X - startX }],
+    }), '<b>Clear:</b> confete centrado em cada inimigo, +40 pontos, toast “' + name + '! 🎉”.');
+    const travelMs = ((VILLAIN_SHOT_HIT_X - startX) / SHOT_SPEED) * 1000;
+    later(() => {
+      mount(gameScene({
+        charges: 1, score: 270, vilHP: 4, vilMood: 'bravo', talkText: 'AI!! Isso foi… nutritivo demais!',
+        bursts: [{ x: VILLAIN_SHOT_FX_X, y: H / 2 }],
+      }), '<b>Impacto</b> em W − 150: Barão −1 HP, cara brava 1,4 s e tremor 0,45 s.');
+    }, travelMs);
+  }, 900);
+}
+
+let dialogueRequest = 0;
+function playDialogue(sameAgain) {
+  ui.dialogueRequestId += 1;
+  const requestId = ui.dialogueRequestId;
+  dialogueRequest = requestId;
+  const text = TAUNT;
+  mount(gameScene({ enemies: NORMAL_ENEMIES.slice(0, 2), vilTalking: true, talkText: '&nbsp;' }),
+    '<b>Solicitação #' + requestId + '</b>' + (sameAgain ? ' · mesmo texto da anterior → digitação reinicia' : '') + ' · digitando…');
+  const talkEl = () => document.getElementById('ff-talk');
+  let index = 0;
+  const typer = every(() => {
+    if (dialogueRequest !== requestId) return;
+    index += 1;
+    const el = talkEl();
+    if (el) el.textContent = text.slice(0, index);
+    if (index >= text.length) {
+      clearInterval(typer); timers.delete(typer);
+      setVillainArt({ mood: 'feliz', talking: false });
+      caption('<b>Solicitação #' + requestId + '</b> · texto completo → boca parada · permanência de ' + TAUNT_HOLD_MS + ' ms');
+      later(() => {
+        if (dialogueRequest !== requestId) return;
+        const el2 = talkEl();
+        if (el2) el2.remove();
+        caption('<b>Solicitação #' + requestId + '</b> · balão oculto após a permanência.');
+      }, TAUNT_HOLD_MS);
+    }
+  }, DIALOGUE_CHAR_MS);
+}
+
+function playDefeat() {
+  mount(gameScene({
+    vilHP: 0, score: 280, vilMood: 'bravo', vilDying: true, vilTalking: true, talkText: '&nbsp;', scrollStopped: true,
+    bursts: defeatBursts(),
+  }), '<b>0 ms</b> · derrota estagiada: gameplay congelado, inflar → tremer → girar → sumir.');
+  let index = 0;
+  const typer = every(() => {
+    index += 1;
+    const el = document.getElementById('ff-talk');
+    if (el) el.textContent = DEFEAT_LINE.slice(0, index);
+    if (index >= DEFEAT_LINE.length) {
+      clearInterval(typer); timers.delete(typer);
+      setVillainArt({ mood: 'bravo', talking: false });
+      caption('<b>' + DEFEAT_LINE.length * DEFEAT_CHAR_MS + ' ms</b> · fala de derrota completa; permanece visível até a vitória.');
+    }
+  }, DEFEAT_CHAR_MS);
+  later(() => {
+    mount(gameScene({ vilHP: 0, score: 280, best: 340, scrollStopped: true, modal: 'win', vilDying: true }),
+      '<b>' + DEFEAT_DURATION_MS + ' ms</b> · screen = win. A modal nunca abre antes deste instante.');
+  }, DEFEAT_DURATION_MS);
+}
+
+function defeatBursts() {
+  /* Offsets fixos dentro do spread ±90 × ±100 (o jogo sorteia via PRNG). */
+  const offsets = [[-60, -70], [40, 30], [-20, 80], [70, -40], [-80, 20], [10, -90], [60, 70], [-40, -20], [20, 40]];
+  const cx = W - 120;
+  const cy = H / 2;
+  return offsets.slice(0, DEFEAT_BURSTS).map(([dx, dy], i) => ({ x: cx + dx, y: cy + dy, delayMs: DEFEAT_BURST_START_MS + i * DEFEAT_BURST_STEP_MS }));
+}
+
+function playResume() {
+  const params = { enemies: NORMAL_ENEMIES, charges: 1 };
+  mount(gameScene(Object.assign({ pause: 'paused' }, params)), '<b>Pausado</b> · cena congelada.');
+  setFrozen(true);
+  later(() => {
+    setFrozen(false);
+    const overlay = document.getElementById('ff-pause');
+    if (overlay) overlay.classList.add('is-leaving');
+    document.getElementById('device').insertAdjacentHTML('beforeend', resumeHtml({ resumePill: true }));
+    caption('<b>active</b> · overlay sai em ' + PAUSE_FADE_OUT_MS + ' ms; cena retoma do mesmo frame.');
+    later(() => { const o = document.getElementById('ff-pause'); if (o) o.remove(); }, PAUSE_FADE_OUT_MS);
+    later(() => {
+      const pill = document.getElementById('ff-resume');
+      if (pill) pill.classList.add('is-leaving');
+      later(() => { const p2 = document.getElementById('ff-resume'); if (p2) p2.remove(); caption('<b>Jogando</b> · sem eventos atrasados, sem teleporte.'); }, 250);
+    }, RESUME_PILL_MS);
+  }, 1600);
+}
+
+/* =========================================================================
+   Montagem e UI do documento
+   ========================================================================= */
+function mount(html, captionHtml) {
+  const device = document.getElementById('device');
+  device.classList.remove('is-frozen');
+  device.innerHTML = html;
+  caption(captionHtml || '');
+}
+function caption(html) { document.getElementById('stage-caption').innerHTML = html; }
+function setFrozen(on) { document.getElementById('device').classList.toggle('is-frozen', on); }
+function setVillainArt(opts) {
+  const art = document.getElementById('ff-vil-art');
+  if (art) art.innerHTML = villainSvg(opts);
+}
+
+function currentView() { return VIEWS.find((v) => v.id === ui.view); }
+
+function run() {
+  cancelAll();
+  const view = currentView();
+  const step = view.steps[Math.min(ui.step, view.steps.length - 1)];
+  document.getElementById('stage-title').textContent = view.label;
+  document.getElementById('state-note').innerHTML = view.note;
+  document.getElementById('stage-replay').style.display = view.replay || view.steps.length > 1 ? '' : 'none';
+  const steps = document.getElementById('stage-steps');
+  steps.innerHTML = view.steps.length > 1
+    ? view.steps.map((s, i) => '<button type="button" class="chip" data-step="' + i + '" aria-pressed="' + (i === ui.step) + '">' + (i + 1) + '. ' + s.name + '</button>').join('')
+    : '';
+  step.run();
+  renderNav();
+}
+
+function renderNav() {
+  document.getElementById('nav-states').innerHTML = VIEWS.map((v) =>
+    '<button type="button" class="nav-btn" data-view="' + v.id + '" aria-pressed="' + (v.id === ui.view) + '">' + v.label + '</button>').join('');
+  document.getElementById('nav-heroes').innerHTML = Object.keys(HERO_NAMES).map((w) =>
+    '<button type="button" class="chip" data-who="' + w + '" aria-pressed="' + (w === ui.who) + '">' + HERO_NAMES[w] + '</button>').join('');
+  document.getElementById('nav-diffs').innerHTML = Object.keys(DIFFS).map((d) =>
+    '<button type="button" class="chip" data-diff="' + d + '" aria-pressed="' + (d === ui.diff) + '">' + DIFFS[d].label + '</button>').join('');
+}
+
+function renderPalette() {
+  const rows = [
+    ['brand', '#FF6B6B'], ['brandShadow', '#E04F4F'], ['positive', '#7BC950'], ['positiveShadow', '#59A335'],
+    ['score', '#FFB627'], ['scoreShadow', '#E09A10'], ['villain', '#9B5DE5'], ['villainDark', '#3D2C4E'],
+    ['villainBorder', '#E5D4F7'], ['sprinkleYellow', '#FFD23F'], ['candyPink', '#FF7BAC'], ['candyTeal', '#4ECDC4'],
+    ['bg', '#FFF3E2'], ['surface', '#FFFFFF'], ['surfaceAlt', '#FFFDF6'], ['border', '#F0DFC0'],
+    ['heartEmpty', '#E9DAC4'], ['textStrong', '#5A4327'], ['textBody', '#8A6A45'], ['textMuted', '#B08F63'],
+    ['winSurface', '#EAF6E1'], ['winText', '#3E7D2E'], ['powerDisabled', '#D8CBB4'], ['powerDisabledShadow', '#BEB09A'],
+    ['overlay', 'rgba(70,40,10,0.45)'], ['winOverlay', 'rgba(123,201,80,0.4)'],
+  ];
+  document.getElementById('palette-table').innerHTML = '<table>' + rows.map(([k, v]) =>
+    '<tr><td><span class="swatch" style="background:' + v + '"></span><code>' + k + '</code></td><td>' + v + '</td></tr>').join('') +
+    '</table><p>Pausa reutiliza <code>overlay</code>, <code>surfaceAlt</code>, <code>border</code> e <code>textStrong</code>; “Continuando!” reutiliza <code>positive</code>/<code>positiveShadow</code>; o selo de recorde reutiliza <code>score</code>/<code>scoreShadow</code>. Nenhuma cor nova.</p>';
+}
+
+function fitDevice() {
+  const stage = document.querySelector('.doc-stage');
+  const frame = document.getElementById('device-frame');
+  const availW = stage.clientWidth - 48;
+  const availH = stage.clientHeight - 140;
+  const scale = Math.max(0.3, Math.min(availW / W, availH / H, 1.4));
+  document.getElementById('device').style.transform = 'scale(' + scale + ')';
+  frame.style.width = W * scale + 'px';
+  frame.style.height = H * scale + 'px';
+}
+
+document.addEventListener('click', (event) => {
+  const target = event.target.closest('button');
+  if (!target) return;
+  if (target.dataset.view) { ui.view = target.dataset.view; ui.step = 0; run(); }
+  else if (target.dataset.step) { ui.step = Number(target.dataset.step); run(); }
+  else if (target.dataset.who) { ui.who = target.dataset.who; run(); }
+  else if (target.dataset.diff) { ui.diff = target.dataset.diff; run(); }
+  else if (target.id === 'stage-replay') { run(); }
+});
+document.addEventListener('keydown', (event) => {
+  const index = VIEWS.findIndex((v) => v.id === ui.view);
+  if (event.key === 'ArrowDown' && index < VIEWS.length - 1) { ui.view = VIEWS[index + 1].id; ui.step = 0; run(); event.preventDefault(); }
+  if (event.key === 'ArrowUp' && index > 0) { ui.view = VIEWS[index - 1].id; ui.step = 0; run(); event.preventDefault(); }
+});
+window.addEventListener('resize', fitDevice);
+
+renderPalette();
+run();
+fitDevice();
+</script>
+</body>
+</html>

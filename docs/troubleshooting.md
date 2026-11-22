@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Symptom → cause → fix, for Food Fight v0.0.1.
+Symptom → cause → fix, for Food Fight v0.0.5.
 
 ---
 
@@ -125,7 +125,7 @@ It hides on the first successful lane change, via `GameScreen`'s wrapper around 
 
 Check `HERO_HITBOX_PADDING` (18). It insets the hero hitbox on the X axis — raising it makes collisions more forgiving, lowering it makes them stricter.
 
-Only the X axis is tested; Y overlap is implied by the lane-index check. If lane geometry is ever changed so that hero and candy are no longer both centred in their lane, that assumption breaks and a Y test becomes necessary. During the 130 ms lane transition, collision already uses the destination lane, so a hit can register before the hero visually arrives; this is a known debt, not a rendering bug. See [architecture.md](./architecture.md).
+In v0.0.5, vertical collision is continuous using visual Y coordinates (`heroIntersectsObstacleY` / `heroIntersectsBubbleY`). During the 130 ms lane transition, hits only register if the hero's vertical bounds actually overlap the obstacle's vertical bounds, eliminating false positives from premature destination-lane assignment. See [architecture.md](./architecture.md).
 
 ### Collisions never register
 
@@ -160,9 +160,9 @@ Speed and interval come from the selected fixed preset. `engine.reset()` restore
 
 Score is awarded for **dodging** — 10 points when a candy exits the left edge while active. A candy that hits the hero still exits and still scores; the penalty is the lost life.
 
-### Best score not updating
+### Best score not updating or not persisting
 
-`best` updates inside the same transition that sets `screen: 'over'`. It only rises when the finished run beats it, and it survives `reset()` along with the hero choice. It is **in-memory only**: a cold start resets it.
+`best` updates inside the same transition that sets `screen: 'over'` or `screen: 'win'`. It only rises when the finished run beats it, survives `reset()` along with the hero choice, and is asynchronously persisted via `@react-native-async-storage/async-storage` (`@foodfight:best_score`). Values outside the safe `[0, 10,000,000)` range or corrupt values are rejected and the in-memory score remains active. Storage failures are intentionally handled as a silent memory fallback so they cannot interrupt gameplay.
 
 ---
 
@@ -174,7 +174,7 @@ Geometry is ported verbatim from `docs/design/project/Foodie.dc.html`. That file
 
 ### Heroes bob in unison
 
-Known debt. The design gives each hero its own `animation-delay`; `useWalkCycle` does not replicate the offset.
+Resolved in v0.0.5. `useWalkCycle` ports verified `animation-delay` offsets from `Foodie.dc.html` (Alface 0s, Feijão -0.15s, Arroz -0.30s), so each character runs with its design-faithful phase offset.
 
 ### Colours look off-brand
 

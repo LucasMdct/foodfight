@@ -1,9 +1,9 @@
 # Food Fight
 
-A mobile endless runner built with **Expo SDK 56**, **React Native Skia** and **Reanimated**.
+A mobile endless runner built with **Expo SDK 57**, **React Native Skia** and **Reanimated**.
 
-**Version:** 0.0.4 ([changelog](./CHANGELOG.md))
-**Status:** v0.0.4 release candidate on `master` — pre-release APK published; ARM hardware profiling pending
+**Version:** 0.0.5 ([changelog](./CHANGELOG.md))
+**Status:** v0.0.5 release candidate on `feature/v005` — stabilization, persistent best score via AsyncStorage, pause/resume AppState handling, transition-accurate collision, and design-verified hero bob offsets
 
 Pick a Foodie, dodge the candy the Barão Brigadeiro throws across three lanes of a rolling kitchen table, collect food bubbles to charge your power, and defeat the Barão.
 
@@ -33,9 +33,9 @@ The architecture is still the strongest part: the loop runs entirely on the UI t
 
 > The 30–50 fps figure is disputed in this branch: commit `2c21cd2` claimed it came from an old README and removed it. No replacement measurement exists, so the figure is retained as the last recorded result and the verdict is marked unresolved rather than approved.
 
-### Phase 2 — Game v0.0.1–v0.0.4 · **implemented, device QA pending**
+### Phase 2 — Game v0.0.1–v0.0.5 · **implemented, device QA pending**
 
-From v0.0.1 the project stops being a POC and becomes the game, implementing the `FoodFight v0.0.1` design in full. Pre-release APKs cover v0.0.1 through v0.0.4: v0.0.3 added difficulty selection and Barão 2.0 combat, and v0.0.4 adds bubble-only power charging, full-screen power clears, typed Barão dialogue with a talking mouth, laughing zombies, a 224 × 242 Barão, and a staged defeat sequence.
+From v0.0.1 the project stops being a POC and becomes the game, implementing the `FoodFight` designs in full. Pre-release APKs cover v0.0.1 through v0.0.4; v0.0.5 adds production stabilization, persistent best score via AsyncStorage, pause/resume AppState handling, transition-accurate collision, and design-verified hero bob offsets.
 
 **Delivered:** character selection with three heroes, fixed-difficulty presets, the 224 × 242 Barão Brigadeiro villain with typed dialogue and staged defeat, Skia-rendered characters with an animated walk cycle, spinning candy projectiles and laughing zombies, food bubbles and full-screen power clears with centered confetti, scrolling tablecloth and lane dividers, a three-lives model, HUD with a 126 px lower-right circular power control, Win/Game Over with best-score tracking, a centralized theme with Fredoka typography, and Husky quality gates.
 
@@ -56,7 +56,7 @@ From v0.0.1 the project stops being a POC and becomes the game, implementing the
 | **Projectiles** | Lollipop, gumdrop, donut, laughing zombie (`HA HA HA!`) — falling across 3 lanes |
 | **Powers** | Collect food bubbles (every 100 pts) to charge `PODER!`; firing clears all visible enemies and damages the Barão |
 | **Input** | Swipe or tap up/down to change lane; tap the lower-right circular `PODER!` button to fire |
-| **Scoring** | +10 per dodged or power-cleared enemy; best score persists across runs in a session |
+| **Scoring** | +10 per dodged or power-cleared enemy; best score persists across app restarts |
 | **Victory / Loss** | 5 Barão hits trigger the 2.5 s defeat explosion before Win; losing all 3 lives ends the run |
 | **Screens** | Loading → Select → Difficulty → Game → Win/Game Over |
 | **Difficulty** | Muito Fácil, Fácil, Difícil, Impossível (fixed per match) |
@@ -109,7 +109,9 @@ src/
 │   └── useRunnerEngine.ts    Game loop (UI-thread worklet)
 ├── components/
 │   └── SwipeHandler.tsx      Fling and tap gestures → lane changes
-├── store/gameStore.ts        Zustand: screen flow, difficulty, lives, score, dialogue, defeat
+├── store/
+│   ├── bestScoreStorage.ts   Persistent best score via AsyncStorage with memory fallback
+│   └── gameStore.ts          Zustand: screen flow, difficulty, lives, score, dialogue, defeat
 └── types/                    Game types and tunable constants
 ```
 

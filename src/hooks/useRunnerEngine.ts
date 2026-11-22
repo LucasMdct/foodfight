@@ -14,6 +14,8 @@ import {
   difficultyAtIndex,
   difficultyConfigAt,
   difficultyIndexAt,
+  heroIntersectsBubbleY,
+  heroIntersectsObstacleY,
   nextRngState,
   powerChargeAfterPickup,
   projectileKindAt,
@@ -335,6 +337,7 @@ export const useRunnerEngine = (
     activeMatchGeneration.current += 1;
     matchGeneration.value = activeMatchGeneration.current;
     frozen.value = 0;
+    appPaused.value = 0;
     heroLane.value = 1;
     heroY.value = heroTopY(1);
     heroOpacity.value = 1;
@@ -376,6 +379,7 @@ export const useRunnerEngine = (
       burstFxUntil[index].value = 0;
     }
   }, [
+    appPaused,
     bubbleActive,
     bubbleLane,
     bubblePending,
@@ -662,7 +666,7 @@ export const useRunnerEngine = (
       }
       if (
         canBeHit &&
-        obstacleLane[index].value === heroLane.value &&
+        heroIntersectsObstacleY(heroY.value, obstacleY[index].value, size) &&
         rectsOverlapX(heroLeft, heroRight, x, x + size)
       ) {
         obstacleActive[index].value = 0;
@@ -703,7 +707,7 @@ export const useRunnerEngine = (
     if (bubbleActive.value === 1) {
       bubbleX.value -= speed * 0.55 * dt;
       if (
-        bubbleLane.value === heroLane.value &&
+        heroIntersectsBubbleY(heroY.value, bubbleY.value) &&
         rectsOverlapX(
           heroLeft,
           heroRight,

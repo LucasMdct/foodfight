@@ -1,6 +1,8 @@
 import {
   attackPhaseAt,
   difficultyConfigAt,
+  heroIntersectsBubbleY,
+  heroIntersectsObstacleY,
   milestoneCountAt,
   nextRngState,
   powerChargeAfterPickup,
@@ -12,7 +14,7 @@ import {
   trackShotY,
   villainYAt,
 } from './combatMath';
-import { rectsOverlapX } from './math';
+import { laneTopY, rectsOverlapX } from './math';
 import { GAME_CONSTANTS } from '../types/constants';
 import type { Difficulty } from '../types/game';
 
@@ -29,6 +31,7 @@ export type CombatSimulationScreen = 'game' | 'over' | 'win';
 export interface CombatFrame {
   readonly dtMs: number;
   readonly lane?: number;
+  readonly heroY?: number;
   readonly fire?: boolean;
 }
 
@@ -160,13 +163,31 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
   let defeatStartedAtMs = 0;
   let defeatBurstIndex = 0;
   let defeatVillainCenterY = SIMULATION_HEIGHT / 2;
+  let heroY = laneTopY(
+    clampLane(scenario.frames[0]?.lane ?? 1),
+    LANE_HEIGHT,
+    GAME_CONSTANTS.HERO_HEIGHT
+  );
 
   for (let frameIndex = 0; frameIndex < scenario.frames.length; frameIndex += 1) {
     if (screen !== 'game') break;
 
     const frame = scenario.frames[frameIndex];
     const dtMs = Math.max(0, Math.min(GAME_CONSTANTS.MAX_FRAME_DELTA_MS, frame.dtMs));
-    const lane = clampLane(frame.lane ?? 1);
+    const targetLane = clampLane(frame.lane ?? 1);
+    const lane = targetLane;
+    const targetY = laneTopY(targetLane, LANE_HEIGHT, GAME_CONSTANTS.HERO_HEIGHT);
+
+    if (frame.heroY !== undefined) {
+      heroY = frame.heroY;
+    } else if (heroY !== targetY) {
+      const step = (LANE_HEIGHT * dtMs) / GAME_CONSTANTS.HERO_LANE_TRANSITION_DURATION;
+      if (heroY < targetY) {
+        heroY = Math.min(targetY, heroY + step);
+      } else {
+        heroY = Math.max(targetY, heroY - step);
+      }
+    }
 
     if (defeatActive) {
       elapsedMs += dtMs;
@@ -417,7 +438,7 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
         enemy.active = false;
       } else if (
         elapsedMs >= invulnerableUntilMs &&
-        enemy.lane === lane &&
+        heroIntersectsObstacleY(heroY, laneTopY(enemy.lane, LANE_HEIGHT, enemySize), enemySize) &&
         rectsOverlapX(enemy.x, enemy.x + enemySize, HERO_LEFT, HERO_RIGHT)
       ) {
         enemy.active = false;
@@ -474,7 +495,10 @@ export const runCombatScenario = (scenario: CombatScenario): CombatResult => {
     if (bubbleActive) {
       bubbleX -= (speed * 0.55 * dtMs) / 1000;
       if (
-        bubbleLane === lane &&
+        heroIntersectsBubbleY(
+          heroY,
+          laneTopY(bubbleLane, LANE_HEIGHT, GAME_CONSTANTS.BUBBLE_RENDER_SIZE)
+        ) &&
         rectsOverlapX(
           bubbleX - GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
           bubbleX + GAME_CONSTANTS.BUBBLE_RENDER_SIZE + GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,

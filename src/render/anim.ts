@@ -1,7 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
-  useSharedValue, withRepeat, withTiming, Easing, type SharedValue,
+  useSharedValue,
+  withSequence,
+  withRepeat,
+  withTiming,
+  Easing,
+  type SharedValue,
 } from 'react-native-reanimated';
+import { bobTimelineForDelay } from './bobTimeline';
+
+export { bobTimelineForDelay } from './bobTimeline';
+export type { BobTimeline } from './bobTimeline';
 
 const DEG = Math.PI / 180;
 
@@ -11,21 +20,36 @@ export const useSwing = (deg: number, periodMs: number): SharedValue<number> => 
   useEffect(() => {
     v.value = withRepeat(
       withTiming(deg * DEG, { duration: periodMs, easing: Easing.inOut(Easing.ease) }),
-      -1, true,
+      -1,
+      true
     );
   }, [deg, periodMs, v]);
   return v;
 };
 
 /** Ping-pong vertical bob: 0..-px over periodMs each half. */
-export const useBob = (px: number, periodMs: number): SharedValue<number> => {
-  const v = useSharedValue(0);
+export const useBob = (px: number, periodMs: number, phaseDelayMs = 0): SharedValue<number> => {
+  const timeline = useMemo(
+    () => bobTimelineForDelay(px, periodMs, phaseDelayMs),
+    [periodMs, phaseDelayMs, px]
+  );
+  const v = useSharedValue(timeline.initialValue);
   useEffect(() => {
     v.value = withRepeat(
-      withTiming(-px, { duration: periodMs, easing: Easing.inOut(Easing.ease) }),
-      -1, true,
+      withSequence(
+        withTiming(timeline.firstTarget, {
+          duration: timeline.firstDurationMs,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        withTiming(timeline.secondTarget, {
+          duration: timeline.secondDurationMs,
+          easing: Easing.inOut(Easing.ease),
+        })
+      ),
+      -1,
+      false
     );
-  }, [px, periodMs, v]);
+  }, [timeline, v]);
   return v;
 };
 
@@ -35,7 +59,8 @@ export const useSpin = (periodMs: number, dir: 1 | -1 = 1): SharedValue<number> 
   useEffect(() => {
     v.value = withRepeat(
       withTiming(dir * 2 * Math.PI, { duration: periodMs, easing: Easing.linear }),
-      -1, false,
+      -1,
+      false
     );
   }, [periodMs, dir, v]);
   return v;

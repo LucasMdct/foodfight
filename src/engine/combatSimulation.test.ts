@@ -475,4 +475,76 @@ describe('combat simulation coverage', () => {
     expect(result.events.filter((event) => event.type === 'heroHit')).toHaveLength(1);
     expect(result.snapshot.lives).toBe(2);
   });
+
+  it('avoids false positive hits during the 130ms lane transition until reaching target lane', () => {
+    // Enemy in Lane 0 at hero X position
+    // Hero starts in Lane 1, then begins transition to Lane 0
+    const laneHeight = 520 / 3;
+    const heroHeight = GAME_CONSTANTS.HERO_HEIGHT;
+    const heroYLane1 = 1 * laneHeight + (laneHeight - heroHeight) / 2; // ~200
+    const heroYLane0 = 0 * laneHeight + (laneHeight - heroHeight) / 2; // ~26.67
+    const heroYMidpoint = (heroYLane1 + heroYLane0) / 2; // ~113.33
+
+    // 1. Initial transition position (t=0): hero at Lane 1 Y, targeted to Lane 0
+    const initialResult = runCombatScenario({
+      seed: 10,
+      lives: 3,
+      enemies: [
+        { x: 900 * GAME_CONSTANTS.HERO_X_RATIO + 20, lane: 0, kind: PROJECTILE_KIND.candy },
+      ],
+      frames: [{ dtMs: 0, lane: 0, heroY: heroYLane1 }],
+    });
+    // In v0.0.4, lane: 0 caused a false positive hit here!
+    expect(initialResult.events.some((e) => e.type === 'heroHit')).toBe(false);
+    expect(initialResult.snapshot.lives).toBe(3);
+
+    // 2. Midpoint transition position (t=65ms): hero at midpoint Y
+    const midResult = runCombatScenario({
+      seed: 10,
+      lives: 3,
+      enemies: [
+        { x: 900 * GAME_CONSTANTS.HERO_X_RATIO + 20, lane: 0, kind: PROJECTILE_KIND.candy },
+      ],
+      frames: [{ dtMs: 0, lane: 0, heroY: heroYMidpoint }],
+    });
+    expect(midResult.events.some((e) => e.type === 'heroHit')).toBe(false);
+    expect(midResult.snapshot.lives).toBe(3);
+
+    // 3. Final transition position (t=130ms): hero reaches Lane 0 Y
+    const finalResult = runCombatScenario({
+      seed: 10,
+      lives: 3,
+      enemies: [
+        { x: 900 * GAME_CONSTANTS.HERO_X_RATIO + 20, lane: 0, kind: PROJECTILE_KIND.candy },
+      ],
+      frames: [{ dtMs: 0, lane: 0, heroY: heroYLane0 }],
+    });
+    expect(finalResult.events.some((e) => e.type === 'heroHit')).toBe(true);
+    expect(finalResult.snapshot.lives).toBe(2);
+  });
+
+  it('freezes simulation during background pause (dt=0) without advancing positions or emitting events', () => {
+    const result = runCombatScenario({
+      seed: 11,
+      lives: 3,
+      score: 50,
+      enemies: [{ x: 300, lane: 1, kind: PROJECTILE_KIND.lolli }],
+      bubble: { x: 400, lane: 1 },
+      frames: [
+        // 5 paused frames (app in background: dtMs = 0)
+        { dtMs: 0 },
+        { dtMs: 0 },
+        { dtMs: 0 },
+        { dtMs: 0 },
+        { dtMs: 0 },
+      ],
+    });
+
+    expect(result.events.filter((e) => e.type === 'heroHit')).toHaveLength(0);
+    expect(result.events.filter((e) => e.type === 'score')).toHaveLength(0);
+    expect(result.snapshot.score).toBe(50);
+    expect(result.snapshot.lives).toBe(3);
+    expect(result.snapshot.activeEnemies).toBe(1);
+    expect(result.snapshot.bubbleActive).toBe(true);
+  });
 });

@@ -1,6 +1,6 @@
 {
   "name": "foodfight",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -14,25 +14,26 @@
   },
   "dependencies": {
     "@expo-google-fonts/fredoka": "^0.4.1",
-    "@shopify/react-native-skia": "2.6.2",
-    "expo": "~56.0.14",
-    "expo-font": "~56.0.7",
-    "expo-linear-gradient": "~56.0.4",
-    "expo-screen-orientation": "~56.0.5",
-    "expo-splash-screen": "~56.0.16",
-    "expo-status-bar": "~56.0.4",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@shopify/react-native-skia": "2.14.0",
+    "expo": "57.0.33",
+    "expo-font": "~57.0.4",
+    "expo-linear-gradient": "~57.0.2",
+    "expo-screen-orientation": "~57.0.3",
+    "expo-splash-screen": "~57.0.11",
+    "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
-    "react-native": "0.85.3",
-    "react-native-gesture-handler": "~2.31.1",
-    "react-native-reanimated": "4.3.1",
-    "react-native-worklets": "0.8.3",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "4.5.1",
+    "react-native-worklets": "0.10.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "babel-preset-expo": "~56.0.15",
+    "babel-preset-expo": "~57.0.17",
     "eslint": "^9.39.4",
-    "eslint-config-expo": "~56.0.4",
+    "eslint-config-expo": "~57.0.2",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
@@ -41,6 +42,13 @@
     "vitest": "^5.0.5"
   },
   "private": true,
+  "expo": {
+    "install": {
+      "exclude": [
+        "@shopify/react-native-skia"
+      ]
+    }
+  },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
       "prettier --write",

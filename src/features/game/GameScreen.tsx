@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Text as RNText, useWindowDimensions, View } from 'react-native';
+import { AppState, Text as RNText, useWindowDimensions, View } from 'react-native';
 import {
   Canvas,
   Circle,
@@ -399,6 +399,14 @@ export const GameScreen = () => {
   const actions = useGameStore((s) => s.actions);
   const [hasMoved, setHasMoved] = useState(false);
   const [typedTalk, setTypedTalk] = useState('');
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (next) => {
+      setIsPaused(next !== 'active');
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => bindVillainDialogue(useGameStore, setTypedTalk), []);
 
@@ -435,7 +443,10 @@ export const GameScreen = () => {
     return () => clearTimeout(timeout);
   }, [actions, screen, villainDying]);
 
-  const tauntStyle = useAnimatedStyle(() => ({ top: engine.villainY.value - 4 }));
+  const tauntStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: engine.villainY.value - 4 }],
+    opacity: typedTalk ? 1 : 0,
+  }));
 
   const handleMoveLane = useCallback(
     (direction: -1 | 1) => {
@@ -465,13 +476,18 @@ export const GameScreen = () => {
 
       <Hud onFire={engine.firePower} onExit={actions.toSelect} showHint={!hasMoved} />
 
-      {typedTalk ? (
-        <Animated.View pointerEvents="none" style={[GAME_SCREEN_STYLES.tauntBubble, tauntStyle]}>
-          <RNText style={GAME_SCREEN_STYLES.tauntText}>{typedTalk}</RNText>
-        </Animated.View>
-      ) : null}
+      <Animated.View pointerEvents="none" style={[GAME_SCREEN_STYLES.tauntBubble, tauntStyle]}>
+        <RNText style={GAME_SCREEN_STYLES.tauntText}>{typedTalk}</RNText>
+      </Animated.View>
 
       <LoopReadout />
+      {isPaused && (
+        <View style={GAME_SCREEN_STYLES.pauseOverlay} pointerEvents="none">
+          <View style={GAME_SCREEN_STYLES.pausePill}>
+            <RNText style={GAME_SCREEN_STYLES.pauseTitle}>Pausado</RNText>
+          </View>
+        </View>
+      )}
       {isGameOverModalVisible(screen) && <GameOverModal />}
     </View>
   );

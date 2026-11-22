@@ -1,4 +1,8 @@
 import { useSwing, useBob } from '../anim';
+import type { HeroId } from '../../types/game';
+import { HERO_BOB_DELAYS_S } from './walkCycleConfig';
+
+export { HERO_BOB_DELAYS_S };
 
 /**
  * Hero walk cycle: legs swing ±16° over a 0.32s half-cycle, arms swing ±14°
@@ -6,9 +10,9 @@ import { useSwing, useBob } from '../anim';
  * over the same 0.32s half-cycle (== ff-bob's 0.64s full cycle / 2).
  * Mirrors the CSS keyframes ff-leg / ff-arm / ff-bob in Foodie.dc.html.
  */
-export const useWalkCycle = () => {
+export const useWalkCycle = (who: HeroId = 'alface') => {
   const legSwing = useSwing(16, 320);
   const armSwing = useSwing(14, 320);
-  const bobY = useBob(3, 320);
+  const bobY = useBob(3, 320, HERO_BOB_DELAYS_S[who] * 1000);
   return { legSwing, armSwing, bobY };
 };
