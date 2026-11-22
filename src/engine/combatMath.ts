@@ -125,16 +125,15 @@ export const trackShotY = (
 };
 
 /** Top-Y of the villain, centred in the playfield and clamped away from edges. */
-export const villainYAt = (
-  elapsedMs: number,
-  height: number,
-  villainHeight = GAME_CONSTANTS.VILLAIN_HEIGHT
-): number => {
+export const villainYAt = (elapsedMs: number, height: number, villainHeight?: number): number => {
   'worklet';
-  const centreY = height / 2 - villainHeight / 2;
+  // Resolve imported constants inside the worklet body. Reanimated evaluates
+  // default parameters before installing the worklet closure on the UI thread.
+  const resolvedVillainHeight = villainHeight ?? GAME_CONSTANTS.VILLAIN_HEIGHT;
+  const centreY = height / 2 - resolvedVillainHeight / 2;
   const maxAmplitude = Math.max(
     0,
-    height / 2 - villainHeight / 2 - GAME_CONSTANTS.VILLAIN_EDGE_MARGIN
+    height / 2 - resolvedVillainHeight / 2 - GAME_CONSTANTS.VILLAIN_EDGE_MARGIN
   );
   const amplitude = Math.min(height * GAME_CONSTANTS.VILLAIN_AMPLITUDE_RATIO, maxAmplitude);
   const phase = (elapsedMs / GAME_CONSTANTS.VILLAIN_CYCLE_MS) * 2 * Math.PI;
@@ -145,25 +144,34 @@ export const heroIntersectsObstacleY = (
   heroY: number,
   obstacleY: number,
   obstacleSize: number,
-  heroHeight = GAME_CONSTANTS.HERO_HEIGHT,
-  padding = GAME_CONSTANTS.HERO_HITBOX_PADDING
+  heroHeight?: number,
+  padding?: number
 ): boolean => {
   'worklet';
-  const heroTop = heroY + padding;
-  const heroBottom = heroY + heroHeight - padding;
+  const resolvedHeroHeight = heroHeight ?? GAME_CONSTANTS.HERO_HEIGHT;
+  const resolvedPadding = padding ?? GAME_CONSTANTS.HERO_HITBOX_PADDING;
+  const heroTop = heroY + resolvedPadding;
+  const heroBottom = heroY + resolvedHeroHeight - resolvedPadding;
   return heroTop < obstacleY + obstacleSize && heroBottom > obstacleY;
 };
 
 export const heroIntersectsBubbleY = (
   heroY: number,
   bubbleY: number,
-  bubbleSize = GAME_CONSTANTS.BUBBLE_RENDER_SIZE,
-  bubblePadding = GAME_CONSTANTS.BUBBLE_HITBOX_PADDING,
-  heroHeight = GAME_CONSTANTS.HERO_HEIGHT,
-  padding = GAME_CONSTANTS.HERO_HITBOX_PADDING
+  bubbleSize?: number,
+  bubblePadding?: number,
+  heroHeight?: number,
+  padding?: number
 ): boolean => {
   'worklet';
-  const heroTop = heroY + padding;
-  const heroBottom = heroY + heroHeight - padding;
-  return heroTop < bubbleY + bubbleSize + bubblePadding && heroBottom > bubbleY - bubblePadding;
+  const resolvedBubbleSize = bubbleSize ?? GAME_CONSTANTS.BUBBLE_RENDER_SIZE;
+  const resolvedBubblePadding = bubblePadding ?? GAME_CONSTANTS.BUBBLE_HITBOX_PADDING;
+  const resolvedHeroHeight = heroHeight ?? GAME_CONSTANTS.HERO_HEIGHT;
+  const resolvedPadding = padding ?? GAME_CONSTANTS.HERO_HITBOX_PADDING;
+  const heroTop = heroY + resolvedPadding;
+  const heroBottom = heroY + resolvedHeroHeight - resolvedPadding;
+  return (
+    heroTop < bubbleY + resolvedBubbleSize + resolvedBubblePadding &&
+    heroBottom > bubbleY - resolvedBubblePadding
+  );
 };
