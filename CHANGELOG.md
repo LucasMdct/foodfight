@@ -23,6 +23,7 @@ This project has **two version tracks**, because it changed identity partway thr
 ### Changed
 
 - Bump the application version to `0.0.6` for the next release cycle.
+- Align `expo-splash-screen` with the Expo SDK 57 patch required by Expo Doctor and CI.
 
 ## [0.0.5] — 2026-11-22 — _released_
 

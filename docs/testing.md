@@ -219,7 +219,7 @@ zombie hitboxes, milestone bursts, full-screen power clearing, centered confetti
 typewriter dialogue cadence and cancellation, store-bound `dialogueRequestId` restarts for repeated lines during typing and hold, staged Barão defeat and delayed victory,
 phase-four sugar rain, pool saturation, power rotation, reset/replay and terminal result races.
 
-Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint. GitHub Actions runs typecheck, lint and tests on every PR.
+Pre-commit runs lint-staged with Prettier; pre-push runs `tsc` plus lint. GitHub Actions runs typecheck, lint, tests, Expo Doctor, Android export, and bundle verification on every PR.
 
 ---
 
@@ -230,7 +230,7 @@ Copy this into a new dated file under `docs/` and fill it in:
 ```markdown
 # Test Run — YYYY-MM-DD
 
-**Version:** v0.0.5
+**Version:** v0.0.6
 **Device:** model, SoC, RAM
 **OS:** version
 **Build:** release / dev
@@ -273,12 +273,18 @@ npm run verify:android-bundle
 
 The verifier must report at least one Hermes Android bundle and reject any worklet signature that evaluates `GAME_CONSTANTS` in a default parameter.
 
-For a native crash, capture the complete report before closing it:
+For a native crash, save the existing buffers before clearing anything. Then clear
+and reproduce the crash in a separate capture so the fatal-signal diagnostics are
+preserved:
 
 ```powershell
+adb logcat -d -v threadtime > crash-before-repro.log
 adb logcat -c
-adb logcat -v threadtime AndroidRuntime:E ReactNativeJS:E Worklets:E *:S
+adb logcat -v threadtime > crash-repro.log
 ```
+
+If the app closes without a visible stack trace, inspect the saved files for
+`AndroidRuntime`, `ReactNativeJS`, `Worklets`, `libc`, and `DEBUG` entries.
 
 ## Outstanding for v0.0.6
 
