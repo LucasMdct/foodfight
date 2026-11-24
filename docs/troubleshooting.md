@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Symptom → cause → fix, for Food Fight v0.0.5.
+Symptom → cause → fix, for Food Fight v0.0.6.
 
 ---
 
@@ -29,7 +29,19 @@ All three need a native rebuild — they cannot be hot-loaded into an existing b
 npx expo prebuild --clean && npm run android
 ```
 
-Reanimated also requires `react-native-worklets` (pinned at 0.8.3) and its Babel plugin. Check `babel.config.js` if worklets throw at runtime.
+Reanimated also requires `react-native-worklets` (pinned at 0.10.1) and its Babel plugin. Check `babel.config.js` if worklets throw at runtime.
+
+### Android closes immediately with `Property 'GAME_CONSTANTS' doesn't exist`
+
+This is a UI-thread Worklets closure error. A worklet default parameter such as `heroHeight = GAME_CONSTANTS.HERO_HEIGHT` is evaluated before Reanimated installs the closure that contains the imported constant. The fix is to use an optional parameter and resolve the fallback inside the worklet body. Run the source test and compiled-bundle guard before building:
+
+```powershell
+npm test -- --run src/engine/workletSafety.test.ts
+npx expo export --platform android --clear
+npm run verify:android-bundle
+```
+
+If the error persists in a physical APK, capture the full native report with `adb logcat` and record the exact build ID. Do not treat a successful JavaScript export as proof that the native worklet runtime is safe.
 
 ### Fonts never load / app stuck on the loading screen
 

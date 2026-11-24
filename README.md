@@ -2,8 +2,8 @@
 
 A mobile endless runner built with **Expo SDK 57**, **React Native Skia** and **Reanimated**.
 
-**Version:** 0.0.5 ([changelog](./CHANGELOG.md))
-**Status:** v0.0.5 released — stabilization, persistent best score via AsyncStorage, pause/resume AppState handling, transition-accurate collision, design-verified hero bob offsets, and Android Worklets crash hardening
+**Version:** 0.0.6 ([changelog](./CHANGELOG.md))
+**Status:** v0.0.6 in development — release hardening after the v0.0.5 Android Worklets crash; v0.0.5 remains the latest released game version
 
 Pick a Foodie, dodge the candy the Barão Brigadeiro throws across three lanes of a rolling kitchen table, collect food bubbles to charge your power, and defeat the Barão.
 
